@@ -69,16 +69,18 @@ podTemplate(
 				// In python 3.9 environment, dataclasses should be installed at this point.
 				//sh "pip3 install dataclasses"
 				sh "pip3 install idmtools_test --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple"
+                // withCredentials([string(credentialsId: 'idm_bamboo_user', variable: 'user'), string(credentialsId: 'idm_bamboo_user_password', variable: 'password')]) {
+				//		sh 'pip3 install emod_generic==0.0.21 --index-url=https://$user:$password@packages.idmod.org/api/pypi/pypi-staging/simple --force-reinstall --no-cache-dir'
+				//	} 
 				sh "pip3 install emod_generic --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple"
 				sh 'pip3 install keyrings.alt'
 				sh "pip3 install pytest-xdist"
 				sh "pip3 freeze"
 			}
 			stage('Login and Test') {
-				withCredentials([string(credentialsId: 'Comps_emodpy_user', variable: 'user'), string(credentialsId: 'Comps_emodpy_password', variable: 'password'),
-				                 string(credentialsId: 'Bamboo_id', variable: 'bamboo_user'), string(credentialsId: 'Bamboo', variable: 'bamboo_password')]) {
-					sh 'python3 ".dev_scripts/create_auth_token_args.py" --comps_url https://comps2.idmod.org --username $user --password $password'
-				}
+				withCredentials([usernamePassword(credentialsId: 'comps2_jenkins_user', usernameVariable: 'COMPS2_USERNAME', passwordVariable: 'COMPS2_PASSWORD')]) {
+        		    		sh 'python3 .dev_scripts/create_auth_token_args.py --comps_url https://comps2.idmod.org --username $COMPS2_USERNAME --password $COMPS2_PASSWORD'
+            			}
 				echo "Running Emodpy Tests"
 				dir('tests') {
 					sh "pytest -n 0 test_download_from_package.py"

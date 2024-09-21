@@ -1,10 +1,8 @@
 # flake8: noqa W605,F821
-import copy
 import json
 import os
 from unittest.mock import Mock
 
-import idmtools
 import pytest
 import shutil
 from functools import partial
@@ -13,7 +11,9 @@ from idmtools.core import ItemType
 
 from emodpy import emod_task
 from emodpy.emod_task import EMODTask
-from emodpy.emod_task import AssetCollection
+from emodpy.emod_task import add_ep4_from_path, default_ep4_fn
+
+from emodpy.reporters.custom import ReportNodeDemographics
 
 from idmtools.entities.experiment import Experiment
 from idmtools.entities.simulation import Simulation
@@ -231,8 +231,101 @@ class TestEMODTask(ITestWithPersistence):
 
         self.assertDictEqual(config, task.config)
 
-    def test_from_default(self):
+    def test_from_files_valid_customReport(self):
+        self.prepare_input_files()
 
+        dfs.write_config_from_default_and_params(config_path=self.default_config_file,
+                                                 set_fn=partial(set_param_fn,
+                                                                implicit_config_set_fns=self.demog.implicits),
+                                                 config_out_path=self.config_path)
+
+        # workaround for https://github.com/InstituteforDiseaseModeling/emodpy/issues/358
+        import emod_api.schema_to_class as s2c
+        with open(self.config_path) as conf:
+            config_rod = json.load(conf, object_hook=s2c.ReadOnlyDict)
+        #config_rod.parameters.Enable_Demographics_Builtin = 1
+        #del config_rod.parameters["Demographics_Filenames"]
+        config_rod.parameters['Base_Infectivity_Constant'] = 1
+        config_rod.parameters['Incubation_Period_Constant'] = 1
+        config_rod.parameters['Infectious_Period_Constant'] = 1
+        config_rod.parameters['Base_Infectivity_Distribution'] = 'CONSTANT_DISTRIBUTION'
+        config_rod.parameters['Incubation_Period_Distribution'] = 'CONSTANT_DISTRIBUTION'
+        config_rod.parameters['Infectious_Period_Distribution'] = 'CONSTANT_DISTRIBUTION'
+        config_rod.parameters['x_Base_Population'] = 0.001
+        config_rod.parameters['Simulation_Duration'] = 10
+        config_rod.parameters['Start_Time'] = 0
+
+        with open(self.config_path, "w") as outfile:
+            json.dump(config_rod, outfile, sort_keys=True, indent=4)
+
+        custom_reports_path = os.path.join(manifest.current_directory, "inputs", "custom_reports.json")
+
+        task = EMODTask.from_files(
+            eradication_path=self.eradication_path,
+            config_path=self.config_path,
+            campaign_path=self.camp_path,
+            demographics_paths=self.demo_path,
+            custom_reports_path=custom_reports_path,
+            asset_path=manifest.package_folder
+        )
+
+        task.pre_creation(Simulation(), self.platform)
+        task.gather_common_assets()
+
+        experiment = Experiment.from_task(task, name=self.case_name)
+
+        # Check if reporter plugins is in assets
+        self.assertIn(os.path.join(manifest.package_folder, 'reporter_plugins',
+                                   ReportNodeDemographics.dll_file.replace('dll', 'so')),
+                      [a.absolute_path for a in task.common_assets.assets])
+
+        # check experiment common assets are as expected
+        experiment.pre_creation(self.platform)
+        self.assertEqual(len(experiment.assets), 3)
+        self.assertIn(self.eradication_path, [a.absolute_path for a in experiment.assets])
+        self.assertIn(self.demo_path, [a.absolute_path for a in experiment.assets])
+
+        sim = experiment.simulations[0]
+        sim.pre_creation(self.platform)
+        self.assertEqual(len(sim.assets), 3)
+        self.assertIn('custom_reports.json', [a.filename for a in sim.assets])
+        self.assertEqual('custom_reports.json', sim.task.config["parameters"]['Custom_Reports_Filename'])
+        self.assertEqual(1, len(sim.task.reporters.custom_reporters))
+        print(type(sim.task.reporters.custom_reporters[0]))
+        # print(isinstance(ReportNodeDemographics, type(sim.task.reporters.custom_reporters[0])))
+        self.assertEqual('ReportNodeDemographics', sim.task.reporters.custom_reporters[0].name)
+
+        task.set_sif(manifest.sft_id_file)
+        experiment.run(wait_until_done=True)
+        self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
+
+        for sim in experiment.simulations:
+            file = self.platform.get_files(sim, ["output/ReportNodeDemographics.csv"])
+            report = file["output/ReportNodeDemographics.csv"].decode("utf-8")
+            self.assertIn("NodeID", report)
+
+    def test_from_files_missing_customReport(self):
+        self.prepare_input_files()
+
+        dfs.write_config_from_default_and_params(config_path=self.default_config_file,
+                                                 set_fn=partial(set_param_fn,
+                                                                implicit_config_set_fns=self.demog.implicits),
+                                                 config_out_path=self.config_path)
+
+        custom_reports_path = os.path.join(manifest.current_directory, "inputs", "silly_custom_reports.json")
+        with self.assertRaises(Exception) as context:
+            task = EMODTask.from_files(
+                eradication_path=self.eradication_path,
+                config_path=self.config_path,
+                campaign_path=self.camp_path,
+                demographics_paths=self.demo_path,
+                custom_reports_path=custom_reports_path,
+                asset_path=manifest.package_folder
+            )
+
+        self.assertTrue('Could not find the reporter class' in str(context.exception))
+
+    def test_from_default(self):
         def set_param_fn(config):
             print("Setting params.")
             config.parameters.Simulation_Duration = 100
@@ -544,4 +637,30 @@ class TestEMODTask(ITestWithPersistence):
             experiment = Experiment.from_task(task, name="Test_set_sif")
             experiment.post_creation(fake_platform)
             self.assertEquals(task.sif_path, "my_sif.sif")
+
+    def test_add_py_path(self):
+        self.prepare_schema_and_eradication()
+        task = EMODTask.from_default2(config_path=None, eradication_path=self.eradication_path,
+                                      campaign_builder=None, schema_path=self.schema_path,
+                                      param_custom_cb=None, ep4_custom_cb=None,
+                                      demog_builder=None)
+        pyscript_path = os.path.join(manifest.current_directory, 'inputs', 'ep4')
+
+        add_ep4_from_path(task, pyscript_path)
+        pypackage_path = '/python_venv/lib/python3.11/site-packages'
+        task.add_py_path(pypackage_path)
+
+        virtual_path = 'venv/lib/python3.9/site-packages/'
+        task.add_py_path(virtual_path)
+
+        task.set_sif(manifest.sft_id_file)
+        task.use_embedded_python = True
+
+        task.pre_creation(Simulation(), self.platform)
+        task.gather_common_assets()
+
+        self.assertTrue(task.use_embedded_python)
+
+        self.assertIn(f"--python-script-path './Assets/python;{pypackage_path};{virtual_path}'", str(task.command))
+
 

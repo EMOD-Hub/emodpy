@@ -136,3 +136,23 @@ you would change it to something like::
     platform = Platform( "SLURM", num_cores=4 )
 
 to run with 4 cores.
+
+
+What does "DTK" stand for?
+=========================================
+Disease Transmission Kernel. This was the early internal name of EMOD.
+
+
+What is a "parameter sweep"?
+=========================================
+When the docs refer to a "parameter sweep", it usually means an experiment consisting of a multiple simulations where almost all the input values are the same except for a single parameter. The parameter being swept will have different values across a range, possibly the min to the max, but any range of interest to the modeler. Parameter sweeps can be very useful for just learning the sensitivity of a given parameter, or as a form of manual calibration. A "1-D parameter sweep" is where you just sweep over a single parameter. You can also do "2-D parameter sweeps", where you sweep over two parameters at once, and so on. But these of course require more simulations and fancier visualization.
+
+A special kind of parameter sweep is sweeping over Run_Number which is the random number seed. This kind of sweep gives you a sense of the model to general stochasticity, given your other inputs.
+
+You can sweep over config, demographics, or campaign parameters.
+
+
+Is there any place where I can see which parameters are taken from distributions and what type of distributions are they?
+===========================================================================================================================
+Any parameter that is being set from a distribution will have the distribution type in the name. E.g., Base_Infectivity_Gaussian_Mean tells you that this value is being drawn from a Gaussian distribution. If you don't see any distribution name in the parameter name, it's just fixed at that parameter value.
+

@@ -6,6 +6,7 @@ import unittest
 from glob import glob
 
 import pandas as pd
+import pytest
 from idmtools.core import ItemType  # noqa: F401
 
 from emodpy.emod_task import EMODTask
@@ -16,6 +17,7 @@ from idmtools.entities.experiment import Experiment
 from tests import manifest
 
 
+@pytest.mark.emod
 class VitalDynamicDemographicsTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -79,9 +81,15 @@ class VitalDynamicDemographicsTests(unittest.TestCase):
             demog.SetEquilibriumVitalDynamicsFromWorldBank(wb_births_df=self.wb_births_df, country=self.places[idx],
                                                            year=self.year,
                                                            node_ids=[idx + 1])
+        demog.generate_file("demographics_vita.json")
         return demog
 
-    def skip_test_vitaldynamics_demog_from_worldbank(self):
+    def test_vitaldynamics_demog_from_worldbank(self):
+        # try:
+        #     os.unlink(os.path.join(os.getcwd(), "demographics.json"))
+        # except FileNotFoundError:
+        #     print("Error while deleting file ")
+
         self.print_params()
         EMODTask.dev_mode = True
         task = EMODTask.from_default2(config_path="config.json", eradication_path=self.eradication,
@@ -89,7 +97,6 @@ class VitalDynamicDemographicsTests(unittest.TestCase):
                                       schema_path=self.schema_path, param_custom_cb=self.set_param_fn,
                                       ep4_custom_cb=None)
         print("Adding asset dir...")
-        task.common_assets.add_asset(os.path.join(manifest.plugins_folder, "libreporteventcounter.so"), relative_path="reporter_plugins")
 
         task.set_sif(manifest.sft_id_file)
 
@@ -153,7 +160,7 @@ class VitalDynamicDemographicsTests(unittest.TestCase):
         # Test age distribution
         # We are listening to 'HappyBirthday' event, since each person will have birthday in a year, so we can get  all person's
         # age in a year. We use age for calculate age distribution over time and compare with demographics age distribution
-        f = open(os.path.join(os.getcwd(), "demographics.json"))
+        f = open(os.path.join(os.getcwd(), "demographics_vita.json"))
         demog_data = json.load(f)
         age_dist = {}
         # Save age_distribution info to age_dist from demographics.json

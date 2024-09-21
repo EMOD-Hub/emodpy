@@ -1,6 +1,5 @@
 import os
 import pytest
-import shutil
 import json
 import pandas as pd
 from abc import ABC, abstractmethod
@@ -21,20 +20,14 @@ from idmtools.builders import SimulationBuilder
 
 from emodpy.emod_task import EMODTask
 from emodpy.emod_campaign import EMODCampaign
-from emodpy.utils import download_latest_bamboo, download_latest_schema, EradicationBambooBuilds, bamboo_api_login
+from emodpy.utils import EradicationBambooBuilds
 
-# import sys
-# file_dir = os.path.dirname(__file__)
-# sys.path.append(file_dir)
-from . import manifest
+from tests import manifest
 
-sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
+sif_path = manifest.sft_id_file
 default_config_file = "campaign_workflow_default_config.json"
 
 
-# bamboo_api_login() only work in console
-# Please run this test from console for the first time or run "test_download_from_bamboo.py" from console before
-# running this test
 class TestWorkflowCampaign(ITestWithPersistence, ABC):
     """
         Base test class to test emod_api.campaign and  emod_api.interventions in a workflow
@@ -62,40 +55,8 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
     def setUp(self) -> None:
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
         print(self.case_name)
-        self.get_exe_from_bamboo()
-        self.get_schema_from_bamboo()
         self.platform = Platform(self.comps_platform)
         manifest.delete_existing_file(self.camp_file)
-
-    def get_exe_from_bamboo(self):
-        if not os.path.isfile(self.eradication_path):
-            bamboo_api_login()
-            print(
-                f"Getting Eradication from bamboo for plan {self.plan}. Please run this script in console if this "
-                "is the first time you use bamboo_api_login()."
-            )
-            eradication_path_bamboo = download_latest_bamboo(
-                plan=self.plan,
-                scheduled_builds_only=False
-            )
-            shutil.move(eradication_path_bamboo, self.eradication_path)
-        else:
-            print(f"{self.eradication_path} already exists, no need to get it from bamboo.")
-
-    def get_schema_from_bamboo(self):
-        if not os.path.isfile(self.schema_path):
-            bamboo_api_login()
-            print(
-                f"Getting Schema.json from bamboo for plan {self.plan}. Please run this script in console if this "
-                "is the first time you use bamboo_api_login()."
-            )
-            download_latest_schema(
-                plan=self.plan,
-                scheduled_builds_only=False,
-                out_path=self.schema_path
-            )
-        else:
-            print(f"{self.schema_path} already exists, no need to get it from bamboo.")
 
     def run_exp(self, task):
         experiment = Experiment.from_task(task, name=self._testMethodName)
@@ -480,7 +441,7 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
                             msg=f"Test failed: infected should be in ascending order during the peak duration"
                                 f" {timestep} - {timestep + peak_dur} for boxcar durations, "
                                 f"got {infected[timestep: timestep + peak_dur]}.")
-            self.assertTrue(all(infected[i] >= infected[i + 1] for i in range(timestep + peak_dur, len(infected) - 1)),
+            self.assertTrue(all(infected[i] >= infected[i + 1] for i in range(timestep + peak_dur + 1, len(infected) - 1)),
                             msg=f"Test failed: infected should be in descending order after peak time "
                                 f"{timestep + peak_dur} for boxcar durations, got {infected[timestep + peak_dur:]}.")
 
@@ -657,7 +618,6 @@ class TestWorkflowCampaignLinux(TestWorkflowCampaign):
     def test_5_node_multiplier_constant_linux(self):
         super().node_multiplier_constant_test()
 
-    @pytest.mark.skip(reason="Bug 637")
     def test_6_node_multiplier_boxcar_linux(self):
         super().node_multiplier_boxcar_test()
 

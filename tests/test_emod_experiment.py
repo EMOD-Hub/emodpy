@@ -22,11 +22,7 @@ from idmtools_platform_comps.utils.singularity_build import SingularityBuildWork
 
 from emodpy.emod_task import EMODTask, add_ep4_from_path
 
-# import sys
-# file_dir = os.path.dirname(__file__)
-# sys.path.append(file_dir)
-from . import manifest
-# import manifest
+from tests import manifest
 
 # current_directory = os.path.dirname(os.path.realpath(__file__))
 # DEFAULT_CONFIG_PATH = os.path.join(COMMON_INPUT_PATH, "files", "config.json")
@@ -247,7 +243,7 @@ class EMODExperimentTest(ABC):
 
         def build_camp():
             event = ob.new_intervention(camp, 1, cases=4)
-            camp.add(event, first=True)
+            camp.add(event)
             return camp
 
         def build_demo():
@@ -257,13 +253,15 @@ class EMODExperimentTest(ABC):
 
         print(f"Telling emod-api to use {self.get_emod_schema()} as schema.")
         ob.schema_path = self.get_emod_schema()
-        camp.schema_path = self.get_emod_schema()
+        camp.set_schema( self.get_emod_schema() )
 
         config_path = f"config_{self._testMethodName}.json"
         base_task = EMODTask.from_default2(config_path=config_path, eradication_path=self.get_emod_binary(),
                                            campaign_builder=build_camp, schema_path=self.get_emod_schema(),
-                                           param_custom_cb=set_param_fn, ep4_custom_cb=None,
-                                           demog_builder=build_demo)
+                                           param_custom_cb=set_param_fn, ep4_custom_cb=None)
+
+        # build tmpxxx.json for demographics file to avoid random pick wrong demographics.json file from other test
+        base_task.create_demog_from_callback(build_demo, from_sweep=True)
         base_task.set_sif(sif_path)
 
         builder = SimulationBuilder()
@@ -303,6 +301,7 @@ class EMODExperimentTest(ABC):
         base_sim = Simulation(task=base_task)
         for i in range(num_sim_long):
             sim = copy.deepcopy(base_sim)
+            sim.task.common_assets = base_task.common_assets # workaround coz copy doesn't copy common_assets anymore.
             sim.task.set_parameter("Enable_Immunity", 0)
             e.simulations.append(sim)
 

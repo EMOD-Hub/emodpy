@@ -10,8 +10,9 @@ from emodpy.utils import EradicationBambooBuilds
 from emodpy.bamboo import get_model_files
 from examples.config_update_parameters import del_folder
 
-from . import manifest
-sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
+from tests import manifest
+
+sif_path = manifest.sft_id_file
 
 
 @pytest.mark.emod
@@ -76,7 +77,7 @@ class TestSerialization(ITestWithPersistence):
             from emod_api.interventions import outbreak as ob
             from emod_api import campaign as camp
 
-            camp.schema_path = manifest.schema_file
+            camp.set_schema( manifest.schema_file )
             event = ob.new_intervention(camp, 1, cases=10)
             camp.add(event)
             return camp

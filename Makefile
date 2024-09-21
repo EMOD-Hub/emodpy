@@ -27,7 +27,7 @@ clean-all:  ## Deleting package info hides plugins so we only want to do that fo
 	$(CLDIR) --dir-patterns "**/*.egg-info/"
 
 lint: ## check style with flake8
-	flake8 --ignore=E201,E202,E501,W291,W503 --exclude="emodpy/campaign/**" $(PACKAGE_NAME) tests
+	flake8 --ignore=E201,E202,E501,W291,W503,E261 --exclude="emodpy/campaign/**" $(PACKAGE_NAME) tests
 
 test: ## Run our tests
 	$(FULL_TEST_CMD) -m "not comps and not docker"'

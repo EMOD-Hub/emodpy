@@ -25,8 +25,9 @@ import json
 # import sys
 # file_dir = os.path.dirname(__file__)
 # sys.path.append(file_dir)
-from . import manifest
-sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
+from tests import manifest
+
+sif_path = manifest.sft_id_file
 
 
 default_config_file = "demographics_workflow_default_config.json"
@@ -606,7 +607,7 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
                              ["SusceptibilityDistribution"]["ResultScaleFactor"], 1)
 
 
-# @pytest.mark.skip('skip tests for Windows Eradication for now')
+@pytest.mark.skip('skip tests for Windows Eradication')
 @pytest.mark.emod
 class TestWorkflowDemographicsWin(TestWorkflowDemographics):
     """

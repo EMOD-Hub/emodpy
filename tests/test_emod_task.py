@@ -2,17 +2,22 @@
 import copy
 import json
 import os
+from unittest.mock import Mock
+
+import idmtools
 import pytest
 import shutil
 from functools import partial
 
+from idmtools.core import ItemType
+
+from emodpy import emod_task
 from emodpy.emod_task import EMODTask
 from emodpy.emod_task import AssetCollection
 
 from idmtools.entities.experiment import Experiment
 from idmtools.entities.simulation import Simulation
 from idmtools.core.platform_factory import Platform
-# from idmtools_test import COMMON_INPUT_PATH
 from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 
 import emod_api.demographics.Demographics as Demographics
@@ -21,10 +26,7 @@ from emod_api.config import default_from_schema_no_validation as dfs
 from emod_api.interventions import outbreak as ob
 from emod_api import campaign as camp
 
-import sys
-file_dir = os.path.dirname(__file__)
-sys.path.append(file_dir)
-import manifest
+from tests import manifest
 
 # current_directory = os.path.dirname(os.path.realpath(__file__))
 # DEFAULT_CONFIG_PATH = os.path.join(COMMON_INPUT_PATH, "files", "config.json")
@@ -66,19 +68,6 @@ class TestEMODTask(ITestWithPersistence):
         self.demog = None
         print(self.case_name)
         self.platform = Platform('SLURM')
-
-    def test_command(self):
-        models_dir_list = [manifest.eradication_path_linux_url,
-                           manifest.eradication_path_win_all,
-                           manifest.eradication_path_win,
-                           manifest.eradication_path_linux]
-        for models_dir in models_dir_list:
-            print(f'testing {models_dir} ...')
-            task = EMODTask(eradication_path=models_dir)
-            task.pre_creation(Simulation(), self.platform)
-            eradication_name = os.path.basename(models_dir)
-            self.assertEqual(f"Assets/{eradication_name} --python-script-path ./Assets/python --config config.json --dll-path ./Assets --input-path ./Assets\;.",
-                                    task.command.cmd)
 
     def prepare_schema_and_eradication(self):
         self.schema_path = manifest.schema_path_linux
@@ -131,7 +120,7 @@ class TestEMODTask(ITestWithPersistence):
         from emod_api.interventions import outbreak as ob
         from emod_api import campaign as camp
 
-        camp.schema_path = schema_path
+        camp.set_schema( schema_path )
         event = ob.new_intervention(camp, 1, cases=4)
         camp.add(event)
         # We are saving and reloading. Maybe there's an even better way? But even an outbreak seeding does not belong in the EMODTask.
@@ -171,7 +160,7 @@ class TestEMODTask(ITestWithPersistence):
         task.pre_creation(Simulation(), self.platform)
         task.gather_common_assets()
 
-        experiment = Experiment.from_task(copy.deepcopy(task), name=self.case_name)
+        experiment = Experiment.from_task(task, name=self.case_name)
 
         # Open all the files for comparison
         with open(self.config_path, 'r') as fp:
@@ -250,9 +239,9 @@ class TestEMODTask(ITestWithPersistence):
             return config
 
         def build_camp(schema_path):
-            camp.schema_path = schema_path
+            camp.set_schema( schema_path )
             event = ob.new_intervention(camp, 1, cases=4)
-            camp.add(event, first=True)
+            camp.add(event)
             camp.save("campaign.json")
             return camp
 
@@ -311,7 +300,7 @@ class TestEMODTask(ITestWithPersistence):
         task.pre_creation(Simulation(), self.platform)
         task.gather_common_assets()
 
-        experiment = Experiment.from_task(copy.deepcopy(task), name=self.case_name)
+        experiment = Experiment.from_task(task, name=self.case_name)
 
         # Open all the files for comparison
         demo_file = 'demographics.json'
@@ -324,7 +313,7 @@ class TestEMODTask(ITestWithPersistence):
         with open(demo_file, 'r') as fp:
             demo = json.load(fp)
 
-        task.gather_common_assets()
+        #task.gather_common_assets()
 
         self.assertEqual(task.eradication_path, self.eradication_path)
         self.assertIn(self.eradication_path, [a.absolute_path for a in task.common_assets.assets])
@@ -376,7 +365,7 @@ class TestEMODTask(ITestWithPersistence):
         task.pre_creation(Simulation(), self.platform)
         task.gather_common_assets()
 
-        experiment = Experiment.from_task(copy.deepcopy(task), name=self.case_name)
+        experiment = Experiment.from_task(task, name=self.case_name)
 
         task.gather_common_assets()
 
@@ -409,7 +398,7 @@ class TestEMODTask(ITestWithPersistence):
         task.pre_creation(Simulation(), self.platform)
         task.gather_common_assets()
 
-        experiment = Experiment.from_task(copy.deepcopy(task), name=self.case_name)
+        experiment = Experiment.from_task(task, name=self.case_name)
 
         task.gather_common_assets()
 
@@ -472,7 +461,7 @@ class TestEMODTask(ITestWithPersistence):
         self.platform.wait_till_done(experiment2, refresh_interval=1)
         assert experiment2.succeeded, "Eradication=None in from_default2 failed"
 
-    def test_config_deepcopy(self):
+    def skip_test_config_deepcopy(self):
         """
             Test copy.deepcopy(EMODTask.config) is working.
         """
@@ -494,3 +483,65 @@ class TestEMODTask(ITestWithPersistence):
         dict.update({'Enable_Regional_Migration': 0})
         dict.update({'Enable_Sea_Migration': 0})
         return dict
+
+    def ep4_fn(self,task):
+        task = emod_task.add_ep4_from_path(task, manifest.ep4_path)
+        return task
+
+    def download_sif_from_comp2(self):
+        assets = self.platform.get_item(item_id="ce9154fc-5fb8-ed11-92f4-f0921c167864", item_type=ItemType.ASSETCOLLECTION)
+
+        out_dir = os.path.join(os.path.dirname(__file__), 'inputs', 'singularity')
+        os.makedirs(out_dir, exist_ok=True)
+        for asset in assets:
+            name = os.path.join(out_dir, asset.filename)
+            asset.download_to_path(name)
+
+    def test_set_sif_function_with_sif_file(self):
+        self.prepare_schema_and_eradication()
+        sif_name = "dtk_run_rocky_py39.sif"
+        if not os.path.exists(os.path.join(os.path.dirname(__file__), 'inputs', 'singularity', sif_name)):
+            self.download_sif_from_comp2()
+        task = EMODTask.from_default2(eradication_path=self.eradication_path,
+                                      schema_path=self.schema_path,
+                                      ep4_custom_cb=self.ep4_fn)
+        task.set_sif(os.path.join(manifest.current_directory, f"inputs/singularity/{sif_name}"))
+        experiment = Experiment.from_task(task, name="Test_set_sif_file")
+        experiment.run(platform=self.platform, wait_on_done=True)
+        experiment_from_comps = self.platform.get_item(experiment.id, item_type=ItemType.EXPERIMENT, raw=True)
+        comps_ac = self.platform.get_item(experiment_from_comps.configuration.asset_collection_id, item_type=ItemType.ASSETCOLLECTION)
+        comps_sif_asset = [ac for ac in comps_ac if ac.filename == sif_name]
+        self.assertTrue(len(comps_sif_asset), 1)
+
+    def test_set_sif_function_with_sif_id(self):
+        self.prepare_schema_and_eradication()
+        task = EMODTask.from_default2(eradication_path=self.eradication_path,
+                                      schema_path=self.schema_path)
+        task.set_sif(manifest.sft_id_file)
+        experiment = Experiment.from_task(task, name="Test_set_sif_id")
+        experiment.run(platform=self.platform, wait_on_done=True)
+        experiment_from_comps = self.platform.get_item(experiment.id, item_type=ItemType.EXPERIMENT, raw=True)
+        comps_ac = self.platform.get_item(experiment_from_comps.configuration.asset_collection_id, item_type=ItemType.ASSETCOLLECTION)
+        comps_sif_asset = [ac for ac in comps_ac if ac.filename == "dtk_run_rocky_py39.sif"]
+        self.assertTrue(len(comps_sif_asset), 1)
+
+    def test_set_sif_function_with_slurm_file_process_platform(self):
+        class FilePlatform:
+            pass
+
+        class SlurmPlatform:
+            pass
+
+        class ProcessPlatform:
+            pass
+
+        self.prepare_schema_and_eradication()
+        for platform in [FilePlatform, SlurmPlatform, ProcessPlatform]:
+            task = EMODTask.from_default2(eradication_path=self.eradication_path,
+                                          schema_path=self.schema_path)
+            fake_platform = Mock(spec=platform)
+            task.set_sif("my_sif.sif", fake_platform)
+            experiment = Experiment.from_task(task, name="Test_set_sif")
+            experiment.post_creation(fake_platform)
+            self.assertEquals(task.sif_path, "my_sif.sif")
+

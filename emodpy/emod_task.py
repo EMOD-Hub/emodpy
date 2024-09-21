@@ -32,7 +32,7 @@ from emodpy.reporters import Reporters
 # from emod_api.schema import get_schema as gs # only needed if we go back to schema regen
 from emod_api.config import default_from_schema_no_validation as dfs
 
-user_logger = getLogger("user")
+user_logger = getLogger('user')
 logger = getLogger(__name__)
 dev_mode = False
 
@@ -48,7 +48,7 @@ def add_ep4_from_path(task, ep4_path="EP4"):  # default added for back-compat
 
     for entry_name in os.listdir(ep4_path):
         full_path = os.path.join(ep4_path, entry_name)
-        if os.path.isfile(full_path) and entry_name.endswith(".py"):
+        if (os.path.isfile(full_path) and entry_name.endswith(".py")):
             py_file_asset = Asset(full_path, relative_path="python")
             task.common_assets.add_asset(py_file_asset)
 
@@ -58,9 +58,7 @@ def add_ep4_from_path(task, ep4_path="EP4"):  # default added for back-compat
 def default_ep4_fn(task, ep4_path=None):
     # If user specifies absolutely nothing, use the built-in ones so that we get default behaviour easy-peasy.
     if ep4_path is None:
-        ep4_path = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "defaults/ep4"
-        )
+        ep4_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "defaults/ep4")
 
     task = add_ep4_from_path(task, ep4_path)
     return task
@@ -71,18 +69,13 @@ class EMODTask(ITask):
     """
     EMODTask allows easy running and configuration of EMOD Experiments and Simulations
     """
-
     # Experiment Level Assets
     #: Eradication path. Can also be set through config file
     eradication_path: str = field(default=None, compare=False, metadata={"md": True})
     #: Common Demographics
-    demographics: DemographicsFiles = field(
-        default_factory=lambda: DemographicsFiles("")
-    )
+    demographics: DemographicsFiles = field(default_factory=lambda: DemographicsFiles(''))
     #: Common Migrations
-    migrations: MigrationFiles = field(
-        default_factory=lambda: MigrationFiles("migrations")
-    )
+    migrations: MigrationFiles = field(default_factory=lambda: MigrationFiles('migrations'))
     #: Common Reports
     reporters: Reporters = field(default_factory=lambda: Reporters())
     #: Common Climate
@@ -95,35 +88,28 @@ class EMODTask(ITask):
     #: Campaign configuration
     campaign: EMODCampaign = field(default_factory=lambda: EMODEmptyCampaign.campaign())
     #: Simulation level demographics such as overlays
-    simulation_demographics: DemographicsFiles = field(
-        default_factory=lambda: DemographicsFiles()
-    )
+    simulation_demographics: DemographicsFiles = field(default_factory=lambda: DemographicsFiles())
     #: Simulation level migrations
-    simulation_migrations: MigrationFiles = field(
-        default_factory=lambda: MigrationFiles()
-    )
+    simulation_migrations: MigrationFiles = field(default_factory=lambda: MigrationFiles())
 
     #: Add --python-script-path to command line
     use_embedded_python: bool = True
     is_linux: bool = False
     implicit_configs: list = field(default_factory=lambda: [])
-    use_singularity: bool = False
     sif_filename: str = None
+    sif_path = None # one is for slurm only
 
     def __post_init__(self):
         from emodpy.utils import download_eradication
-
         super().__post_init__()
         self.executable_name = "Eradication"
         if self.eradication_path is not None:
             self.executable_name = os.path.basename(self.eradication_path)
-            if urlparse(self.eradication_path).scheme in ("http", "https"):
+            if urlparse(self.eradication_path).scheme in ('http', 'https'):
                 self.eradication_path = download_eradication(self.eradication_path)
             self.eradication_path = os.path.abspath(self.eradication_path)
         else:
-            eradication_path = IdmConfigParser().get_option(
-                "emodpy", "eradication_path"
-            )
+            eradication_path = IdmConfigParser().get_option("emodpy", "eradication_path")
             if eradication_path:
                 self.eradication_path = eradication_path
                 self.executable_name = os.path.basename(self.eradication_path)
@@ -150,20 +136,18 @@ class EMODTask(ITask):
         adhoc_events = campaign.get_adhocs()
         if dev_mode:
             campaign.save()
+        # This might be a great place to reset the campaign object so users don't have to.
+        campaign.reset()
 
         if len(adhoc_events) > 0:
             # print("Found adhoc events in campaign. Needs some special processing behind the scenes.")
-            logger.debug(
-                "Found adhoc events in campaign. Needs some special processing behind the scenes."
-            )
+            logger.debug("Found adhoc events in campaign. Needs some special processing behind the scenes.")
             if "Custom_Individual_Events" in self.config.parameters:
-                self.config.parameters.Custom_Individual_Events = [
-                    x for x in adhoc_events.keys()
-                ]
+                self.config.parameters.Custom_Individual_Events = [x for x in adhoc_events.keys()]
             else:
                 reverse_map = {}
                 for user_name, builtin_name in adhoc_events.items():
-                    reverse_map[builtin_name] = user_name
+                    reverse_map[builtin_name] = user_name 
                 self.config.parameters["Event_Map"] = reverse_map
 
     def create_demog_from_callback(self, builder, from_sweep=False, params=None):
@@ -171,7 +155,7 @@ class EMODTask(ITask):
             return
 
         if from_sweep:
-            demog_path = tempfile.NamedTemporaryFile(delete=False).name + ".json"
+            demog_path = tempfile.NamedTemporaryFile(delete=False).name + '.json'
         else:
             demog_path = "demographics.json"
 
@@ -180,10 +164,7 @@ class EMODTask(ITask):
 
         print(f"Generating demographics file {demog_path}.")
         demographics = builders
-        if (
-            type(builders) is tuple
-        ):  # backwards-compatibility, remove this in major version bump
-
+        if type(builders) is tuple:  # backwards-compatibility, remove this in major version bump
             def old_way(builders, demog_path):
                 demographics = builders[0]
                 demographics.implicits.extend(builders[0].implicits)
@@ -191,12 +172,9 @@ class EMODTask(ITask):
                 mig = builders[1]
                 # if mig is a function, invoke it. If it's a Migration object, use it.
                 import emod_api.migration
-
                 # Wanted to have tempfile only but too tedious to fix tests.
                 if from_sweep:
-                    mig_filename = (
-                        tempfile.NamedTemporaryFile(delete=False).name + ".bin"
-                    )
+                    mig_filename = tempfile.NamedTemporaryFile(delete=False).name + ".bin"
                 else:
                     mig_filename = "regional_migration.bin"
                 if isinstance(mig, emod_api.migration.Migration):
@@ -204,23 +182,16 @@ class EMODTask(ITask):
                     mig_path = mig.to_file(pathlib.Path(mig_filename))
                 else:
                     # it's a function
-                    mig_path = mig(demographics_file_path=demog_path).to_file(
-                        pathlib.Path(mig_filename)
-                    )
+                    mig_path = mig(demographics_file_path=demog_path).to_file(pathlib.Path(mig_filename))
 
                 if mig_path is not None:
                     import emod_api.demographics.DemographicsTemplates as DT
-
                     demographics.implicits.append(DT._set_migration_model_fixed_rate)
-                    set_mig_filename = partial(
-                        DT._set_regional_migration_filenames,
-                        file_name=pathlib.PurePath(mig_path).name,
-                    )
+                    set_mig_filename = partial(DT._set_regional_migration_filenames, file_name=pathlib.PurePath(mig_path).name)
                     demographics.implicits.append(set_mig_filename)
 
                 demographics.migration_files.append(mig_path)
                 return demographics
-
             demographics = old_way(builders, demog_path)
         else:
             demog_path = demographics.generate_file(demog_path)
@@ -247,29 +218,26 @@ class EMODTask(ITask):
         """
         Execute the implicit config functions created by the demographics builder.
         """
-        logger.debug(
-            f"Executing {len(self.implicit_configs)} implicit config functions from demog and mig land."
-        )
+        logger.debug(f"Executing {len(self.implicit_configs)} implicit config functions from demog and mig land.")
         for fn in self.implicit_configs:
             if fn:
                 self.config = fn(self.config)
 
     @classmethod
     def from_default2(
-        cls,
-        eradication_path,  # : str = None,
-        schema_path,  # : str
-        param_custom_cb=None,
-        config_path="config.json",
-        campaign_builder=None,
-        ep4_custom_cb=default_ep4_fn,
-        demog_builder=None,
-        plugin_report=None,
-        serial_pop_files=None,
-        write_default_config=None,
-        ep4_path=None,
-        **kwargs,
-    ) -> "EMODTask":
+            cls,
+            eradication_path,   # : str = None,
+            schema_path,    # : str
+            param_custom_cb=None,
+            config_path="config.json",
+            campaign_builder=None,
+            ep4_custom_cb=default_ep4_fn,
+            demog_builder=None,
+            plugin_report=None,
+            serial_pop_files=None,
+            write_default_config=None,
+            ep4_path=None,
+            **kwargs) -> "EMODTask":
         """
         Create a task from emod-api Defaults
 
@@ -298,23 +266,18 @@ class EMODTask(ITask):
 
         # we do not regenerate the schema from a binary because there are too many issues with matching platforms,
         # so we use a schema file.
-        default_config = dfs.get_default_config_from_schema(
-            path_to_schema=schema_path,
-            as_rod=True,
-            output_filename=write_default_config,
-        )
-        task.available_config_parameters = list(default_config["parameters"].keys())
+        default_config = dfs.get_default_config_from_schema(path_to_schema=schema_path, as_rod=True,
+                                                            output_filename=write_default_config)
+        task.available_config_parameters = list(default_config['parameters'].keys())
 
         # Invoke new custom param fn callback here.
-        task.config = dfs.get_config_from_default_and_params(
-            config=default_config, set_fn=param_custom_cb
-        )
+        task.config = dfs.get_config_from_default_and_params(config=default_config, set_fn=param_custom_cb)
 
         if config_path is None:
             config_path = "config.json"
         task.config_file_name = pathlib.Path(config_path).name
 
-        # Let's do the demographics building here...
+        # Let's do the demographics building here...  
         if demog_builder:
             task.create_demog_from_callback(demog_builder)
 
@@ -344,9 +307,7 @@ class EMODTask(ITask):
         if serial_pop_files:
             for serial_pop_file in serial_pop_files:
                 task.common_assets.add_asset(serial_pop_file)
-                task.config.parameters.Serialized_Population_Filenames = [
-                    pathlib.Path(serial_pop_file).name
-                ]
+                task.config.parameters.Serialized_Population_Filenames = [pathlib.Path(serial_pop_file).name]
             task.config.parameters.Serialized_Population_Path = "Assets"
 
         task.handle_implicit_configs()
@@ -354,17 +315,15 @@ class EMODTask(ITask):
         return task
 
     @classmethod
-    def from_files(
-        cls,
-        eradication_path=None,
-        config_path=None,
-        campaign_path=None,
-        demographics_paths=None,
-        ep4_path=None,
-        custom_reports_path=None,
-        asset_path=None,
-        **kwargs,
-    ):
+    def from_files(cls,
+                   eradication_path=None,
+                   config_path=None,
+                   campaign_path=None,
+                   demographics_paths=None,
+                   ep4_path=None,
+                   custom_reports_path=None,
+                   asset_path=None,
+                   **kwargs):
 
         """
         Load custom |EMOD_s| files when creating :class:`EMODTask`.
@@ -383,13 +342,8 @@ class EMODTask(ITask):
         task = cls(eradication_path=eradication_path, **kwargs)
 
         # Load the files
-        task.load_files(
-            config_path=config_path,
-            campaign_path=campaign_path,
-            demographics_paths=demographics_paths,
-            custom_reports_path=custom_reports_path,
-            asset_path=asset_path,
-        )
+        task.load_files(config_path=config_path, campaign_path=campaign_path, demographics_paths=demographics_paths,
+                        custom_reports_path=custom_reports_path, asset_path=asset_path)
 
         if ep4_path is not None:
             # Load dtk_*_process.py to COMPS Assets/python folder
@@ -399,14 +353,8 @@ class EMODTask(ITask):
 
         return task
 
-    def load_files(
-        self,
-        config_path=None,
-        campaign_path=None,
-        custom_reports_path=None,
-        demographics_paths=None,
-        asset_path=None,
-    ) -> NoReturn:
+    def load_files(self, config_path=None, campaign_path=None, custom_reports_path=None, demographics_paths=None,
+                   asset_path=None) -> NoReturn:
         """
         Load files in the experiment/base_simulation.
 
@@ -428,24 +376,15 @@ class EMODTask(ITask):
         else:
             self.campaign = None
 
-        if demographics_paths:
+        if demographics_paths: 
             logger.debug(f"demographics_paths = {demographics_paths}.")
-            for demog_path in (
-                [demographics_paths]
-                if isinstance(demographics_paths, str)
-                else demographics_paths
-            ):
+            for demog_path in [demographics_paths] if isinstance(demographics_paths, str) else demographics_paths:
                 self.demographics.add_demographics_from_file(demog_path)
             if isinstance(demographics_paths, str):
-                self.config["Demographics_Filenames"] = [
-                    pathlib.PurePath(demographics_paths).name
-                ]
+                self.config['Demographics_Filenames'] = [pathlib.PurePath(demographics_paths).name]
             else:
-                self.config["Demographics_Filenames"] = [
-                    pathlib.PurePath(demographics_path).name
-                    for demographics_path in demographics_paths
-                ]
-            self.config["Enable_Demographics_Builtin"] = 0
+                self.config['Demographics_Filenames'] = [pathlib.PurePath(demographics_path).name for demographics_path in demographics_paths]
+            self.config['Enable_Demographics_Builtin'] = 0
 
         if custom_reports_path:
             self.reporters.read_custom_reports_file(custom_reports_path)
@@ -460,9 +399,7 @@ class EMODTask(ITask):
             # Look for migrations
             self.migrations.read_config_file(config_path, asset_path)
 
-    def pre_creation(
-        self, parent: Union[Simulation, IWorkflowItem], platform: "IPlatform"
-    ):
+    def pre_creation(self, parent: Union[Simulation, IWorkflowItem], platform: 'IPlatform'):
         """
         Call before a task is executed. This ensures our configuration is properly done
 
@@ -490,10 +427,10 @@ class EMODTask(ITask):
             # this may need to be done both ways.
             if type(self.config) is dict:
                 self.config["Campaign_Filename"] = "campaign.json"
-                self.config["Enable_Interventions"] = 1  # implicit?
+                self.config["Enable_Interventions"] = 1     # implicit?
             else:
                 self.config.parameters.Campaign_Filename = "campaign.json"
-                self.config.parameters.Enable_Interventions = 1  # implicit
+                self.config.parameters.Enable_Interventions = 1     # implicit
 
         # Gather the custom coordinator, individual, and node events
         self.set_command_line()
@@ -521,7 +458,7 @@ class EMODTask(ITask):
         input_path = "./Assets\\;."
 
         # Create the command line according to self. location of the model
-        if self.use_singularity:
+        if self.sif_filename:
             self.command = CommandLine(
                 "singularity",
                 "exec",
@@ -533,40 +470,39 @@ class EMODTask(ITask):
                 "./Assets",
             )
         else:
-            self.command = CommandLine(
-                f"Assets/{self.executable_name}",
-                "--config",
-                f"{self.config_file_name}",
-                "--dll-path",
-                "./Assets",
-            )
-        if (
-            self.use_embedded_python
-        ):  # This should be the always-use case but we're not quite there yet.
+            self.command = CommandLine(f"Assets/{self.executable_name}", "--config", f"{self.config_file_name}", "--dll-path", "./Assets")
+        if self.use_embedded_python:    # This should be the always-use case but we're not quite there yet.
             self.command._options.update({"--python-script-path": "./Assets/python"})
 
         # We do this here because CommandLine tries to be smart and quote input_path, but it isn't quite right...
         self.command.add_raw_argument("--input-path")
         self.command.add_raw_argument(input_path)
 
-    def set_sif(self, path_to_sif) -> NoReturn:
+    def set_sif(self, path_to_sif, platform=None) -> NoReturn:
         """
         Set the Singularity Image File.
 
         Returns:
 
         """
-        # check if file is a SIF or an ID.
-        if path_to_sif.endswith(".id"):
-            ac = AssetCollection.from_id_file(path_to_sif)
-            self.common_assets.add_assets(ac)
-            self.sif_filename = [
-                acf.filename for acf in ac.assets if acf.filename.endswith(".sif")
-            ][0]
+        if platform:
+            p = platform.__class__.__name__.lower()
+            if p.startswith('slurm') or p.startswith('file') or p.startswith('process'):
+                self.sif_path = path_to_sif
+            else:
+                raise ValueError( f"platform of type {p} not valid for using SIF." )
         else:
-            self.common_assets.add_asset(path_to_sif)
-            self.sif_filename = pathlib.Path(path_to_sif).name
-        self.use_singularity = True
+            # check if file is a SIF or an ID.
+            if path_to_sif.endswith(".id"):
+                ac = AssetCollection.from_id_file(path_to_sif)
+                sif_asset = ac.assets[0]
+                self.sif_filename = [
+                    acf.filename for acf in ac.assets if acf.filename.endswith(".sif")
+                ][0]
+            else:
+                sif_asset = path_to_sif
+                self.sif_filename = pathlib.Path(path_to_sif).name
+            self.common_assets.add_asset(sif_asset)
 
     def gather_common_assets(self) -> AssetCollection:
         """
@@ -577,13 +513,10 @@ class EMODTask(ITask):
         # check whether there are any .sif or .img files in the common assets diretories...
         # Add Eradication.exe to assets
         logger.debug(f"Adding {self.eradication_path}")
-        if self.eradication_path:
+        if (self.eradication_path):
             self.common_assets.add_asset(
-                Asset(
-                    absolute_path=self.eradication_path, filename=self.executable_name
-                ),
-                fail_on_duplicate=False,
-            )
+                Asset(absolute_path=self.eradication_path, filename=self.executable_name),
+                fail_on_duplicate=False)
 
         # Add demographics to assets
         self.common_assets.extend(self.demographics.gather_assets())
@@ -599,18 +532,12 @@ class EMODTask(ITask):
 
     def _enforce_non_schema_coherence(self):
         """
-        This function enforces business logic that can't be encoded in the schema.
+        This function enforces business logic that can't be encoded in the schema. 
         Rules:
         1) if >starttime + Sim_Duration < min_sim_endtime => ERROR
         """
-        if (
-            self.config.parameters.Start_Time
-            + self.config.parameters.Simulation_Duration
-            < self.config.parameters.Minimum_End_Time
-        ):
-            raise ValueError(
-                f"{self.config.parameters.Start_Time} + {self.config.parameters.Simulation_Duration} (Start_Time + Simulation_Duration) < {self.config.parameters.Minimum_End_Time} (Minimum_End_Time)"
-            )
+        if self.config.parameters.Start_Time + self.config.parameters.Simulation_Duration < self.config.parameters.Minimum_End_Time:
+            raise ValueError(f"{self.config.parameters.Start_Time} + {self.config.parameters.Simulation_Duration} (Start_Time + Simulation_Duration) < {self.config.parameters.Minimum_End_Time} (Minimum_End_Time)")
 
     def gather_transient_assets(self) -> AssetCollection:
         """
@@ -627,7 +554,7 @@ class EMODTask(ITask):
         # Add config and campaign to assets as needed
 
         if self.config:
-            if type(self.config) is dict:  # old/basic style
+            if type(self.config) is dict:   # old/basic style
                 self.config = {"parameters": self.config}
             else:
                 self._enforce_non_schema_coherence()
@@ -635,10 +562,7 @@ class EMODTask(ITask):
             if dev_mode:
                 with open(self.config_file_name, "w") as fp:
                     json.dump(self.config, fp, sort_keys=True, indent=4)
-            asset = Asset(
-                filename=self.config_file_name,
-                content=json.dumps(self.config, sort_keys=True),
-            )
+            asset = Asset(filename=self.config_file_name, content=json.dumps(self.config, sort_keys=True))
             self.transient_assets.add_asset(asset=asset, fail_on_duplicate=False)
 
         if self.campaign:
@@ -647,9 +571,8 @@ class EMODTask(ITask):
 
             if dev_mode:
                 import emod_api.peek_camp as base_peek_camp
-
                 original = sys.stdout
-                sys.stdout = open("campaign.ccdl", "w")
+                sys.stdout = open('campaign.ccdl', 'w')
                 base_peek_camp.decode("campaign.json", self.config_file_name)
                 sys.stdout = original
                 data = open("campaign.ccdl").readlines()
@@ -670,7 +593,7 @@ class EMODTask(ITask):
 
         return self.transient_assets
 
-    def copy_simulation(self, base_simulation: "Simulation") -> "Simulation":
+    def copy_simulation(self, base_simulation: 'Simulation') -> 'Simulation':
         """
         Called when making copies of a simulation.
 
@@ -717,18 +640,21 @@ class EMODTask(ITask):
             Tags to set
         """
         logger.warning(
-            "'set_parameter' will be deprecated in the future in favor of emod_api.config."
+            "'set_parameter' will be deprecated in the future in favor of emod_api.config. You are not getting full schema enforcement when using this function."
         )
         if "parameters" in self.config:
-            self.config.parameters[name] = value
+            config = self.config.parameters
         else:
-            self.config[name] = value
+            config = self.config
+        if name in config:
+            config[name] = value
+        else:
+            raise ValueError( f"parameter '{name}' not in schema." )
+
         return {name: value}
 
     @staticmethod
-    def set_parameter_sweep_callback(
-        simulation: Simulation, param: str, value: Any
-    ) -> Dict[str, Any]:
+    def set_parameter_sweep_callback(simulation: Simulation, param: str, value: Any) -> Dict[str, Any]:
         """
         Convenience callback for sweeps
 
@@ -740,10 +666,8 @@ class EMODTask(ITask):
         Returns:
             Tags to set on simulation
         """
-        if not hasattr(simulation.task, "set_parameter"):
-            raise ValueError(
-                "update_task_with_set_parameter can only be used on tasks with a set_parameter"
-            )
+        if not hasattr(simulation.task, 'set_parameter'):
+            raise ValueError("update_task_with_set_parameter can only be used on tasks with a set_parameter")
         return simulation.task.set_parameter(param, value)
 
     @classmethod
@@ -788,7 +712,7 @@ class EMODTask(ITask):
         )
         self.config.update(params)
 
-    def reload_from_simulation(self, simulation: "Simulation"):
+    def reload_from_simulation(self, simulation: 'Simulation'):
         pass
 
     @classmethod
@@ -823,18 +747,14 @@ class EMODTask(ITask):
 
         all_results = []
         exp = Experiment.get(exp_id)
-        sims = exp.get_simulations(QueryCriteria().select_children(["tags"]))
+        sims = exp.get_simulations(QueryCriteria().select_children(['tags']))
         for sim in sims:
             poi = {"sim_id": sim.id}
             for tag in sim.tags:
                 if tag in ["task_type"]:
                     continue
-                try:
-                    value = sim.tags[tag]
-                    poi[tag] = float(value)
-                except Exception:
-                    # silently handle exception; assume this is a non-numeric tag, which we don't process.
-                    continue
+                value = sim.tags[tag]
+                poi[tag] = float(value)
             if optional_data_files:
                 for odf in optional_data_files:
                     with open(os.path.join(str(exp_id), str(sim.id), odf)) as fp:
@@ -842,11 +762,9 @@ class EMODTask(ITask):
                         poi[odf] = output
             all_results.append(poi)
         if len(all_results) == 0:
-            raise ValueError(
-                f"Failed to find any tag metadata for this experiment ({exp_id})."
-            )
+            raise ValueError( f"Failed to find any tag metadata for this experiment ({exp_id})." )
         try:
-            os.makedirs(str(exp_id), exist_ok=True)
+            os.makedirs( str( exp_id ), exist_ok=True )
             con = sqlite3.connect(db)
         except Exception as ex:
             print(f"Exception {ex} while trying to open db file {db}.")
@@ -855,7 +773,7 @@ class EMODTask(ITask):
         cur = con.cursor()
         tagset = list()
         for tag in all_results[0].keys():
-            tagset.append(tag.replace(" ", "_").replace("-", "_"))
+            tagset.append(tag.replace(" ", "_"))
         tagset.remove("sim_id")
         tag_cols = " DECIMAL, ".join(tagset) + " DECIMAL"
         create_sql = f"CREATE TABLE results (SIM_ID TEXT,{tag_cols})"
@@ -864,10 +782,10 @@ class EMODTask(ITask):
         tag_cols = ",".join(tagset)
         for result in all_results:
             insert_str = f"INSERT INTO results (SIM_ID, {tag_cols} ) VALUES"
-            sim = result["sim_id"]
+            sim = result['sim_id']
             values = []
             for tag in result:
-                if tag == "sim_id":
+                if tag == 'sim_id':
                     continue
                 values.append(result[tag])
             tag_vals = ",".join(map(str, values))
@@ -904,6 +822,7 @@ class EMODTask(ITask):
 
 
 class EMODTaskSpecification(TaskSpecification):
+
     def get(self, configuration: dict) -> EMODTask:
         """
         Return an EMODTask object using provided configuration
@@ -932,16 +851,9 @@ class EMODTaskSpecification(TaskSpecification):
             List of urls to examples
         """
         # from emodpy import __version__
-        examples = ["examples"]  # noqa
+        examples = ['examples']  # noqa
         # TODO Rework this to grab branch of emodpy compatible with this version
-        return [
-            self.get_version_url(
-                "dev-1.4.0",
-                x,
-                repo_base_url="https://github.com/InstituteforDiseaseModeling/emodpy/tree/",
-            )
-            for x in examples
-        ]
+        return [self.get_version_url('dev-1.4.0', x, repo_base_url='https://github.com/InstituteforDiseaseModeling/emodpy/tree/') for x in examples]
 
     def get_type(self) -> Type[EMODTask]:
         """
@@ -960,5 +872,4 @@ class EMODTaskSpecification(TaskSpecification):
             Version
         """
         from emodpy import __version__
-
         return __version__

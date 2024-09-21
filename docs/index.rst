@@ -5,7 +5,7 @@
 |EMODPY_s| is a collection of Python scripts and utilities created to
 streamline user interactions with |EMOD_s| and |IT_s|. Additional
 functionality  for interacting with |EMOD_s| is provided in the
-:doc:`emod_api:emod_api` and  :doc:`idmtools:idmtools_index` packages.
+:doc:`emod_api:emod_api` and  :doc:`idmtools:api/idmtools_index` packages.
 
 See :doc:`idmtools:index` for a diagram showing how |IT_s| and each of the
 related packages are used in an end-to-end workflow using |EMOD_s| as the

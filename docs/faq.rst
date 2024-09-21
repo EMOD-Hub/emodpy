@@ -123,3 +123,16 @@ What if I need a new or different SIF with a different custom environment?
 ==========================================================================
 
 Anyone is free to create SIFs for themselves and use those. COMPS can build SIFs for you provided a 'recipe' -- .def file. There are people at IDM who can do it on their desktops. Bear in mind Singularity really only installs on Linux.
+
+How do I specify the number of cores to use on the cluster?
+===========================================================
+
+num_cores is an undocumented kwargs argument to Platform. What that means is if you already have a script with a line like::
+
+    platform = Platform( "SLURM" )``
+
+you would change it to something like::
+
+    platform = Platform( "SLURM", num_cores=4 )
+
+to run with 4 cores.

@@ -29,21 +29,6 @@ class EmodpyImportTest(ITestWithPersistence):
         ]
         self.verify_expected_items_present(namespace=emodpy)
 
-    def test_module_bamboo_api_utils(self):
-        import emodpy.bamboo_api_utils as b_a_u
-        self.expected_items = [
-            "BambooConnection",
-            "BuildInfo",
-            "BuildArtifacts",
-            "BuildPlans"
-        ]
-        self.verify_expected_items_present(namespace=b_a_u)
-
-        test_bamboo_connection = b_a_u.BambooConnection()
-        self.assertIn("bamboo", test_bamboo_connection.server.lower())
-        self.assertIsNotNone(test_bamboo_connection.session_cookie)
-        pass
-
     def test_module_emod_campaign(self):
         import emodpy.emod_campaign as e_c
         self.expected_items = [

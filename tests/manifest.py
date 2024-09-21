@@ -76,6 +76,8 @@ ep4_path = os.path.join(current_directory, "inputs", 'ep4')
 INPUT_PATH = os.path.join(current_directory, "inputs", "process")   # don't like this name
 
 requirements = os.path.join(current_directory, './requirements.txt')
+wb = os.path.join(current_directory, "inputs", "birth_rate", "wb_data.csv")
+ten_nodes = os.path.join(current_directory, "inputs", "birth_rate", "ten_nodes.csv")
 
 
 def delete_existing_file(file):

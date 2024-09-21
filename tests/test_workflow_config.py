@@ -24,6 +24,7 @@ from emodpy.utils import download_latest_bamboo, download_latest_schema, Eradica
 # file_dir = os.path.dirname(__file__)
 # sys.path.append(file_dir)
 from . import manifest
+sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
 
 num_seeds = 2
 
@@ -46,12 +47,13 @@ class TestWorkflowConfig(ITestWithPersistence, ABC):
     def define_test_environment(self):
         self.plan = EradicationBambooBuilds.GENERIC_WIN
         self.eradication_path = manifest.eradication_path_win
-        self.schema_path = os.path.join(manifest.config_folder, 'generic_schema.json')
-        self.config_file = os.path.join(manifest.config_folder, "generic_config.json")
+        self.schema_path = os.path.join(manifest.config_folder, f"generic_schema_{self._testMethodName}.json")
+        self.config_file = os.path.join(manifest.config_folder, f"generic_config_{self._testMethodName}.json")
         self.default_config_file = "default_config.json"
         self.comps_platform = 'COMPS2'
 
     def setUp(self) -> None:
+        self.is_singularity = False
         self.define_test_environment()
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
         print(self.case_name)
@@ -79,15 +81,15 @@ class TestWorkflowConfig(ITestWithPersistence, ABC):
     def generate_config_from_builder(self, model):
         manifest.delete_existing_file(self.config_file)
         fs.SchemaConfigBuilder(schema_name=self.schema_path, config_out=self.config_file, model=model)
-        self.assertTrue(os.path.isfile(self.config_file), msg=f"f{self.config_file} doesn't exist.")
+        self.assertTrue(os.path.isfile(self.config_file), msg=f"{self.config_file} doesn't exist.")
 
     def generate_default_config(self, default_config):
         manifest.delete_existing_file(default_config)
-        print("write_default_from_schema")
-        dfs.write_default_from_schema(self.schema_path)
+        print("get_default_from_schema")
+        dfs.get_default_config_from_schema(self.schema_path, output_filename=self.default_config_file)
         print("move write_default_from_schema")
         shutil.move(self.default_config_file, default_config)
-        self.assertTrue(os.path.isfile(default_config), msg=f"f{default_config} doesn't exist.")
+        self.assertTrue(os.path.isfile(default_config), msg=f"{default_config} doesn't exist.")
 
     def run_exp(self, task):
         # Create simulation sweep with builder
@@ -113,9 +115,8 @@ class TestWorkflowConfig(ITestWithPersistence, ABC):
         """
         self.generate_config_from_builder(model=model)
         task = EMODTask.from_files(config_path=self.config_file, eradication_path=self.eradication_path, ep4_path=None)
-        # task.set_parameter("Enable_Demographics_Builtin", 1)
-        # task.set_parameter("Default_Geography_Initial_Node_Population", 100)
-        # task.set_parameter("Default_Geography_Torus_Size", 10)
+        if self.is_singularity:
+            task.set_sif(sif_path)
         self.run_exp(task)
 
     def config_from_default_and_set_fn_test(self):  # This is our preferred workflow which support the depends-on logic
@@ -135,6 +136,8 @@ class TestWorkflowConfig(ITestWithPersistence, ABC):
         dfs.write_config_from_default_and_params(self.config_file, set_param_fn, self.config_file)
         task = EMODTask.from_files(config_path=self.config_file, eradication_path=self.eradication_path,
                                    ep4_path=None)
+        if self.is_singularity:
+            task.set_sif(sif_path)
         self.run_exp(task)
 
     def config_from_po_test(self, config_filename="config_from_po.json"):
@@ -161,9 +164,13 @@ class TestWorkflowConfig(ITestWithPersistence, ABC):
 
         task = EMODTask.from_files(config_path=self.config_file, eradication_path=self.eradication_path,
                                    ep4_path=None)
+        if self.is_singularity:
+            task.set_sif(sif_path)
         self.run_exp(task)
 
-    def config_from_task_update_test(self, config_filename="generic_config.json"):
+    def config_from_task_update_test(self, config_filename=None):
+        if config_filename is None:
+            config_filename = self.config_file
         # this workflow may be deprecated later
         # and we will use the workflow 'config_from_default_and_set_fn_test' as our preferred workflow
         """
@@ -173,14 +180,14 @@ class TestWorkflowConfig(ITestWithPersistence, ABC):
         def standard_cb_updates(my_task: EMODTask):
             my_task.update_parameters({
                 'Simulation_Duration': 10
-                # 'Enable_Demographics_Builtin': 1,
-                # "Default_Geography_Initial_Node_Population": 100,
-                # "Default_Geography_Torus_Size": 10
             })
 
         self.config_file = os.path.join(manifest.config_folder, config_filename)
+        self.generate_config_from_builder(model='GENERIC_SIM')
         task = EMODTask.from_files(config_path=self.config_file, eradication_path=self.eradication_path,
                                    ep4_path=None)
+        if self.is_singularity:
+            task.set_sif(sif_path)
         standard_cb_updates(task)
         self.run_exp(task)
 
@@ -219,6 +226,8 @@ class TestWorkflowConfig(ITestWithPersistence, ABC):
         task = EMODTask.from_default2(config_path=self.config_file, eradication_path=self.eradication_path,
                                       campaign_builder=build_camp, schema_path=self.schema_path,
                                       param_custom_cb=set_param_fn, ep4_custom_cb=None)
+        if self.is_singularity:
+            task.set_sif(sif_path)
         self.run_exp(task)
 
 
@@ -230,9 +239,9 @@ class TestWorkflowConfigWin(TestWorkflowConfig):
     def define_test_environment(self):
         self.plan = EradicationBambooBuilds.GENERIC_WIN
         self.eradication_path = manifest.eradication_path_win
-        self.schema_path = os.path.join(manifest.config_folder, 'generic_schema.json')
-        self.config_file = os.path.join(manifest.config_folder, "generic_config.json")
-        self.default_config_file = "default_config.json"
+        self.schema_path = os.path.join(manifest.config_folder, f"generic_schema_win_{self._testMethodName}.json")
+        self.config_file = os.path.join(manifest.config_folder, f"generic_config_win_{self._testMethodName}.json")
+        self.default_config_file = f"default_config_{self._testMethodName}.json"
         self.comps_platform = 'COMPS2'
 
     def generate_schema(self):
@@ -247,6 +256,7 @@ class TestWorkflowConfigWin(TestWorkflowConfig):
     def test_2_config_from_default_and_set_fn_win(self):
         super().config_from_default_and_set_fn_test()
 
+    @pytest.skip(reason="TEST: broken test when ran using pytest-xdist #604", allow_module_level=True)
     def test_3_config_from_po_win(self):
         super().config_from_po_test()
 
@@ -270,8 +280,8 @@ class TestWorkflowConfigLinux(TestWorkflowConfig):
     def define_test_environment(self):
         self.plan = EradicationBambooBuilds.GENERIC_LINUX
         self.eradication_path = manifest.eradication_path_linux
-        self.schema_path = os.path.join(manifest.config_folder, 'generic_schema_l.json')
-        self.config_file = os.path.join(manifest.config_folder, "generic_config_l.json")
+        self.schema_path = os.path.join(manifest.config_folder, f"generic_schema_lnx_{self._testMethodName}.json")
+        self.config_file = os.path.join(manifest.config_folder, f"generic_config_lnx_{self._testMethodName}.json")
         self.default_config_file = "default_config.json"
         self.comps_platform = 'SLURM'
 
@@ -282,23 +292,23 @@ class TestWorkflowConfigLinux(TestWorkflowConfig):
             download_latest_schema(plan=self.plan, scheduled_builds_only=False, out_path=self.schema_path)
 
     def test_1_config_from_builder_linux(self):
+        self.is_singularity = True
         super().config_from_builder_test()
 
     def test_2_config_from_default_and_set_fn_linux(self):
+        self.is_singularity = True
         super().config_from_default_and_set_fn_test()
 
     def test_3_config_from_po_linux(self):
+        self.is_singularity = True
         super().config_from_po_test(config_filename="config_from_po_l.json")
 
     def test_4_config_from_task_update_linux(self):
+        self.is_singularity = True
         super().config_from_task_update_test(config_filename="generic_config_l.json")
 
     def test_5_config_from_task_default_linux(self):
-        # if platform == "win32":
-        #     print('OS is Windows, skip test.')
-        #     pass
-        # else:
-        #     super().config_from_defaults()
+        self.is_singularity = True
         super().config_from_defaults()
 
 
@@ -311,8 +321,8 @@ class TestWorkflowConfigWinALL(TestWorkflowConfig):
     def define_test_environment(self):
         self.plan = EradicationBambooBuilds.GENERIC_WIN_ALL
         self.eradication_path = manifest.eradication_path_win_all
-        self.schema_path = os.path.join(manifest.config_folder, 'schema_all.json')
-        self.config_file = os.path.join(manifest.config_folder, "config_all.json")
+        self.schema_path = os.path.join(manifest.config_folder, f"generic_schema_win_all_{self._testMethodName}.json")
+        self.config_file = os.path.join(manifest.config_folder, f"generic_config_win_all_{self._testMethodName}.json")
         self.default_config_file = "default_config.json"
         self.comps_platform = 'COMPS2'
 

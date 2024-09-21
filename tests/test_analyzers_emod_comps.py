@@ -27,6 +27,7 @@ INPUT_PATH = os.path.join(current_directory, "..", "examples", "serialization", 
 
 @pytest.mark.comps
 @pytest.mark.analysis
+@pytest.skip(reason="Need these tests to use the right constructor #593", allow_module_level=True)
 class TestAnalyzeManagerEmodComps(ITestWithPersistence):
 
     def generate_experiment(self) -> Experiment:

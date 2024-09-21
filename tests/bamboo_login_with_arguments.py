@@ -1,5 +1,5 @@
 import argparse
-
+import getpass
 import emodpy.bamboo_api_utils as bamboo_api
 
 """
@@ -16,10 +16,16 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--password', help='enter bamboo password')
 
     args = parser.parse_args()
+    if args.password is None:
+        p = getpass.getpass()
+    else:
+        p = args.password
+
+    args = parser.parse_args()
     print("Login to bamboo and cache the credentials.")
 
-    succeed = bamboo_api.bamboo_connection().login(username=args.username, password=args.password)
+    succeed = bamboo_api.bamboo_connection().login(username=args.username, password=p)
     print(f'login status: {succeed}')
 
     if succeed:
-        bamboo_api.save_credentials(username=args.username, password=args.password)
+        bamboo_api.save_credentials(username=args.username, password=p)

@@ -4,8 +4,24 @@
 
 *STILL IN DEVELOPEMENT*
 
+## Documentation
+
 Documentation available at https://docs.idmod.org/projects/emodpy/en/latest/.
 
+
+To build the documentation locally, do the following:
+
+1. Create and activate a venv.
+2. Navigate to the root directory of the repo and enter the following
+
+    ```
+    pip install -r requirements.txt
+    cd docs
+    pip install -r requirements.txt
+    cd ..
+    pip install -e .
+    ```
+    
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**

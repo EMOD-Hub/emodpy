@@ -28,6 +28,7 @@ from emodpy.utils import download_latest_bamboo, download_latest_schema, Eradica
 # sys.path.append(file_dir)
 from . import manifest
 
+sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
 default_config_file = "campaign_workflow_default_config.json"
 
 
@@ -138,6 +139,7 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
 
         task = EMODTask.from_files(config_path=self.config_file, eradication_path=self.eradication_path,
                                    campaign_path=self.camp_file)
+        task.set_sif(sif_path)
         self.assertTrue(isinstance(task.campaign, EMODCampaign))
         self.assertEqual(len(task.campaign.events), 1)
         self.assertEqual(task.campaign.events[0]["Start_Day"], timestep)
@@ -210,6 +212,7 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
                                       campaign_builder=partial(self.build_camp, timestep, coverage),
                                       schema_path=self.schema_path,
                                       param_custom_cb=set_param_fn, ep4_custom_cb=None, demog_builder=None)
+        task.set_sif(sif_path)
 
         builder = SimulationBuilder()
         coverages = [0.1, 0.5]
@@ -296,6 +299,7 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
                                                                timestep_sv),
                                       schema_path=self.schema_path,
                                       param_custom_cb=set_param_fn, ep4_custom_cb=None, demog_builder=None)
+        task.set_sif(sif_path)
 
         self.assertTrue(isinstance(task.campaign, EMODCampaign))
         self.assertEqual(len(task.campaign.events), 2)
@@ -373,6 +377,7 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
                                       campaign_builder=partial(build_camp, timestep, new_infectivity, profile),
                                       schema_path=self.schema_path,
                                       param_custom_cb=set_param_fn, ep4_custom_cb=None, demog_builder=None)
+        task.set_sif(sif_path)
 
         self.assertTrue(isinstance(task.campaign, EMODCampaign))
         self.assertEqual(len(task.campaign.events), 2)
@@ -444,6 +449,7 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
                                       campaign_builder=partial(build_camp, timestep, peak_dur=peak_dur),
                                       schema_path=self.schema_path,
                                       param_custom_cb=set_param_fn, ep4_custom_cb=None, demog_builder=None)
+        task.set_sif(sif_path)
 
         self.assertTrue(isinstance(task.campaign, EMODCampaign))
         self.assertEqual(len(task.campaign.events), 2)
@@ -523,6 +529,7 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
                                       campaign_builder=partial(build_camp, timestep),
                                       schema_path=self.schema_path,
                                       param_custom_cb=set_param_fn, ep4_custom_cb=None, demog_builder=None)
+        task.set_sif(sif_path)
 
         self.assertTrue(isinstance(task.campaign, EMODCampaign))
         self.assertEqual(len(task.campaign.events), len(new_infectivities) + 1)
@@ -633,7 +640,7 @@ class TestWorkflowCampaignLinux(TestWorkflowCampaign):
         cls.config_file = os.path.join(manifest.config_folder, "generic_config_for_campaign_workflow_l.json")
         cls.default_config_file = os.path.join(manifest.config_folder, default_config_file)
         cls.camp_file = os.path.join(manifest.campaign_folder, "generic_campaign_for_campaign_workflow_l.json")
-        cls.comps_platform = "SLURM"
+        cls.comps_platform = "SLURMStage"
 
     def test_1_outbreak_individual_from_file_linux(self):
         super().outbreak_individual_from_file_test()

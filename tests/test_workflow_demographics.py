@@ -26,6 +26,7 @@ import json
 # file_dir = os.path.dirname(__file__)
 # sys.path.append(file_dir)
 from . import manifest
+sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
 
 
 default_config_file = "demographics_workflow_default_config.json"
@@ -67,6 +68,7 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
         # shutil.copy(default_config_file, cls.default_config_file)
 
     def setUp(self) -> None:
+        self.is_singularity = False
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
         print(self.case_name)
         self.get_exe_from_bamboo()
@@ -151,6 +153,8 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
                                       config_path=self.config_file,
                                       param_custom_cb=None,
                                       ep4_custom_cb=None, demog_builder=build_demo)
+        if self.is_singularity:
+            task.set_sif(sif_path)
 
         self.assertEqual(['demographics.json'], task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_default2"
         self.assertEqual(0, task.config['parameters']['Enable_Demographics_Builtin'])
@@ -185,6 +189,8 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
                                           schema_path=manifest.schema_path_linux,
                                           config_path=self.config_file,
                                           param_custom_cb=None, demog_builder=None, ep4_custom_cb=None)
+            if self.is_singularity:
+                task.set_sif(sif_path)
             builder = SimulationBuilder()
             prevalences = [0.1, 0.3, 0.5, 0.7, 1]
             builder.add_sweep_definition(update_demog_initial_prevalence, prevalences)
@@ -224,7 +230,9 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
         task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                       schema_path=manifest.schema_path_linux,
                                       config_path=self.config_file,
-                                      param_custom_cb=None, demog_builder=build_demo, ep4_custom_cb=None)  # remove schema path later
+                                      param_custom_cb=None, demog_builder=build_demo, ep4_custom_cb=None)
+        if self.is_singularity:
+            task.set_sif(sif_path)
 
         self.assertEqual(['demographics.json'], task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_default2"
         self.assertEqual(0, task.config['parameters']['Enable_Demographics_Builtin'])
@@ -253,6 +261,8 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
                                                  config_out_path=self.config_file)
         task = EMODTask.from_files(config_path=self.config_file, eradication_path=self.eradication_path,
                                    demographics_paths=self.demographics_file, ep4_path=None)
+        if self.is_singularity:
+            task.set_sif(sif_path)
         self.assertEqual([os.path.basename(self.demographics_file)], task.config['Demographics_Filenames'])
         self.assertEqual(0, task.config['Enable_Demographics_Builtin'])
         self.assertEqual(1, task.config['Enable_Heterogeneous_Intranode_Transmission'])
@@ -284,6 +294,8 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
                                                  config_out_path=self.config_file)
         task = EMODTask.from_files(config_path=self.config_file, eradication_path=self.eradication_path,
                                    demographics_paths=self.demographics_file, ep4_path=None)
+        if self.is_singularity:
+            task.set_sif(sif_path)
         self.assertEqual([os.path.basename(self.demographics_file)], task.config['Demographics_Filenames'])
         self.assertEqual(0, task.config['Enable_Demographics_Builtin'])
         self.assertEqual(1, task.config['Enable_Heterogeneous_Intranode_Transmission'])
@@ -314,6 +326,8 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
                                                  config_out_path=self.config_file)
         task = EMODTask.from_files(config_path=self.config_file, eradication_path=self.eradication_path,
                                    demographics_paths=self.demographics_file, ep4_path=None)
+        if self.is_singularity:
+            task.set_sif(sif_path)
         self.assertEqual([os.path.basename(self.demographics_file)], task.config['Demographics_Filenames'])
         self.assertEqual(0, task.config['Enable_Demographics_Builtin'])
         self.assertEqual(1, task.config['Enable_Heterogeneous_Intranode_Transmission'])
@@ -338,6 +352,8 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
                                       schema_path=manifest.schema_path_linux,
                                       config_path=self.config_file, demog_builder=demog_builder,
                                       ep4_custom_cb=None, param_custom_cb=None)
+        if self.is_singularity:
+            task.set_sif(sif_path)
         self.assertEqual(['demographics.json'], task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_default2"
         self.assertEqual(0, task.config['parameters']['Enable_Demographics_Builtin'])
         task.set_parameter('x_Base_Population', 0.00001)
@@ -363,6 +379,8 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
                                       schema_path=manifest.schema_path_linux,
                                       config_path=self.config_file, demog_builder=demog_builder,
                                       param_custom_cb=None, ep4_custom_cb=None)
+        if self.is_singularity:
+            task.set_sif(sif_path)
 
         self.assertEqual(['demographics.json'], task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_default2"
         self.assertEqual(0, task.config['parameters']['Enable_Demographics_Builtin'])
@@ -398,6 +416,8 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
                                       schema_path=manifest.schema_path_linux,
                                       config_path=self.config_file,
                                       param_custom_cb=None, demog_builder=build_demog, ep4_custom_cb=None)
+        if self.is_singularity:
+            task.set_sif(sif_path)
         experiment = self.run_exp(task)
 
         inset_chart_filename = "output/InsetChart.json"
@@ -454,6 +474,8 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
                                       schema_path=manifest.schema_path_linux,
                                       config_path=self.config_file,
                                       param_custom_cb=None, demog_builder=build_demog, ep4_custom_cb=None)
+        if self.is_singularity:
+            task.set_sif(sif_path)
         experiment = self.run_exp(task)
 
         demog_filename = "Assets/demographics.json"
@@ -517,6 +539,8 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
                                       schema_path=manifest.schema_path_linux,
                                       config_path=self.config_file,
                                       param_custom_cb=set_param_fn, demog_builder=build_demog, ep4_custom_cb=None)
+        if self.is_singularity:
+            task.set_sif(sif_path)
         experiment = self.run_exp(task)
 
         property_filename = "output/PropertyReport.json"
@@ -557,6 +581,8 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
                                                  config_out_path=self.config_file)
         task = EMODTask.from_files(config_path=self.config_file, eradication_path=self.eradication_path,
                                    demographics_paths=[self.demographics_file, overlay_filename], ep4_path=None)
+        if self.is_singularity:
+            task.set_sif(sif_path)
 
         experiment = self.run_exp(task)
 
@@ -596,40 +622,40 @@ class TestWorkflowDemographicsWin(TestWorkflowDemographics):
         cls.demographics_file = os.path.join(manifest.demographics_folder, "generic_demographics_for_demographics_workflow.json")
         cls.comps_platform = 'COMPS2'
 
-    def test_1_basic_demographics_win(self):
+    def test_a_basic_demographics_win(self):
         super().basic_demographics_test()
 
-    def test_2_simple_susceptibility_demographics_win(self):
+    def test_b_simple_susceptibility_demographics_win(self):
         super().simple_susceptibility_demographics_test()
 
-    def test_3_age_dependent_transmission_demographics_win(self):
+    def test_c_age_dependent_transmission_demographics_win(self):
         super().age_dependent_transmission_demographics_test()
 
-    def test_4_add_individual_property_and_HINT_demographics_win(self):
+    def test_d_add_individual_property_and_HINT_demographics_win(self):
         super().add_individual_property_and_HINT_demographics_test()
 
-    def skip_test_5_add_individual_property_and_HINT_disable_whitelist_demographics_win(self):
+    def skip_test_e_add_individual_property_and_HINT_disable_whitelist_demographics_win(self):
         super().add_individual_property_and_HINT_disable_whitelist_demographics_test()
 
-    def test_6_from_csv_demographics_win(self):
+    def test_f_from_csv_demographics_win(self):
         super().from_csv_demographics_test()
 
-    def test_7_from_params_demographics_win(self):
+    def test_g_from_params_demographics_win(self):
         super().from_params_demographics_test()
 
-    def test_8_demographics_sweep_win(self):
+    def test_h_demographics_sweep_win(self):
         super().demographic_sweep_test()
 
-    def test_9_demographics_overlay_node_attributes_win(self):
+    def test_i_demographics_overlay_node_attributes_win(self):
         super().demographics_overlay_node_attributes_test()
 
-    def test_10_demographics_overlay_individual_attributes_win(self):
+    def test_j_demographics_overlay_individual_attributes_win(self):
         super().demographics_overlay_individual_attributes_test()
 
-    def test_11_demographics_overlay_individual_properties_win(self):
+    def test_k_demographics_overlay_individual_properties_win(self):
         super().demographics_overlay_individual_properties_test()
 
-    def test_12_demographics_overlay_susceptibility_distribution_from_files_win(self):
+    def test_l_demographics_overlay_susceptibility_distribution_from_files_win(self):
         super().demographics_overlay_susceptibility_distribution_from_files_test()
 
 
@@ -647,40 +673,52 @@ class TestWorkflowDemographicsLinux(TestWorkflowDemographics):
         cls.config_file = os.path.join(manifest.config_folder, "generic_config_for_demographics_workflow_l.json")
         cls.default_config_file = os.path.join(manifest.config_folder, default_config_file)
         cls.demographics_file = os.path.join(manifest.demographics_folder, "generic_demographics_for_demographics_workflow_l.json")
-        cls.comps_platform = 'SLURM'
+        cls.comps_platform = 'SLURMStage'
 
-    def test_1_basic_demographics_linux(self):
+    def test_a_basic_demographics_linux(self):
+        self.is_singularity = True
         super().basic_demographics_test()
 
-    def test_2_simple_susceptibility_demographics_linux(self):
+    def test_b_simple_susceptibility_demographics_linux(self):
+        self.is_singularity = True
         super().simple_susceptibility_demographics_test()
 
-    def test_3_age_dependent_transmission_demographics_linux(self):
+    def test_c_age_dependent_transmission_demographics_linux(self):
+        self.is_singularity = True
         super().age_dependent_transmission_demographics_test()
 
-    def test_4_add_individual_property_and_HINT_demographics_linux(self):
+    def test_d_add_individual_property_and_HINT_demographics_linux(self):
+        self.is_singularity = True
         super().add_individual_property_and_HINT_demographics_test()
 
-    def skip_test_5_add_individual_property_and_HINT_disable_whitelist_demographics_linux(self):
+    def skip_test_e_add_individual_property_and_HINT_disable_whitelist_demographics_linux(self):
+        self.is_singularity = True
         super().add_individual_property_and_HINT_disable_whitelist_demographics_test()
 
-    def test_6_from_csv_demographics_linux(self):
+    def test_f_from_csv_demographics_linux(self):
+        self.is_singularity = True
         super().from_csv_demographics_test()
 
-    def test_7_from_params_demographics_linux(self):
+    def test_g_from_params_demographics_linux(self):
+        self.is_singularity = True
         super().from_params_demographics_test()
 
-    def test_8_demographics_sweep_linux(self):
+    def test_h_demographics_sweep_linux(self):
+        self.is_singularity = True
         super().demographic_sweep_test()
 
-    def test_9_demographics_overlay_node_attributes_linux(self):
+    def test_i_demographics_overlay_node_attributes_linux(self):
+        self.is_singularity = True
         super().demographics_overlay_node_attributes_test()
 
-    def test_10_demographics_overlay_individual_attributes_linux(self):
+    def test_j_demographics_overlay_individual_attributes_linux(self):
+        self.is_singularity = True
         super().demographics_overlay_individual_attributes_test()
 
-    def test_11_demographics_overlay_individual_properties_linux(self):
+    def test_k_demographics_overlay_individual_properties_linux(self):
+        self.is_singularity = True
         super().demographics_overlay_individual_properties_test()
 
-    def test_12_demographics_overlay_susceptibility_distribution_from_files_linux(self):
+    def test_l_demographics_overlay_susceptibility_distribution_from_files_linux(self):
+        self.is_singularity = True
         super().demographics_overlay_susceptibility_distribution_from_files_test()

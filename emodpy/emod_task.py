@@ -1,6 +1,7 @@
 import copy
 import json
 import os
+import sys
 from dataclasses import dataclass, field
 from functools import partial
 from logging import getLogger, DEBUG
@@ -18,6 +19,7 @@ from idmtools.entities.simulation import Simulation
 from idmtools.registry.task_specification import TaskSpecification
 from idmtools.utils.json import load_json_file
 from idmtools.entities.iplatform import IPlatform
+from COMPS.utils import get_output_files_for_experiment as comps_getter
 
 from emodpy.emod_file import ClimateFiles, DemographicsFiles, MigrationFiles
 from emodpy.emod_campaign import EMODCampaign
@@ -30,12 +32,13 @@ from emod_api.config import default_from_schema_no_validation as dfs
 user_logger = getLogger('user')
 logger = getLogger(__name__)
 dev_mode = False
+
 """
 Note that these 3 functions could be member functions of EMODTask but Python modules are already pretty good at being 'static classes'.
 """
 
 
-def add_ep4_from_path(task, ep4_path):
+def add_ep4_from_path(task, ep4_path="EP4"):  # default added for back-compat
     """
     Add embedded Python scripts from a given path.
     """
@@ -49,8 +52,12 @@ def add_ep4_from_path(task, ep4_path):
     return task
 
 
-def default_ep4_fn(task):
-    task = add_ep4_from_path(task, os.path.join(os.path.dirname(os.path.realpath(__file__)), "defaults/ep4"))
+def default_ep4_fn(task, ep4_path=None):
+    # If user specifies absolutely nothing, use the built-in ones so that we get default behaviour easy-peasy.
+    if ep4_path is None:
+        ep4_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "defaults/ep4")
+
+    task = add_ep4_from_path(task, ep4_path)
     return task
 
 
@@ -128,7 +135,7 @@ class EMODTask(ITask):
             campaign.save()
 
         if len(adhoc_events) > 0:
-            print("Found adhoc events in campaign. Needs some special processing behind the scenes.")
+            # print("Found adhoc events in campaign. Needs some special processing behind the scenes.")
             logger.debug("Found adhoc events in campaign. Needs some special processing behind the scenes.")
             if "Custom_Individual_Events" in self.config.parameters:
                 self.config.parameters.Custom_Individual_Events = [x for x in adhoc_events.keys()]
@@ -230,16 +237,27 @@ class EMODTask(ITask):
             plugin_report=None,
             serial_pop_files=None,
             write_default_config=None,
+            ep4_path=None,
             **kwargs) -> "EMODTask":
         """
         Create a task from emod-api Defaults
 
         Args:
-            config_path: /path/to/new_config.json
-            eradication_path: Path to Eradication binary
-            param_custom_cb: Function that sets parameters for config
-            ep4_custom_cb: Function that sets EP4 assets
-            plugin_report: Custom reports file
+            eradication_path: Path to Eradication binary.
+            schema_path: Path to schema.json.
+            param_custom_cb: Function that sets parameters for config.
+            campaign_builder: Function that builds the campaign.
+            ep4_custom_cb: Function that sets EP4 assets.  There are 4 options for specificying EP4 scripts:
+                1) Set ep4_custom_cb=None. This just says "don't even attempt to use EP4 scripts". Not the default.
+                2) All defaults. This uses the built-in ep4 scripts (inside emodpy module) which does some standard pre- and post-processing. You can't edit these scripts.
+                3) Set the (new) ep4_path to your local path where your custom scripts are. Leave out ep4_custom_cb so it uses the default function (but with your path).
+                4) Power mode where you set ep4_custom_cb to your own function which gives you all the power. Probably don't need this.
+            demog_builder: Function that builds the demographics configuration and optional migration configuration.
+            plugin_report: Custom reports file.
+            serial_pop_files: Input ".dtk" serialized population files.
+            config_path: Optional filename for the generated config.json, if you don't like that name.
+            write_default_config: Set to true if you want to have the default_config.json written locally for inspection.
+            ep4_path: See ep4_custom_cb section.
 
         Returns:
             EMODTask
@@ -275,7 +293,10 @@ class EMODTask(ITask):
             task.campaign = None
 
         if ep4_custom_cb is not None:
-            task = ep4_custom_cb(task)
+            if ep4_path:
+                task = ep4_custom_cb(task, ep4_path)
+            else:
+                task = ep4_custom_cb(task)  # for back-compat
         else:
             task.use_embedded_python = False
 
@@ -535,6 +556,17 @@ class EMODTask(ITask):
             asset = Asset(filename="campaign.json", content=self.campaign.json)
             self.transient_assets.add_asset(asset=asset, fail_on_duplicate=False)
 
+            if dev_mode:
+                import emod_api.peek_camp as base_peek_camp
+                original = sys.stdout
+                sys.stdout = open('campaign.ccdl', 'w')
+                base_peek_camp.decode("campaign.json", self.config_file_name)
+                sys.stdout = original
+                data = open("campaign.ccdl").readlines()
+                data.sort()
+                for i in range(len(data)):
+                    print(data[i].strip())
+
         # Add custom_reporters.json if needed
         if not self.reporters.empty:
             asset = Asset(filename="custom_reports.json", content=self.reporters.json)
@@ -664,6 +696,49 @@ class EMODTask(ITask):
 
     def reload_from_simulation(self, simulation: 'Simulation'):
         pass
+
+    @classmethod
+    def get_file_from_comps(cls, exp_id, filename):
+        """
+        Get file or files from COMPS. Retrieve all files named <filename> in experiment <exp_id>
+        and put them in a local directory called exp_id. On linux, this is under "latest_experiment".
+        This function will eventually be added to pyCOMPS.
+        """
+        os.makedirs(str(exp_id), exist_ok=True)
+        if os.name == "posix":
+            if os.path.islink("latest_experiment"):
+                os.remove("latest_experiment")
+            os.symlink(str(exp_id), "latest_experiment")
+        comps_getter.get_files(exp_id, files_to_get=filename)
+
+    @classmethod
+    def handle_experiment_completion(cls, experiment):
+        """
+        Handle experiment completion in consistent way, pull down stderr on failure.
+
+        Args:
+            parameter: experiment reference
+
+        Returns:
+
+        """
+        if not experiment.succeeded:
+            print(f"Experiment {experiment.uid} failed.\n")
+            """
+            from COMPS import get_output_files_for_experiment_and_name as getter
+            errfiles = getter.get( experiment.uid, "stderr.txt" )
+            """
+            errfiles = cls.get_file_from_comps(experiment, "stderr.txt")
+            for filename in errfiles:
+                text = open(filename).read()
+                sys.stdout.write(text)
+            exit()
+        else:
+            print(f"Experiment {experiment.uid} succeeded.")
+
+        with open("COMPS_ID", "w") as fd:
+            fd.write(experiment.uid.hex)
+        print("\n" + experiment.uid.hex)
 
 
 class EMODTaskSpecification(TaskSpecification):

@@ -13,12 +13,15 @@ from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 from . import manifest
 
 major = 3
-minor = 6
-
+minor = 9
+schema_filename = 'generic_schema_from_emodapi.json'
+schema_l_filename = 'generic_schema_l_from_emodapi.json'
 
 # bamboo_api_login() only work in console
 # Please run this test from console for the first time or run 'test_download_from_bamboo.py' from console before
 # running this test
+
+
 class TestGetSchema(ITestWithPersistence, ABC):
     """
         Base test case for get_schema from Eradication
@@ -28,7 +31,7 @@ class TestGetSchema(ITestWithPersistence, ABC):
     def define_test_environment(cls):
         cls.plan = EradicationBambooBuilds.GENERIC_WIN
         cls.eradication_path = manifest.eradication_path_win
-        cls.schema_path = 'inputs/schema/generic_schema_fron_emodapi.json'
+        cls.schema_path = 'inputs/schema/' + schema_filename
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -49,6 +52,7 @@ class TestGetSchema(ITestWithPersistence, ABC):
         self.assertTrue(os.path.isfile(self.schema_path))
 
 
+@pytest.mark.skip(reason="Eradication in Bamboo is build with Rocky OS, no way of currently testing this")
 @pytest.mark.skipif(sys.version_info.major != major or sys.version_info.minor != minor,
                     reason=f"skip TestGetSchemaWin test in Python {sys.version_info.major}.{sys.version_info.minor} "
                            f"environment.")
@@ -65,12 +69,12 @@ class TestGetSchemaWin(TestGetSchema):
         cls.eradication_path = manifest.eradication_path_win
 
     def test_1_get_schema_relative_path_win(self):
-        self.schema_path = 'inputs/schema/generic_schema_from_emodapi.json'
+        self.schema_path = 'inputs/schema/' + schema_filename
         super().run_test()
 
     def test_2_get_schema_absolute_path_win(self):
         self.schema_path = os.path.join(manifest.current_directory, 'inputs', 'schema',
-                                        'generic_schema_l_from_emodapi.json')
+                                        schema_filename)
         super().run_test()
 
     def test_3_get_schema_temp_path_win(self):
@@ -78,16 +82,17 @@ class TestGetSchemaWin(TestGetSchema):
         import random
         letters = string.ascii_lowercase
         result_str = ''.join(random.choice(letters) for i in range(4))
-        self.schema_path = os.path.join("inputs", 'schema', result_str, "generic_schema_from_emodapi.json")
+        self.schema_path = os.path.join("inputs", 'schema', result_str, schema_filename)
         super().run_test()
 
     def test_4_get_schema_existing_path_win(self):
         self.schema_path = os.path.join(manifest.current_directory, 'inputs', 'schema',
-                                        'generic_schema_l_from_emodapi.json')
+                                        schema_filename)
         super().run_test()
         super().run_test()
 
 
+@pytest.mark.skip(reason="Eradication in Bamboo is build with Rocky OS, no way of currently testing this")
 @pytest.mark.skipif(sys.version_info.major != major or sys.version_info.minor != minor,
                     reason=f"skip TestGetSchemaLinux test in Python {sys.version_info.major}.{sys.version_info.minor} "
                            f"environment.")
@@ -104,12 +109,12 @@ class TestGetSchemaLinux(TestGetSchema):
         cls.eradication_path = manifest.eradication_path_linux
 
     def test_1_get_schema_relative_path_linux(self):
-        self.schema_path = 'inputs/schema/generic_schema_l_from_emodapi.json'
+        self.schema_path = 'inputs/schema/' + schema_l_filename
         super().run_test()
 
     def test_2_get_schema_absolute_path_linux(self):
         self.schema_path = os.path.join(manifest.current_directory, 'inputs', 'schema',
-                                        'generic_schema_l_from_emodapi.json')
+                                        schema_l_filename)
         super().run_test()
 
     def test_3_get_schema_temp_path_linux(self):
@@ -117,12 +122,12 @@ class TestGetSchemaLinux(TestGetSchema):
         import random
         letters = string.ascii_lowercase
         result_str = ''.join(random.choice(letters) for i in range(4))
-        self.schema_path = os.path.join("inputs", 'schema', result_str, "generic_schema_l_from_emodapi.json")
+        self.schema_path = os.path.join("inputs", 'schema', result_str, schema_l_filename)
         super().run_test()
 
     def test_4_get_schema_existing_path_linux(self):
         self.schema_path = os.path.join(manifest.current_directory, 'inputs', 'schema',
-                                        'generic_schema_l_from_emodapi.json')
+                                        schema_l_filename)
         super().run_test()
         super().run_test()
 

@@ -3,7 +3,7 @@ click~=7.1
 idmtools~=1.7
 idmtools-platform-comps~=1.7
 idmtools-models~=1.7
-emod-api~=1.24
+emod-api~=1.30
 matplotlib
 astor
 astunparse
@@ -11,3 +11,5 @@ bs4
 keyring
 pyCOMPS~=2.6
 requests==2.29.0
+xmlrunner~=1.7.7
+pytest==8.1.2

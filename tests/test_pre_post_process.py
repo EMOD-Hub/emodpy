@@ -6,7 +6,6 @@ import pytest
 import copy
 
 from emod_api.config import from_schema as fs
-from emod_api.schema import get_schema as gs
 
 from idmtools.assets import Asset
 from idmtools.entities.experiment import Experiment
@@ -90,18 +89,14 @@ class TestEmodPrePostProcess(ITestWithPersistence):
         self.config_file = os.path.join(manifest.config_folder, 'config_for_ep4.json')
         delete_existing_file(self.schema_file)
         delete_existing_file(self.config_file)
-        # try to generate schema from eradication
-        try:
-            gs.dtk_to_schema(eradication_path, path_to_write_schema=self.schema_file)
-        except Exception:
-            print(
-                f"Your OS is {sys.platform}, trying to use schema downloaded from bamboo in 'test_download_from_bamboo.py'")
+        # generate schema
+        print("trying to use schema downloaded from bamboo in 'test_download_from_bamboo.py'")
+        if os.path.isfile(self.schema_bamboo_path):
+            shutil.copy(self.schema_bamboo_path, self.schema_file)
+        else:
+            bamboo_api_login()
+            download_latest_schema(plan=self.plan, scheduled_builds_only=False, out_path=self.schema_file)
 
-            if os.path.isfile(self.schema_bamboo_path):
-                shutil.copy(self.schema_bamboo_path, self.schema_file)
-            else:
-                bamboo_api_login()
-                download_latest_schema(plan=self.plan, scheduled_builds_only=False, out_path=self.schema_file)
         # generate default config file from schema
         fs.SchemaConfigBuilder(schema_name=self.schema_file, config_out=self.config_file)
 

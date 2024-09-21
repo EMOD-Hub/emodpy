@@ -28,7 +28,7 @@ import json
 from . import manifest
 
 
-default_config_file = "default_config.json"  # this is a hard-coded value
+default_config_file = "demographics_workflow_default_config.json"
 
 
 def set_param_fn(config, implicit_config_set_fns=None):
@@ -62,9 +62,9 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
         manifest.delete_existing_file(cls.config_file)
         manifest.delete_existing_file(default_config_file)
         print("write_default_from_schema")
-        dfs.write_default_from_schema(cls.schema_path)
-        print("move default_config.json")
-        shutil.move(default_config_file, cls.default_config_file)
+        dfs.get_default_config_from_schema(cls.schema_path, output_filename=cls.default_config_file)
+        # print("move default_config.json")
+        # shutil.copy(default_config_file, cls.default_config_file)
 
     def setUp(self) -> None:
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
@@ -148,7 +148,7 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
 
         task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                       schema_path=manifest.schema_path_linux,
-                                      config_path=self.default_config_file,
+                                      config_path=self.config_file,
                                       param_custom_cb=None,
                                       ep4_custom_cb=None, demog_builder=build_demo)
 
@@ -183,7 +183,7 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
         with redirect_stdout(printed_output):
             task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                           schema_path=manifest.schema_path_linux,
-                                          config_path=self.default_config_file,
+                                          config_path=self.config_file,
                                           param_custom_cb=None, demog_builder=None, ep4_custom_cb=None)
             builder = SimulationBuilder()
             prevalences = [0.1, 0.3, 0.5, 0.7, 1]
@@ -223,7 +223,7 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
 
         task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                       schema_path=manifest.schema_path_linux,
-                                      config_path=self.default_config_file,
+                                      config_path=self.config_file,
                                       param_custom_cb=None, demog_builder=build_demo, ep4_custom_cb=None)  # remove schema path later
 
         self.assertEqual(['demographics.json'], task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_default2"
@@ -336,7 +336,7 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
 
         task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                       schema_path=manifest.schema_path_linux,
-                                      config_path=self.default_config_file, demog_builder=demog_builder,
+                                      config_path=self.config_file, demog_builder=demog_builder,
                                       ep4_custom_cb=None, param_custom_cb=None)
         self.assertEqual(['demographics.json'], task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_default2"
         self.assertEqual(0, task.config['parameters']['Enable_Demographics_Builtin'])
@@ -361,7 +361,7 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
 
         task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                       schema_path=manifest.schema_path_linux,
-                                      config_path=self.default_config_file, demog_builder=demog_builder,
+                                      config_path=self.config_file, demog_builder=demog_builder,
                                       param_custom_cb=None, ep4_custom_cb=None)
 
         self.assertEqual(['demographics.json'], task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_default2"
@@ -396,7 +396,7 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
 
         task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                       schema_path=manifest.schema_path_linux,
-                                      config_path=self.default_config_file,
+                                      config_path=self.config_file,
                                       param_custom_cb=None, demog_builder=build_demog, ep4_custom_cb=None)
         experiment = self.run_exp(task)
 
@@ -452,7 +452,7 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
 
         task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                       schema_path=manifest.schema_path_linux,
-                                      config_path=self.default_config_file,
+                                      config_path=self.config_file,
                                       param_custom_cb=None, demog_builder=build_demog, ep4_custom_cb=None)
         experiment = self.run_exp(task)
 
@@ -515,7 +515,7 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
 
         task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                       schema_path=manifest.schema_path_linux,
-                                      config_path=self.default_config_file,
+                                      config_path=self.config_file,
                                       param_custom_cb=set_param_fn, demog_builder=build_demog, ep4_custom_cb=None)
         experiment = self.run_exp(task)
 
@@ -593,7 +593,7 @@ class TestWorkflowDemographicsWin(TestWorkflowDemographics):
         cls.schema_path = manifest.schema_path_win
         cls.config_file = os.path.join(manifest.config_folder, "generic_config_for_demographics_workflow.json")
         cls.default_config_file = os.path.join(manifest.config_folder, default_config_file)
-        cls.demographics_file = os.path.join(manifest.demographics_folder, "generic_demographics.json")
+        cls.demographics_file = os.path.join(manifest.demographics_folder, "generic_demographics_for_demographics_workflow.json")
         cls.comps_platform = 'COMPS2'
 
     def test_1_basic_demographics_win(self):
@@ -646,7 +646,7 @@ class TestWorkflowDemographicsLinux(TestWorkflowDemographics):
         cls.schema_path = manifest.schema_path_linux
         cls.config_file = os.path.join(manifest.config_folder, "generic_config_for_demographics_workflow_l.json")
         cls.default_config_file = os.path.join(manifest.config_folder, default_config_file)
-        cls.demographics_file = os.path.join(manifest.demographics_folder, "generic_demographics_l.json")
+        cls.demographics_file = os.path.join(manifest.demographics_folder, "generic_demographics_for_demographics_workflow_l.json")
         cls.comps_platform = 'SLURM'
 
     def test_1_basic_demographics_linux(self):

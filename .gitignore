@@ -273,7 +273,7 @@ instance/
 
 # Sphinx docs
 docs/_build/
-docs/external/*.rst
+docs/emodpy*
 
 # PyBuilder
 target/

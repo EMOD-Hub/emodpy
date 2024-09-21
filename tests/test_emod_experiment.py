@@ -9,14 +9,14 @@ from emod_api.interventions import outbreak as ob
 from emod_api import campaign as camp
 import emod_api.demographics.Demographics as Demographics
 
-from idmtools.assets import AssetCollection, Asset
+from idmtools.assets import Asset  # ,AssetCollection
 from idmtools.builders import SimulationBuilder
 from idmtools.core.platform_factory import Platform
 from idmtools.core import ItemType
 from idmtools.entities.experiment import Experiment
 from idmtools.entities.iplatform import IPlatform
 from idmtools.entities.simulation import Simulation
-from idmtools_platform_comps.utils.python_requirements_ac.requirements_to_asset_collection import RequirementsToAssetCollection
+# from idmtools_platform_comps.utils.python_requirements_ac.requirements_to_asset_collection import RequirementsToAssetCollection
 from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 from idmtools_platform_comps.utils.singularity_build import SingularityBuildWorkItem
 
@@ -37,6 +37,7 @@ from . import manifest
 emod_version = '2.20.0'
 num_sim = 2
 num_sim_long = 20  # to catch issue like config is not deep copied #251 and #238
+sif_path = os.path.join(manifest.current_directory, "inputs/singularity/CentOS.id")
 
 print("Please run 'test_download_from_bamboo.py' (run from console for the first time to login to bamboo) before "
       "running this test")
@@ -80,19 +81,23 @@ class EMODExperimentTest(ABC):
         def set_param_fn(config):
             print("Setting params.")
             return config
+
+        self.platform = Platform("SLURM")
         base_task = EMODTask.from_default2(eradication_path=self.get_emod_binary(),
                                            schema_path=self.get_emod_schema(),
                                            param_custom_cb=set_param_fn)
-        pl = RequirementsToAssetCollection(self.platform, requirements_path=manifest.requirements)
+        # pl = RequirementsToAssetCollection(self.platform, requirements_path=manifest.requirements)
+        base_task.set_sif(sif_path)
+
         base_task.set_parameter('Enable_Immunity', 0)
         e = Experiment.from_task(
             base_task,
             self.case_name,
             tags={"emodpy": "emodpy-automation", "string_tag": "test", "number_tag": 123}
         )
-        self.platform = Platform("SLURM")
-        other_assets = AssetCollection.from_id(pl.run())
-        e.assets.add_assets(other_assets)
+
+        # other_assets = AssetCollection.from_id(pl.run())
+        # e.assets.add_assets(other_assets)
         with self.platform as p:
             # The last step is to call run() on the ExperimentManager to run the simulations.
             e.run(platform=p)
@@ -107,7 +112,7 @@ class EMODExperimentTest(ABC):
     def download_singularity_ac(self, ac_id, out_filenames, output_path):
         self.platform.get_files_by_id(ac_id, ItemType.ASSETCOLLECTION, out_filenames, output_path)
 
-    def singularity_test(self, sif_path, ep4_fn):
+    def singularity_test(self, my_sif_path, ep4_fn):
         def set_param_fn(config):
             print("Setting params.")
             return config
@@ -122,7 +127,7 @@ class EMODExperimentTest(ABC):
             relative_path='python')
         base_task.common_assets.add_asset(demographics_asset)
 
-        base_task.set_sif(sif_path)
+        base_task.set_sif(my_sif_path)
 
         e = Experiment.from_task(
             base_task,
@@ -155,12 +160,12 @@ class EMODExperimentTest(ABC):
             task = add_ep4_from_path(task, os.path.join(manifest.current_directory, "inputs/ep4/singularity"))
             return task
 
-        self.singularity_test(sif_path=os.path.join(manifest.current_directory, "inputs/singularity/emod_latest.sif"),
+        self.singularity_test(my_sif_path=os.path.join(manifest.current_directory, "inputs/singularity/emod_latest.sif"),
                               ep4_fn=ep4_fn)
 
     @pytest.mark.long
     def test_experiment_from_task_with_singularity(self):
-        def make_sif(sif_path):
+        def make_sif(my_sif_path):
             """
             Creating a singularity image on Comps, only run when the image is not available on Comps.
             After creating the image, please use the Asset Collection ID of this image in the simulation.
@@ -172,14 +177,13 @@ class EMODExperimentTest(ABC):
             sbi.run(wait_until_done=True, platform=self.platform)
             if sbi.succeeded:
                 # Write ID file
-                sbi.asset_collection.to_id_file(sif_path)
+                sbi.asset_collection.to_id_file(my_sif_path)
 
         def ep4_fn(task):
             task = add_ep4_from_path(task, os.path.join(manifest.current_directory, "inputs/ep4/singularity"))
             return task
 
         self.platform = Platform("SLURM")
-        sif_path = os.path.join(manifest.current_directory, "inputs/singularity/CentOS.id")
         # use the commented line to create a singularity image on Comps for the first time.
         # make_sif(sif_path)
         self.singularity_test(sif_path, ep4_fn)
@@ -195,20 +199,22 @@ class EMODExperimentTest(ABC):
             return config
 
         config_path = "config_from_default2_1"
+        self.platform = Platform("SLURM")
         base_task = EMODTask.from_default2(config_path=config_path,
                                            eradication_path=self.get_emod_binary(),
                                            schema_path=self.get_emod_schema(),
                                            param_custom_cb=set_param_fn)
-        pl = RequirementsToAssetCollection(self.platform, requirements_path=manifest.requirements)
+        # pl = RequirementsToAssetCollection(self.platform, requirements_path=manifest.requirements)
+        base_task.set_sif(sif_path)
 
         e = Experiment.from_task(
             base_task,
             self.case_name,
             tags={"emodpy": "emodpy-automation", "string_tag": "test", "number_tag": 123}
         )
-        self.platform = Platform("SLURM")
-        other_assets = AssetCollection.from_id(pl.run())
-        e.assets.add_assets(other_assets)
+
+        # other_assets = AssetCollection.from_id(pl.run())
+        # e.assets.add_assets(other_assets)
 
         with self.platform as p:
             # The last step is to call run() on the ExperimentManager to run the simulations.

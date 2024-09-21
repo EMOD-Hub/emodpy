@@ -3,7 +3,7 @@ import pytest
 import shutil
 from functools import partial
 from abc import ABC, abstractmethod
-from sys import platform
+# from sys import platform
 import json
 
 from emod_api.config import default_from_schema_no_validation as dfs
@@ -236,14 +236,10 @@ class TestWorkflowConfigWin(TestWorkflowConfig):
         self.comps_platform = 'COMPS2'
 
     def generate_schema(self):
-        if platform == "linux" or platform == "linux2":
-            print('OS is Linux, skip writing schema.json file from Windows version of Eradication.exe.')
-            print('Using schema.json downloaded from test_download_from_bamboo.py for test')
-            self.schema_path = manifest.schema_path_win
-            if not os.path.isfile(self.schema_path):
-                download_latest_schema(plan=self.plan, scheduled_builds_only=False, out_path=self.schema_path)
-        else:
-            super().generate_schema()
+        print('Using schema.json downloaded from test_download_from_bamboo.py for test')
+        self.schema_path = manifest.schema_path_win
+        if not os.path.isfile(self.schema_path):
+            download_latest_schema(plan=self.plan, scheduled_builds_only=False, out_path=self.schema_path)
 
     def test_1_config_from_builder_win(self):
         super().config_from_builder_test()
@@ -280,14 +276,10 @@ class TestWorkflowConfigLinux(TestWorkflowConfig):
         self.comps_platform = 'SLURM'
 
     def generate_schema(self):
-        if platform == "win32":
-            print('OS is Windows, skip writing schema.json file from Linux version of Eradication.')
-            print('Using schema.json downloaded from test_download_from_bamboo.py for test')
-            self.schema_path = manifest.schema_path_linux
-            if not os.path.isfile(self.schema_path):
-                download_latest_schema(plan=self.plan, scheduled_builds_only=False, out_path=self.schema_path)
-        else:
-            super().generate_schema()
+        print('Using schema.json downloaded from test_download_from_bamboo.py for test')
+        self.schema_path = manifest.schema_path_linux
+        if not os.path.isfile(self.schema_path):
+            download_latest_schema(plan=self.plan, scheduled_builds_only=False, out_path=self.schema_path)
 
     def test_1_config_from_builder_linux(self):
         super().config_from_builder_test()
@@ -325,14 +317,10 @@ class TestWorkflowConfigWinALL(TestWorkflowConfig):
         self.comps_platform = 'COMPS2'
 
     def generate_schema(self):
-        if platform == "linux" or platform == "linux2":
-            print('OS is Linux, skip writing schema.json file from Windows version of Eradication.exe.')
-            print('Using schema.json downloaded from test_download_from_bamboo.py for test')
-            self.schema_path = manifest.schema_path_win_all
-            if not os.path.isfile(self.schema_path):
-                download_latest_schema(plan=self.plan, scheduled_builds_only=False, out_path=self.schema_path)
-        else:
-            super().generate_schema()
+        print('Using schema.json downloaded from test_download_from_bamboo.py for test')
+        self.schema_path = manifest.schema_path_win_all
+        if not os.path.isfile(self.schema_path):
+            download_latest_schema(plan=self.plan, scheduled_builds_only=False, out_path=self.schema_path)
 
     def test_1_config_from_builder_win_all(self):
         super().config_from_builder_test()

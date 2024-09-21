@@ -1,0 +1,11 @@
+{
+    "disease_plugins": [],
+    "interventions": [],
+    "reporter_plugins": [
+        "\\\\bayesianfil01\\IDM\\home\\idm_bamboo_user\\emodules\\reporter_plugins\\9eeb8f83d09f47791de2038df8c5b3bf\\libReportMalariaTransmissions.dll",
+        "\\\\bayesianfil01\\IDM\\home\\idm_bamboo_user\\emodules\\reporter_plugins\\a8c8f6c25f7e8cb24e6fba637c403730\\libreporteventcounter.dll",
+        "\\\\bayesianfil01\\IDM\\home\\idm_bamboo_user\\emodules\\reporter_plugins\\fae1174a1d6d8397ae94e863f5db7495\\libmalariaimmunity_report_plugin.dll",
+        "\\\\bayesianfil01\\IDM\\home\\idm_bamboo_user\\emodules\\reporter_plugins\\926b936be98f2e2735384ae8d6587561\\libmalariasurveyJSON_analyzer_plugin.dll",
+        "\\\\bayesianfil01\\IDM\\home\\idm_bamboo_user\\emodules\\reporter_plugins\\1fb739b1fa340c0db0d32cf7d7877daf\\libmalariasummary_report_plugin.dll"
+    ]
+}

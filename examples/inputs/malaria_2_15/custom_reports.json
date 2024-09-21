@@ -1,0 +1,88 @@
+{
+   "Custom_Reports": {
+      "MalariaSummaryReport": {
+         "Enabled": 1,
+         "Reports": [
+            {
+               "Age_Bins": [
+                  0.25,
+                  5
+               ],
+               "Duration_Days": 100000,
+               "Event_Trigger_List": [
+                  "EveryUpdate"
+               ],
+               "Individual_Property_Filter": "SMCAccess:High",
+               "Infectiousness_Bins": [
+                  20.0,
+                  40.0,
+                  60.0,
+                  80.0,
+                  100.0
+               ],
+               "Max_Number_Reports": 10000,
+               "Nodeset_Config": {
+                  "class": "NodeSetAll"
+               },
+               "Parasitemia_Bins": [
+                  50.0,
+                  500.0,
+                  5000.0,
+                  9223372036854775807
+               ],
+               "Report_Description": "5th_year_August",
+               "Reporting_Interval": 1,
+               "Start_Day": 2038
+            },
+            {
+               "Age_Bins": [
+                  0.25,
+                  5
+               ],
+               "Duration_Days": 100000,
+               "Event_Trigger_List": [
+                  "EveryUpdate"
+               ],
+               "Individual_Property_Filter": "SMCAccess:Low",
+               "Infectiousness_Bins": [
+                  20.0,
+                  40.0,
+                  60.0,
+                  80.0,
+                  100.0
+               ],
+               "Max_Number_Reports": 10000,
+               "Nodeset_Config": {
+                  "class": "NodeSetAll"
+               },
+               "Parasitemia_Bins": [
+                  50.0,
+                  500.0,
+                  5000.0,
+                  9223372036854775807
+               ],
+               "Report_Description": "5th_year_August",
+               "Reporting_Interval": 1,
+               "Start_Day": 2038
+            }
+         ]
+      },
+      "ReportEventCounter": {
+         "Enabled": 1,
+         "Reports": [
+            {
+               "Duration_Days": 10000,
+               "Event_Trigger_List": [
+                  "Received_Treatment"
+               ],
+               "Nodeset_Config": {
+                  "class": "NodeSetAll"
+               },
+               "Report_Description": "",
+               "Start_Day": 0
+            }
+         ]
+      },
+      "Use_Explicit_Dlls": 1
+   }
+}

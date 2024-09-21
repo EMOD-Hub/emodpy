@@ -1,0 +1,44 @@
+{
+   "Campaign_Name": "Empty Campaign",
+   "Events": [
+      {
+         "Event_Coordinator_Config": {
+            "Intervention_Config": {
+               "Number_Cases_Per_Node": 25,
+               "Outbreak_Source": "ImportCases",
+               "class": "Outbreak"
+            },
+            "class": "StandardInterventionDistributionEventCoordinator"
+         },
+         "Nodeset_Config": {
+            "class": "NodeSetAll"
+         },
+         "Start_Day": 2,
+         "class": "CampaignEvent"
+      },
+      {
+         "Event_Coordinator_Config": {
+            "Intervention_Config": {
+               "Clade": 0,
+               "Daily_Import_Pressures": [
+                  0.01644
+               ],
+               "Durations": [
+                  100000
+               ],
+               "Import_Age": 12775,
+               "Number_Cases_Per_Node": 0,
+               "class": "ImportPressure"
+            },
+            "Timesteps_Between_Repetitions": 0,
+            "class": "StandardInterventionDistributionEventCoordinator"
+         },
+         "Nodeset_Config": {
+            "class": "NodeSetAll"
+         },
+         "Start_Day": 30,
+         "class": "CampaignEvent"
+      }
+   ],
+   "Use_Defaults": 1
+}

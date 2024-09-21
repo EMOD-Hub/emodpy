@@ -1,0 +1,22 @@
+{
+  "Metadata": {
+    "IdReference": "Gridded world grump2.5arcmin"
+  },
+  "Nodes": [
+    {
+      "NodeID": 340461476,
+      "IndividualAttributes": {
+        "SusceptibilityDistributionFlag": 0,
+        "SusceptibilityDistribution1": 1,
+        "SusceptibilityDistribution2": 0,
+        "InitialPrevalenceStrains": [
+          {
+            "Clade": 0,
+            "Genome": -1,
+            "Fraction": 1.0
+          }
+        ]
+      }
+    }
+  ]
+}

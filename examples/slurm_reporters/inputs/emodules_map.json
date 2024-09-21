@@ -1,0 +1,8 @@
+{
+    "disease_plugins": [],
+    "interventions": [],
+    "reporter_plugins": [
+        "/mnt/bayesianfil01/home/IDM_Bamboo_User/bin/reporter_plugins/faa4a4314f32b86aab690974ddd9f605/libReportNodeDemographics.so",
+        "/mnt/bayesianfil01/home/IDM_Bamboo_User/bin/reporter_plugins/2c4ddd6bf74f90df974786d0eb620fea/libhumanmigrationtracking.so"
+    ]
+}

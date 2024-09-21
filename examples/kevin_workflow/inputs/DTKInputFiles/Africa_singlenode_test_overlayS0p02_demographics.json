@@ -1,0 +1,1 @@
+{"Metadata": {"DateCreated": "04/14/2020", "Tool": "dtk-tools", "Author": "kmccarthy", "IdReference": "Gridded world grump2.5arcmin", "NodeCount": 1}, "Nodes": [{"NodeID": 1, "IndividualAttributes": {"SusceptibilityDistribution": {"DistributionValues": [[0, 73000]], "ResultScaleFactor": 1, "ResultValues": [[0.02, 0.02]]}}}]}

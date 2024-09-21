@@ -44,7 +44,7 @@ class EMODCampaign:
 
         with open(filename, 'r') as fp:
             data = json.load(fp)
-            return EMODCampaign.load_from_dict(data)
+        return EMODCampaign.load_from_dict(data)
 
     @staticmethod
     def load_from_dict(data: Dict) -> object:

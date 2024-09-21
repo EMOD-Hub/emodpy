@@ -247,11 +247,13 @@ class TestEMODTask(ITestWithPersistence):
             camp.schema_path = schema_path
             event = ob.new_intervention(camp, 1, cases=4)
             camp.add(event, first=True)
+            camp.save("campaign.json")
             return camp
 
         def build_demo():
             demog = Demographics.from_template_node()
             demog.SetDefaultProperties()
+            demog.generate_file("demographics.json")
             return demog
 
         # ToDo: add the migration test when it's ready
@@ -289,6 +291,7 @@ class TestEMODTask(ITestWithPersistence):
             return demog, mig_data
 
         self.prepare_schema_and_eradication()
+        
 
         print(f"Telling emod-api to use {self.schema_path} as schema.")
         ob.schema_path = self.schema_path
@@ -409,13 +412,13 @@ class TestEMODTask(ITestWithPersistence):
 
         # check experiment common assets are as expected
         experiment.pre_creation(self.platform)
-        self.assertEqual(len(experiment.assets), 4)
+        self.assertEqual(len(experiment.assets), 5)
         self.assertIn(self.eradication_path, [a.absolute_path for a in experiment.assets])
 
         sim = experiment.simulations[0]
         sim.pre_creation(self.platform)
         self.assertEqual(len(sim.assets), 1)
-        self.assertIn('new_config.json', [a.filename for a in sim.assets])
+        self.assertIn('config.json', [a.filename for a in sim.assets])
 
         self.assertNotIn('Campaign_Filename', sim.task.config["parameters"])
         self.assertEqual(sim.task.config["parameters"]['Enable_Interventions'], 0)

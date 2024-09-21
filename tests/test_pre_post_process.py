@@ -288,7 +288,7 @@ class TestEmodPrePostProcess(ITestWithPersistence):
 
         # check experiment common assets are as expected
         experiment.pre_creation(self.platform)
-        self.assertEqual(len(experiment.assets), 4)
+        self.assertEqual(len(experiment.assets), 5)
 
     def test_emod_process_from_file(self):
         """

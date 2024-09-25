@@ -69,6 +69,7 @@ podTemplate(
 				// In python 3.9 environment, dataclasses should be installed at this point.
 				//sh "pip3 install dataclasses"
 				sh "pip3 install idmtools_test --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple"
+				sh "pip3 install emod_generic --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple"
 				sh 'pip3 install keyrings.alt'
 				sh "pip3 install pytest-xdist"
 				sh "pip3 freeze"
@@ -77,13 +78,10 @@ podTemplate(
 				withCredentials([string(credentialsId: 'Comps_emodpy_user', variable: 'user'), string(credentialsId: 'Comps_emodpy_password', variable: 'password'),
 				                 string(credentialsId: 'Bamboo_id', variable: 'bamboo_user'), string(credentialsId: 'Bamboo', variable: 'bamboo_password')]) {
 					sh 'python3 ".dev_scripts/create_auth_token_args.py" --comps_url https://comps2.idmod.org --username $user --password $password'
-					dir('tests') {
-					    sh 'python3 bamboo_login_with_arguments.py -u $bamboo_user -p $bamboo_password'
-				    }
 				}
 				echo "Running Emodpy Tests"
 				dir('tests') {
-					sh "pytest -n 0 test_download_from_bamboo.py"
+					sh "pytest -n 0 test_download_from_package.py"
 					sh 'pytest -n 10 --dist loadfile -v -m emod --junitxml="result.xml"'
   		    junit '*.xml'
 				}

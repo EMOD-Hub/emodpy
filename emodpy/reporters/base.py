@@ -224,7 +224,7 @@ class Reporters(InputFilesList):
 
         """
         if not self.empty:
-            task.set_parameter("Custom_Reports_Filename", "custom_reports.json")
+            task.config.parameters.Custom_Reports_Filename = "custom_reports.json"
 
     def gather_assets(self, **kwargs) -> typing.List[Asset]:
         # Remove the unused dlls from the folder

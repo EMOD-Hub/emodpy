@@ -1,8 +1,8 @@
 -i https://packages.idmod.org/api/pypi/pypi-production/simple
 click~=7.1
-idmtools~=1.6
-idmtools-platform-comps~=1.6
-idmtools-models~=1.6
+idmtools~=1.7
+idmtools-platform-comps~=1.7
+idmtools-models~=1.7
 emod-api~=1.24
 matplotlib
 astor

@@ -47,7 +47,6 @@ setup(
     author=[author[0] for author in authors],
     author_email=[author[1] for author in authors],
     classifiers=[
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Framework:: IDM-Tools :: models'
     ],
@@ -62,9 +61,9 @@ setup(
                   "idmtools_cli.cli_plugins": ["emodpy=emodpy_cli.cli.schema:emodpy"]
                   },
     packages=find_packages(),
-    python_requires='>=3.6.*, !=3.7.0, !=3.7.1, !=3.7.2',
+    python_requires='>=3.7.3',
     setup_requires=setup_requirements,
     test_suite='tests',
     extras_require=extras,
-    version='1.20.0'
+    version='1.21.1'
 )

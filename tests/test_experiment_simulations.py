@@ -14,7 +14,7 @@ from idmtools.entities.templated_simulation import TemplatedSimulations
 from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 from emodpy.emod_task import EMODTask
 from emod_api.config import from_schema as fs
-from . import manifest
+from tests import manifest
 
 # current_directory = os.path.dirname(os.path.realpath(__file__))
 # BIN_PATH = os.path.join(current_directory, "..", "examples", "inputs", "bin")

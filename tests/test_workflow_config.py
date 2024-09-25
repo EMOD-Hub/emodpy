@@ -23,8 +23,9 @@ from emodpy.utils import download_latest_bamboo, download_latest_schema, Eradica
 # import sys
 # file_dir = os.path.dirname(__file__)
 # sys.path.append(file_dir)
-from . import manifest
-sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
+from tests import manifest
+
+sif_path = manifest.sft_id_file
 
 num_seeds = 2
 
@@ -212,12 +213,12 @@ class TestWorkflowConfig(ITestWithPersistence, ABC):
         from emod_api import campaign as camp 
 
         print(f"Telling emod-api to use {self.schema_path} as schema.")
-        camp.schema_path = self.schema_path   # this is brittle. We have to make sure schema exists by now but main way to gen schema is call to from_default2....
+        camp.set_schema( self.schema_path )  # this is brittle. We have to make sure schema exists by now but main way to gen schema is call to from_default2.... )
 
         # ToDo: when #276 is resolved, change campaign_builder=build_camp to campaign_builder=camp
         def build_camp():
             event = ob.new_intervention(camp, 1, cases=4)
-            camp.add(event, first=True)
+            camp.add(event)
             # We are saving and reloading. Maybe there's an even better way? But even an outbreak seeding does not belong in the EMODTask.
             # camp_path = "campaign.json"
             # camp.save(camp_path)

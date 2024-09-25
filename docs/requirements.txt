@@ -1,0 +1,10 @@
+sphinx-rtd-theme~=0.5.0
+sphinxcontrib-napoleon~=0.7
+sphinx~=3.3.0
+beautifulsoup4~=4.9.3
+plantweb~=1.2.1
+sphinxcontrib-programoutput~=0.16
+py-make
+PyGithub~=1.54
+pygit2~=1.4.0
+sphinxext.remoteliteralinclude

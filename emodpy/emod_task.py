@@ -138,10 +138,8 @@ class EMODTask(ITask):
         adhoc_events = campaign.get_adhocs()
         if dev_mode:
             campaign.save()
-        # This might be a great place to reset the campaign object so users don't have to.
-        campaign.reset()
 
-        if len(adhoc_events) > 0:
+        if adhoc_events:
             # print("Found adhoc events in campaign. Needs some special processing behind the scenes.")
             logger.debug("Found adhoc events in campaign. Needs some special processing behind the scenes.")
             if "Custom_Individual_Events" in self.config.parameters:
@@ -149,8 +147,17 @@ class EMODTask(ITask):
             else:
                 reverse_map = {}
                 for user_name, builtin_name in adhoc_events.items():
-                    reverse_map[builtin_name] = user_name 
+                    reverse_map[builtin_name] = user_name
                 self.config.parameters["Event_Map"] = reverse_map
+        # checking attributes because if using older emod-api whose campaign doesn't have them,
+        # we don't want to fail, just move on.
+        if hasattr(campaign, "get_custom_coordinator_events") and "Custom_Coordinator_Events" in self.config.parameters:
+            self.config.parameters.Custom_Coordinator_Events = campaign.get_custom_coordinator_events()
+        if hasattr(campaign, "get_custom_node_events") and "Custom_Node_Events" in self.config.parameters:
+            self.config.parameters.Custom_Node_Events = campaign.get_custom_node_events()
+
+        # This might be a great place to reset the campaign object so users don't have to.
+        campaign.reset()
 
     def create_demog_from_callback(self, builder, from_sweep=False, params=None):
         if builder is None:

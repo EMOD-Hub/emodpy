@@ -11,6 +11,9 @@ See :doc:`idmtools:api/idmtools_index` for a diagram showing how |IT_s| and each
 related packages are used in an end-to-end workflow using |EMOD_s| as the
 disease transmission model.
 
+Contents
+--------
+
 .. toctree::
    :maxdepth: 3
    :titlesonly:
@@ -35,7 +38,6 @@ disease transmission model.
    :titlesonly:
    :caption: Related documentation
 
-   emodpy Jupyter notebooks <https://docs.idmod.org/projects/jupyter-notebooks-emodpy/en/latest/>
    EMOD generic <https://docs.idmod.org/projects/emod-generic/en/latest/>
    emod-api <https://docs.idmod.org/projects/emod-api/en/latest/>
    idmtools <https://docs.idmod.org/projects/idmtools/en/latest/>
@@ -43,6 +45,5 @@ disease transmission model.
 
 .. not sure what to do with catalyst. Not included yet.
 
-.. nothing done with STAMP yet; not sure if it will be some sort of "plug-in" to the tools or totally standalone
 
 

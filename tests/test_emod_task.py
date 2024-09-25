@@ -141,15 +141,6 @@ class TestEMODTask(ITestWithPersistence):
                                                                 implicit_config_set_fns=self.demog.implicits),
                                                  config_out_path=self.config_path)
 
-        # workaround for https://github.com/InstituteforDiseaseModeling/emodpy/issues/358
-        import emod_api.schema_to_class as s2c
-        with open(self.config_path) as conf:
-            config_rod = json.load(conf, object_hook=s2c.ReadOnlyDict)
-        config_rod.parameters.Enable_Demographics_Builtin = 1
-        del config_rod.parameters["Demographics_Filenames"]
-        with open(self.config_path, "w") as outfile:
-            json.dump(config_rod, outfile, sort_keys=True, indent=4)
-
         task = EMODTask.from_files(
             eradication_path=self.eradication_path,
             config_path=self.config_path,
@@ -214,10 +205,10 @@ class TestEMODTask(ITestWithPersistence):
 
         del sim.task.config["parameters"]["Enable_Demographics_Builtin"]
         del sim.task.config["parameters"]["Demographics_Filenames"]
+        del config["Demographics_Filenames"]
         del config["Enable_Demographics_Builtin"]
 
         self.assertEqual(config, sim.task.config["parameters"])
-
         # Assert the right demo file is loaded in demographics.assets
         self.assertEqual(self.demo_path, sim.task.demographics.assets[0].absolute_path)
 
@@ -234,29 +225,25 @@ class TestEMODTask(ITestWithPersistence):
     def test_from_files_valid_customReport(self):
         self.prepare_input_files()
 
+        def set_param_fn(config, implicit_config_set_fns):
+            config.parameters.Enable_Demographics_Builtin = 0
+            config.parameters.Base_Infectivity_Constant = 1
+            config.parameters.Incubation_Period_Constant = 1
+            config.parameters.Infectious_Period_Constant = 1
+            config.parameters.Base_Infectivity_Distribution = 'CONSTANT_DISTRIBUTION'
+            config.parameters.Incubation_Period_Distribution = 'CONSTANT_DISTRIBUTION'
+            config.parameters.Infectious_Period_Distribution = 'CONSTANT_DISTRIBUTION'
+            config.parameters.x_Base_Population = 0.001
+            config.parameters.Simulation_Duration = 10
+            config.parameters.Start_Time = 0
+            for fn in implicit_config_set_fns:
+                    config = fn(config)
+            return config
+
         dfs.write_config_from_default_and_params(config_path=self.default_config_file,
                                                  set_fn=partial(set_param_fn,
                                                                 implicit_config_set_fns=self.demog.implicits),
                                                  config_out_path=self.config_path)
-
-        # workaround for https://github.com/InstituteforDiseaseModeling/emodpy/issues/358
-        import emod_api.schema_to_class as s2c
-        with open(self.config_path) as conf:
-            config_rod = json.load(conf, object_hook=s2c.ReadOnlyDict)
-        #config_rod.parameters.Enable_Demographics_Builtin = 1
-        #del config_rod.parameters["Demographics_Filenames"]
-        config_rod.parameters['Base_Infectivity_Constant'] = 1
-        config_rod.parameters['Incubation_Period_Constant'] = 1
-        config_rod.parameters['Infectious_Period_Constant'] = 1
-        config_rod.parameters['Base_Infectivity_Distribution'] = 'CONSTANT_DISTRIBUTION'
-        config_rod.parameters['Incubation_Period_Distribution'] = 'CONSTANT_DISTRIBUTION'
-        config_rod.parameters['Infectious_Period_Distribution'] = 'CONSTANT_DISTRIBUTION'
-        config_rod.parameters['x_Base_Population'] = 0.001
-        config_rod.parameters['Simulation_Duration'] = 10
-        config_rod.parameters['Start_Time'] = 0
-
-        with open(self.config_path, "w") as outfile:
-            json.dump(config_rod, outfile, sort_keys=True, indent=4)
 
         custom_reports_path = os.path.join(manifest.current_directory, "inputs", "custom_reports.json")
 
@@ -379,7 +366,6 @@ class TestEMODTask(ITestWithPersistence):
             return demog, mig_data
 
         self.prepare_schema_and_eradication()
-        
 
         print(f"Telling emod-api to use {self.schema_path} as schema.")
         ob.schema_path = self.schema_path
@@ -662,5 +648,3 @@ class TestEMODTask(ITestWithPersistence):
         self.assertTrue(task.use_embedded_python)
 
         self.assertIn(f"--python-script-path './Assets/python;{pypackage_path};{virtual_path}'", str(task.command))
-
-

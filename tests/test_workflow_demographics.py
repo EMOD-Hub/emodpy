@@ -520,7 +520,7 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
                     [0.0, 1]],
                 "Route": "Contact"}
             new_individual_properties = IndividualProperties()
-            new_individual_properties.add(IndividualProperty(initial_distribution,
+            new_individual_properties.add(IndividualProperty(initial_distribution=initial_distribution,
                                                              property=property,
                                                              values=values,
                                                              transmission_matrix=transmission_matrix))
@@ -570,10 +570,10 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
             result_values=[0.2, 0.3])
         # node_attributes = Node.Node.NodeAttributes(initial_population=100)  # todo, remove this once bug is fixed
 
-        overlay = Demographics.DemographicsOverlay(nodes=[1],
+        overlay = Demographics.DemographicsOverlay(nodes=[Node.OverlayNode(1)],
                                                    individual_attributes=individual_attributes,
                                                    node_attributes=None,
-                                                   meta_data={"IdReference": "Gridded world grump2.5arcmin"})
+                                                   idref="Gridded world grump2.5arcmin")
         overlay_filename = os.path.join(manifest.demographics_folder, "demographics_susceptibility_overlay.json")
         overlay.to_file(overlay_filename)
 

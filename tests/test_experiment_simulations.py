@@ -19,6 +19,7 @@ from tests import manifest
 # current_directory = os.path.dirname(os.path.realpath(__file__))
 # BIN_PATH = os.path.join(current_directory, "..", "examples", "inputs", "bin")
 # INPUT_PATH = os.path.join(current_directory, "..", "examples", "serialization", "inputs")
+sif_path = manifest.sft_id_file
 
 
 @pytest.mark.comps
@@ -75,6 +76,7 @@ class TestExperimentSimulations(ITestWithPersistence):
                                    ep4_path=manifest.ep4_path)
         task.tags = {"idmtools": "idmtools-automation", "string_tag": "test", "number_tag": 123}
         task.set_parameter("Enable_Immunity", 0)
+        task.set_sif(sif_path)
 
         # User builder to create simulations
         num_sims = 3
@@ -92,6 +94,7 @@ class TestExperimentSimulations(ITestWithPersistence):
                                     demographics_paths=None,
                                     eradication_path=eradication_path,
                                     ep4_path=manifest.ep4_path)
+        task1.set_sif(sif_path)
         # create another TemplatedSimulations with this task1
         ts1 = TemplatedSimulations([builder], base_task=task1)
 
@@ -105,6 +108,9 @@ class TestExperimentSimulations(ITestWithPersistence):
         # Check total simulations 3+1+3
         sims = experiment.simulations
         self.assertEqual(len(sims), 7)
+
+        self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
+        print(f"Experiment {experiment.uid} succeeded.")
 
     def test_create_suite(self):
         from idmtools.entities.suite import Suite

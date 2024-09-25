@@ -241,7 +241,7 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
                 return config
             silly_example = partial(_set_config_param_implicitly, trigger_name=test_trigger_name)
             camp.implicits.append(silly_example)
-            camp.add(ip.new_intervention(t, dur, dip),
+            camp.add(ip.new_intervention(t, dur, dip, nods=[]),
                      name="import_pressure", first=True)
             camp.add(sv.new_intervention(t_sv), name="vaccine", first=False)
             return camp

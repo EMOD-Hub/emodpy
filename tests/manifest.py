@@ -21,8 +21,7 @@ schema_path = schema_file
 output_dir = os.path.join(current_directory, "output")
 serialization_files_dir = os.path.join(output_dir, "serialization_files", "output")
 
-sft_id = "e5d5ab18-cfcf-ec11-92e9-f0921c167864"
-sft_id_file = os.path.join(current_directory, "stage_sif.id")
+sft_id_file = "stage_sif.id"
 
 demographics_folder = os.path.join(current_directory, "inputs", "demographics")
 if not os.path.isdir(demographics_folder):

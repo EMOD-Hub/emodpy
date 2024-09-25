@@ -129,14 +129,22 @@ class TestBambooDownloadGenLinux(TestBambooDownload):
 
     def test_bamboo_download_reporter_gen_linux(self):
         super().get_reporter_test()
+    # def create_argparse(self):
+    #     import argparse
+    #     parser = argparse.ArgumentParser()
+    #     parser.add_argument("-b", "--build_schema", help="build schema in get_model_files() ",
+    #                         action="store_true")
+    #     args = parser.parse_args()
+    #     return args.build_schema
 
     def test_bamboo_download_get_model_files(self):
         manifest.delete_existing_folder(manifest2.plugins_folder)
         manifest.delete_existing_file(manifest2.eradication_path)
         manifest.delete_existing_file(manifest2.schema_file)
         os.mkdir(manifest2.plugins_folder)
+
         get_model_files(
-            plan=self.plan, manifest=manifest2
+            plan=self.plan, manifest=manifest2, skip_build_schema=True
         )
 
         # Make sure eradication is downloaded

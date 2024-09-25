@@ -29,7 +29,7 @@ from emod_api.config import default_from_schema_no_validation as dfs
 
 user_logger = getLogger('user')
 logger = getLogger(__name__)
-
+dev_mode = False
 """
 Note that these 3 functions could be member functions of EMODTask but Python modules are already pretty good at being 'static classes'.
 """
@@ -104,7 +104,7 @@ class EMODTask(ITask):
                 self.eradication_path = eradication_path
                 self.executable_name = os.path.basename(self.eradication_path)
 
-    def create_campaign_from_callback(self, builder, params=None, write_campaign=None):
+    def create_campaign_from_callback(self, builder, params=None):
         """
         Parameters:
             write_campaign (str):  if not None, the path to write the campaign to
@@ -114,15 +114,18 @@ class EMODTask(ITask):
             campaign = builder()
         else:
             campaign = builder(params=params)
+        if "implicits" in dir(campaign) and campaign.implicits:
+            self.implicit_configs.extend(campaign.implicits)
 
         # TODO: this is very bad. This is necessary due to the fact that emod-api campaigns are modules with
         # global module scope, NOT objects! They must be serialize/deserialized to prevent different campaigns
         # from mucking with each other.
         campaign_dict = json.loads(json.dumps(campaign.campaign_dict))
         self.campaign = EMODCampaign.load_from_dict(campaign_dict)
+        # self.campaign = EMODCampaign.load_from_dict(copy.deepcopy(campaign.campaign_dict))
         adhoc_events = campaign.get_adhocs()
-        if write_campaign is not None:
-            campaign.save(filename=write_campaign)
+        if dev_mode:
+            campaign.save()
 
         if len(adhoc_events) > 0:
             print("Found adhoc events in campaign. Needs some special processing behind the scenes.")
@@ -187,16 +190,32 @@ class EMODTask(ITask):
                 self.common_assets.add_asset(demog_path)
 
             demog_files = [pathlib.PurePath(demog_path).name]
-            self.config.parameters.Demographics_Filenames = demog_files
-            self.config.parameters.Enable_Demographics_Builtin = 0
+
+            def _set_demog_filenames(config):
+                config.parameters.Demographics_Filenames = demog_files
+                config.parameters.Enable_Demographics_Builtin = 0
+                return config
+            self.implicit_configs.append(_set_demog_filenames)
 
             if mig_path is not None:
                 self.transient_assets.add_asset(str(mig_path))
                 user_logger.info("Adding migration file and json to assets.")
                 self.transient_assets.add_asset(str(mig_path) + ".json")
 
-                self.config.parameters.Regional_Migration_Filename = mig_path.name
-                self.config.parameters.Migration_Model = "FIXED_RATE_MIGRATION"
+                def _set_mig_filenames(config):
+                    config.parameters.Regional_Migration_Filename = mig_path.name
+                    config.parameters.Migration_Model = "FIXED_RATE_MIGRATION"
+                    return config
+                self.implicit_configs.append(_set_mig_filenames)
+
+    def handle_implicit_configs(self):
+        """
+        Execute the implicit config functions created by the demographics builder.
+        """
+        logger.debug(f"Executing {len(self.implicit_configs)} implicit config functions from demog and mig land.")
+        for fn in self.implicit_configs:
+            if fn:
+                self.config = fn(self.config)
 
     @classmethod
     def from_default2(
@@ -249,13 +268,6 @@ class EMODTask(ITask):
         if demog_builder:
             task.create_demog_from_callback(demog_builder)
 
-        logger.debug(f"Executing {len(task.implicit_configs)} implicit config functions from demog and mig land.")
-        for fn in task.implicit_configs:
-            if fn:
-                task.config = fn(task.config)
-
-        # TBD: do the implicits here
-        # We don't write the config to disk until later.
         if campaign_builder:
             task.create_campaign_from_callback(builder=campaign_builder)
 
@@ -281,6 +293,8 @@ class EMODTask(ITask):
                 task.common_assets.add_asset(serial_pop_file)
                 task.config.parameters.Serialized_Population_Filenames = [pathlib.Path(serial_pop_file).name]
             task.config.parameters.Serialized_Population_Path = "Assets"
+
+        task.handle_implicit_configs()
 
         return task
 
@@ -511,6 +525,9 @@ class EMODTask(ITask):
             else:
                 self._enforce_non_schema_coherence()
                 self.config.parameters.finalize()
+            if dev_mode:
+                with open(self.config_file_name, "w") as fp:
+                    json.dump(self.config, fp, sort_keys=True, indent=4)
             asset = Asset(filename=self.config_file_name, content=json.dumps(self.config, sort_keys=True))
             self.transient_assets.add_asset(asset=asset, fail_on_duplicate=False)
 

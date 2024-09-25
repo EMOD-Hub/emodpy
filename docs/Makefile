@@ -57,7 +57,6 @@ generate-api:
 	-rm modules.rst
 	-rm emodpy.rst
 	sphinx-apidoc -f -e -M -o . ../emodpy
-	mv modules.rst emodpy_index.rst
 
 .PHONY: html
 html:

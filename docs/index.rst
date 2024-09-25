@@ -1,11 +1,11 @@
-=====================
-Welcome to |EMODPY_s|
-=====================
+========================
+|EMODPY_s| documentation
+========================
 
 |EMODPY_s| is a collection of Python scripts and utilities created to
 streamline user interactions with |EMOD_s| and |IT_s|. Additional
 functionality  for interacting with |EMOD_s| is provided in the
-:doc:`emod_api:emod_api_index` and  :doc:`idmtools:idmtools_index` packages.
+:doc:`emod_api:emod_api` and  :doc:`idmtools:idmtools_index` packages.
 
 See :doc:`idmtools:index` for a diagram showing how |IT_s| and each of the
 related packages are used in an end-to-end workflow using |EMOD_s| as the
@@ -24,17 +24,25 @@ disease transmission model.
    analyzers
    reports
    serialization
-   emodpy_index
+   modules
    faq
    glossary
    changelog
 
 
+.. toctree::
+   :maxdepth: 3
+   :titlesonly:
+   :caption: Related documentation
+
+   emodpy Jupyter notebooks <https://docs.idmod.org/projects/jupyter-notebooks-emodpy/en/latest/>
+   EMOD generic <https://docs.idmod.org/projects/emod-generic/en/latest/>
+   emod-api <https://docs.idmod.org/projects/emod-api/en/latest/>
+   idmtools <https://docs.idmod.org/projects/idmtools/en/latest/>
 
 
 .. not sure what to do with catalyst. Not included yet.
 
 .. nothing done with STAMP yet; not sure if it will be some sort of "plug-in" to the tools or totally standalone
 
-.. Nothing here for EMOD API. We'll want to put it *somewhere* and likely have a landing page for it here...
 

@@ -1,5 +1,6 @@
 import os
 import pytest
+import sys
 from sys import platform
 from abc import ABC, abstractmethod
 from emod_api.schema import get_schema as gs
@@ -10,6 +11,9 @@ from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 # file_dir = os.path.dirname(__file__)
 # sys.path.append(file_dir)
 from . import manifest
+
+major = 3
+minor = 6
 
 
 # bamboo_api_login() only work in console
@@ -45,6 +49,9 @@ class TestGetSchema(ITestWithPersistence, ABC):
         self.assertTrue(os.path.isfile(self.schema_path))
 
 
+@pytest.mark.skipif(sys.version_info.major != major or sys.version_info.minor != minor,
+                    reason=f"skip TestGetSchemaWin test in Python {sys.version_info.major}.{sys.version_info.minor} "
+                           f"environment.")
 @pytest.mark.skipif(platform == "linux" or platform == "linux2",
                     reason="skip TestGetSchemaWin test in Linux OS")
 @pytest.mark.emod
@@ -81,6 +88,9 @@ class TestGetSchemaWin(TestGetSchema):
         super().run_test()
 
 
+@pytest.mark.skipif(sys.version_info.major != major or sys.version_info.minor != minor,
+                    reason=f"skip TestGetSchemaLinux test in Python {sys.version_info.major}.{sys.version_info.minor} "
+                           f"environment.")
 @pytest.mark.skipif(platform == "win32",
                     reason="skip TestGetSchemaLinux test in Windows OS")
 @pytest.mark.emod

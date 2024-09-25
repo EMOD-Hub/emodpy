@@ -28,7 +28,7 @@ from emodpy.utils import download_latest_bamboo, download_latest_schema, Eradica
 # sys.path.append(file_dir)
 from . import manifest
 
-default_config_file = "default_config.json"  # this is a hard-coded value
+default_config_file = "campaign_workflow_default_config.json"
 
 
 # bamboo_api_login() only work in console
@@ -55,9 +55,7 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
         manifest.delete_existing_file(cls.config_file)
         manifest.delete_existing_file(default_config_file)
         print("write_default_from_schema")
-        dfs.write_default_from_schema(cls.schema_path)
-        print("move default_config.json")
-        shutil.move(default_config_file, cls.default_config_file)
+        dfs.get_default_config_from_schema(cls.schema_path, output_filename=cls.default_config_file)
         camp.schema_path = cls.schema_path
 
     def setUp(self) -> None:
@@ -274,11 +272,17 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
             return config
 
         def build_camp(t, dur, dip, t_sv):
+            def _set_config_param_implicitly(config, trigger_name):
+                config.parameters.Report_Event_Recorder_Events = [trigger_name]
+                return config
+            silly_example = partial(_set_config_param_implicitly, trigger_name=test_trigger_name)
+            camp.implicits.append(silly_example)
             camp.add(ip.new_intervention(t, dur, dip),
                      name="import_pressure", first=True)
             camp.add(sv.new_intervention(t_sv), name="vaccine", first=False)
             return camp
 
+        test_trigger_name = "Births"
         sv.schema_path = self.schema_path
         ip.schema_path = self.schema_path
         timestep = 2
@@ -310,6 +314,7 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
         # these will not be changed until task.pre_creation()
         # self.assertEqual("campaign.json", task.config["Campaign_Filename"])
         # self.assertEqual(1, task.config["Enable_Intervention"])
+        self.assertEqual([test_trigger_name], task.config["parameters"]["Report_Event_Recorder_Events"])
 
         experiment = self.run_exp(task)
         config_basename = os.path.basename(config_path)
@@ -327,6 +332,8 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
             stdout = files["stdout.txt"].decode("utf-8")
             self.assertIn("distributed 'ImportPressure' intervention to node", stdout)
             self.assertIn("'Vaccine' interventions at node", stdout)
+
+        camp.reset()
 
     def node_multiplier_constant_test(self):
         """
@@ -588,7 +595,7 @@ class TestWorkflowCampaignWin(TestWorkflowCampaign):
         cls.schema_path = manifest.schema_path_win
         cls.config_file = os.path.join(manifest.config_folder, "generic_config_for_campaign_workflow.json")
         cls.default_config_file = os.path.join(manifest.config_folder, default_config_file)
-        cls.camp_file = os.path.join(manifest.campaign_folder, "generic_campaign.json")
+        cls.camp_file = os.path.join(manifest.campaign_folder, "generic_campaign_for_campaign_workflow.json")
         cls.comps_platform = "COMPS2"
 
     def test_1_outbreak_individual_from_file_win(self):
@@ -625,7 +632,7 @@ class TestWorkflowCampaignLinux(TestWorkflowCampaign):
         cls.schema_path = manifest.schema_path_linux
         cls.config_file = os.path.join(manifest.config_folder, "generic_config_for_campaign_workflow_l.json")
         cls.default_config_file = os.path.join(manifest.config_folder, default_config_file)
-        cls.camp_file = os.path.join(manifest.campaign_folder, "generic_campaign_l.json")
+        cls.camp_file = os.path.join(manifest.campaign_folder, "generic_campaign_for_campaign_workflow_l.json")
         cls.comps_platform = "SLURM"
 
     def test_1_outbreak_individual_from_file_linux(self):

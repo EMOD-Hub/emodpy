@@ -19,7 +19,6 @@ from idmtools.registry.task_specification import TaskSpecification
 from idmtools.utils.json import load_json_file
 from idmtools.entities.iplatform import IPlatform
 
-from emodpy.utils import download_eradication
 from emodpy.emod_file import ClimateFiles, DemographicsFiles, MigrationFiles
 from emodpy.emod_campaign import EMODCampaign
 from emodpy.interventions import EMODEmptyCampaign
@@ -38,24 +37,15 @@ Note that these 3 functions could be member functions of EMODTask but Python mod
 
 def add_ep4_from_path(task, ep4_path):
     """
-    Add embedded Python pre- and post-, and in-processing scripts from given path.
+    Add embedded Python scripts from a given path.
     """
 
-    pre_proc_path = os.path.join(ep4_path, "dtk_pre_process.py")
-    in_proc_path = os.path.join(ep4_path, "dtk_in_process.py")
-    post_proc_path = os.path.join(ep4_path, "dtk_post_process.py")
+    for entry_name in os.listdir(ep4_path):
+        full_path = os.path.join(ep4_path, entry_name)
+        if(os.path.isfile(full_path) and entry_name.endswith(".py")):
+            py_file_asset = Asset(full_path, relative_path="python")
+            task.common_assets.add_asset(py_file_asset)
 
-    if os.path.isfile(pre_proc_path):
-        dtk_pre_process_asset = Asset(pre_proc_path, relative_path="python")
-        task.common_assets.add_asset(dtk_pre_process_asset)
-
-    if os.path.isfile(in_proc_path):
-        dtk_in_process_asset = Asset(in_proc_path, relative_path="python")
-        task.common_assets.add_asset(dtk_in_process_asset)
-
-    if os.path.isfile(post_proc_path):
-        dtk_post_process_asset = Asset(post_proc_path, relative_path="python")
-        task.common_assets.add_asset(dtk_post_process_asset)
     return task
 
 
@@ -100,6 +90,7 @@ class EMODTask(ITask):
     sif_filename: str = None
 
     def __post_init__(self):
+        from emodpy.utils import download_eradication
         super().__post_init__()
         self.executable_name = "Eradication"
         if self.eradication_path is not None:
@@ -113,17 +104,25 @@ class EMODTask(ITask):
                 self.eradication_path = eradication_path
                 self.executable_name = os.path.basename(self.eradication_path)
 
-    def create_campaign_from_callback(self, builder, params=None):
+    def create_campaign_from_callback(self, builder, params=None, write_campaign=None):
+        """
+        Parameters:
+            write_campaign (str):  if not None, the path to write the campaign to
+        """
         # params param needs to be totally optional for back-compat
         if params is None:
             campaign = builder()
         else:
             campaign = builder(params=params)
 
-        campaign_path = campaign.save()
-        user_logger.info(f"Campaign builder save returned {campaign_path} as file.")
-        self.campaign = EMODCampaign.load_from_file(campaign_path)
+        # TODO: this is very bad. This is necessary due to the fact that emod-api campaigns are modules with
+        # global module scope, NOT objects! They must be serialize/deserialized to prevent different campaigns
+        # from mucking with each other.
+        campaign_dict = json.loads(json.dumps(campaign.campaign_dict))
+        self.campaign = EMODCampaign.load_from_dict(campaign_dict)
         adhoc_events = campaign.get_adhocs()
+        if write_campaign is not None:
+            campaign.save(filename=write_campaign)
 
         if len(adhoc_events) > 0:
             print("Found adhoc events in campaign. Needs some special processing behind the scenes.")
@@ -205,12 +204,13 @@ class EMODTask(ITask):
             eradication_path,   # : str = None,
             schema_path,    # : str
             param_custom_cb=None,
-            config_path="new_config.json",
+            config_path="config.json",
             campaign_builder=None,
             ep4_custom_cb=default_ep4_fn,
             demog_builder=None,
             plugin_report=None,
             serial_pop_files=None,
+            write_default_config=None,
             **kwargs) -> "EMODTask":
         """
         Create a task from emod-api Defaults
@@ -228,21 +228,21 @@ class EMODTask(ITask):
         """
         task = cls(eradication_path=eradication_path, **kwargs)
 
-        # Do not regenerate schema from binary because there are too many issues with matching platforms
-        dfs.write_default_from_schema(schema_path)  # schema -> default_config.json
-        with open('default_config.json', 'r') as f:
-            available_config_parameters = list(json.load(f)['parameters'].keys())
-        task.available_config_parameters = available_config_parameters
+        # we do not regenerate the schema from a binary because there are too many issues with matching platforms,
+        # so we use a schema file.
+        default_config = dfs.get_default_config_from_schema(path_to_schema=schema_path, as_rod=True,
+                                                            output_filename=write_default_config)
+        task.available_config_parameters = list(default_config['parameters'].keys())
 
         # Invoke new custom param fn callback here.
         if param_custom_cb is None:
             def null_param_fn(config):
                 return config
             param_custom_cb = null_param_fn
-        task.config = dfs.get_config_from_default_and_params("default_config.json", param_custom_cb)
+        task.config = dfs.get_config_from_default_and_params(config=default_config, set_fn=param_custom_cb)
+
         if config_path is None:
             config_path = "config.json"
-
         task.config_file_name = pathlib.Path(config_path).name
 
         # Let's do the demographics building here...  
@@ -251,7 +251,8 @@ class EMODTask(ITask):
 
         logger.debug(f"Executing {len(task.implicit_configs)} implicit config functions from demog and mig land.")
         for fn in task.implicit_configs:
-            task.config = fn(task.config)
+            if fn:
+                task.config = fn(task.config)
 
         # TBD: do the implicits here
         # We don't write the config to disk until later.
@@ -337,6 +338,8 @@ class EMODTask(ITask):
         """
         if config_path:
             self.config = load_json_file(config_path)["parameters"]
+        else:
+            self.config = None
 
         if campaign_path:
             self.campaign = EMODCampaign.load_from_file(campaign_path)
@@ -499,30 +502,26 @@ class EMODTask(ITask):
         # task.config contains emod-api version of config i.e., with schema. Needs to be finalized and written.
         if logger.isEnabledFor(DEBUG):
             logger.debug("DEBUG: Calling finalize.")
-        if type(self.config) is dict:   # old/basic style
-            self.config = {"parameters": self.config}
-        else:
-            self._enforce_non_schema_coherence()
-            self.config.parameters.finalize()
 
-        # Add config and campaign to assets
-        with open(self.config_file_name, "w") as fp:
-            json.dump(self.config, fp, sort_keys=True, indent=4)
+        # Add config and campaign to assets as needed
 
-        self.transient_assets.add_asset(
-            Asset(filename=self.config_file_name, content=json.dumps(self.config, sort_keys=True)),
-            fail_on_duplicate=False)
+        if self.config:
+            if type(self.config) is dict:   # old/basic style
+                self.config = {"parameters": self.config}
+            else:
+                self._enforce_non_schema_coherence()
+                self.config.parameters.finalize()
+            asset = Asset(filename=self.config_file_name, content=json.dumps(self.config, sort_keys=True))
+            self.transient_assets.add_asset(asset=asset, fail_on_duplicate=False)
 
         if self.campaign:
-            self.transient_assets.add_asset(
-                Asset(filename="campaign.json", content=self.campaign.json),
-                fail_on_duplicate=False)
+            asset = Asset(filename="campaign.json", content=self.campaign.json)
+            self.transient_assets.add_asset(asset=asset, fail_on_duplicate=False)
 
         # Add custom_reporters.json if needed
         if not self.reporters.empty:
-            self.transient_assets.add_asset(
-                Asset(filename="custom_reports.json", content=self.reporters.json),
-                fail_on_duplicate=False)
+            asset = Asset(filename="custom_reports.json", content=self.reporters.json)
+            self.transient_assets.add_asset(asset=asset, fail_on_duplicate=False)
 
         # Add demographics files to assets
         self.transient_assets.extend(self.simulation_demographics.gather_assets())
@@ -632,7 +631,8 @@ class EMODTask(ITask):
 
     def update_parameters(self, params):
         """
-        Bulk update the configuration parameter values. This will be deprecated in the future in favour of emod_api.config.
+        Bulk update the configuration parameter values. This will be deprecated in the future in favour of
+        emod_api.config.
 
         Args:
             params: A dictionary with new values.

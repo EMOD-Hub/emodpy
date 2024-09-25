@@ -3,7 +3,7 @@ click~=7.1
 idmtools~=1.6.0
 idmtools-platform-comps~=1.6.0
 idmtools-models~=1.6.0
-emod-api~=1.16.5
+emod-api>=1.20,<2.0
 matplotlib
 astor
 astunparse

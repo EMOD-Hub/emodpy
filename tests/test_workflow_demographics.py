@@ -7,6 +7,8 @@ from abc import ABC, abstractmethod
 from emod_api.config import default_from_schema_no_validation as dfs
 import emod_api.demographics.Demographics as Demographics
 import emod_api.demographics.DemographicsTemplates as DT
+import emod_api.demographics.Node as Node
+from emod_api.demographics.PropertiesAndAttributes import IndividualAttributes, IndividualProperty, IndividualProperties, NodeAttributes
 
 from idmtools.entities.experiment import Experiment
 from idmtools.core.platform_factory import Platform
@@ -24,6 +26,7 @@ import json
 # file_dir = os.path.dirname(__file__)
 # sys.path.append(file_dir)
 from . import manifest
+
 
 default_config_file = "default_config.json"  # this is a hard-coded value
 
@@ -113,6 +116,7 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
         self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
 
         print(f"Experiment {experiment.uid} succeeded.")
+        return experiment
 
     @staticmethod
     def set_demog_file(config, demographics_file):
@@ -364,6 +368,217 @@ class TestWorkflowDemographics(ITestWithPersistence, ABC):
         self.assertEqual(0, task.config['parameters']['Enable_Demographics_Builtin'])
         self.run_exp(task)
 
+    def demographics_overlay_node_attributes_test(self):
+        """
+            Testing the Demographics.apply_overlay() and Node.OverlayNode from Emodapi and make sure it can be
+            consumed by the Eradication.
+        """
+        def build_demog():
+            node_attributes_1 = NodeAttributes(latitude=1, longitude=0, initial_population=1001,
+                                               name="test_demo")
+            node_attributes_2 = NodeAttributes(latitude=0, longitude=1, initial_population=1002,
+                                               name="test_demo")
+            nodes = [Node.Node(lat=1, lon=0, pop=1001, node_attributes=node_attributes_1, forced_id=1),
+                     Node.Node(lat=0, lon=1, pop=1002, node_attributes=node_attributes_2, forced_id=2)]
+            demog = Demographics.Demographics(nodes=nodes)
+            demog.SetDefaultProperties()
+
+            overlay_nodes = []
+            new_population = 100
+            new_name = "Test NodeAttributes"
+            new_node_attributes = NodeAttributes(name=new_name, initial_population=new_population)
+
+            overlay_nodes.append(Node.OverlayNode(node_id=1, node_attributes=new_node_attributes))
+            overlay_nodes.append(Node.OverlayNode(node_id=2, node_attributes=new_node_attributes))
+            demog.apply_overlay(overlay_nodes)
+
+            return demog
+
+        task = EMODTask.from_default2(eradication_path=self.eradication_path,
+                                      schema_path=manifest.schema_path_linux,
+                                      config_path=self.default_config_file,
+                                      param_custom_cb=None, demog_builder=build_demog, ep4_custom_cb=None)
+        experiment = self.run_exp(task)
+
+        inset_chart_filename = "output/InsetChart.json"
+        demog_filename = "Assets/demographics.json"
+
+        for sim in experiment.simulations:
+            files = self.platform.get_files(sim, [inset_chart_filename, demog_filename])
+            inset_chart = json.loads(files[inset_chart_filename])
+            self.assertEqual(inset_chart['Channels']['Statistical Population']['Data'][0], 100 * 2)
+
+            demographics = json.loads(files[demog_filename])
+            self.assertEqual(demographics['Nodes'][0]["NodeAttributes"]['Latitude'], 1)
+            self.assertEqual(demographics['Nodes'][1]["NodeAttributes"]['Latitude'], 0)
+
+            self.assertEqual(demographics['Nodes'][0]["NodeAttributes"]['Longitude'], 0)
+            self.assertEqual(demographics['Nodes'][1]["NodeAttributes"]['Longitude'], 1)
+
+            self.assertEqual(demographics['Nodes'][0]["NodeAttributes"]['FacilityName'], "Test NodeAttributes")
+            self.assertEqual(demographics['Nodes'][1]["NodeAttributes"]['FacilityName'], "Test NodeAttributes")
+
+    def demographics_overlay_individual_attributes_test(self):
+        """
+            Testing the Demographics.apply_overlay() and Node.OverlayNode from Emodapi and make sure it can be
+            consumed by the Eradication.
+        """
+        def build_demog():
+            individual_attributes_1 = IndividualAttributes(age_distribution_flag=1,
+                                                           age_distribution1=730,
+                                                           age_distribution2=7300)
+            individual_attributes_2 = IndividualAttributes(age_distribution_flag=1,
+                                                           age_distribution1=365,
+                                                           age_distribution2=3650)
+            node_attributes = NodeAttributes(initial_population=100, latitude=0, longitude=1)
+
+            nodes = [Node.Node(lat=0, lon=1, pop=100, individual_attributes=individual_attributes_1, forced_id=1,
+                               node_attributes=node_attributes),
+                     Node.Node(lat=0, lon=1, pop=100, individual_attributes=individual_attributes_2, forced_id=2,
+                               node_attributes=node_attributes)]
+            demog = Demographics.Demographics(nodes=nodes)
+            demog.SetDefaultProperties()
+
+            overlay_nodes = []
+            new_individual_attributes = IndividualAttributes(age_distribution_flag=0,
+                                                             age_distribution1=300,
+                                                             age_distribution2=600)
+
+            overlay_nodes.append(Node.OverlayNode(node_id=1, individual_attributes=new_individual_attributes))
+            overlay_nodes.append(Node.OverlayNode(node_id=2, individual_attributes=new_individual_attributes))
+            demog.apply_overlay(overlay_nodes)
+
+            return demog
+
+        task = EMODTask.from_default2(eradication_path=self.eradication_path,
+                                      schema_path=manifest.schema_path_linux,
+                                      config_path=self.default_config_file,
+                                      param_custom_cb=None, demog_builder=build_demog, ep4_custom_cb=None)
+        experiment = self.run_exp(task)
+
+        demog_filename = "Assets/demographics.json"
+
+        for sim in experiment.simulations:
+            files = self.platform.get_files(sim, [demog_filename])
+            demographics = json.loads(files[demog_filename])
+            self.assertEqual(demographics['Nodes'][0]["IndividualAttributes"]['AgeDistributionFlag'], 0)
+            self.assertEqual(demographics['Nodes'][1]["IndividualAttributes"]['AgeDistributionFlag'], 0)
+
+            self.assertEqual(demographics['Nodes'][0]["IndividualAttributes"]['AgeDistribution1'], 300)
+            self.assertEqual(demographics['Nodes'][1]["IndividualAttributes"]['AgeDistribution1'], 300)
+
+            self.assertEqual(demographics['Nodes'][0]["IndividualAttributes"]['AgeDistribution2'], 600)
+            self.assertEqual(demographics['Nodes'][1]["IndividualAttributes"]['AgeDistribution2'], 600)
+
+    def demographics_overlay_individual_properties_test(self):
+        """
+            Testing the Demographics.apply_overlay() and Node.OverlayNode from Emodapi and make sure it can be
+            consumed by the Eradication.
+        """
+
+        def build_demog():
+            node_attributes_1 = NodeAttributes(latitude=1, longitude=0, initial_population=1001,
+                                               name="test_demo")
+            node_attributes_2 = NodeAttributes(latitude=0, longitude=1, initial_population=1002,
+                                               name="test_demo")
+            nodes = [Node.Node(lat=1, lon=0, pop=1001, node_attributes=node_attributes_1, forced_id=1),
+                     Node.Node(lat=0, lon=1, pop=1002, node_attributes=node_attributes_2, forced_id=2)]
+            demog = Demographics.Demographics(nodes=nodes)
+            demog.SetDefaultProperties()
+
+            overlay_nodes = []
+
+            initial_distribution = [0.1, 0.9]
+            property = "QualityOfCare"
+            values = ["High", "Low"]
+            transmission_matrix = {
+                "Matrix": [
+                    [0.5, 0.0],
+                    [0.0, 1]],
+                "Route": "Contact"}
+            new_individual_properties = IndividualProperties()
+            new_individual_properties.add(IndividualProperty(initial_distribution,
+                                                             property=property,
+                                                             values=values,
+                                                             transmission_matrix=transmission_matrix))
+
+            overlay_nodes.append(Node.OverlayNode(node_id=1, individual_properties=new_individual_properties))
+            overlay_nodes.append(Node.OverlayNode(node_id=2, individual_properties=new_individual_properties))
+            demog.apply_overlay(overlay_nodes)
+
+            return demog
+
+        def set_param_fn(config):
+            print("Setting params.")
+            config.parameters.Enable_Property_Output = 1
+            return config
+
+        task = EMODTask.from_default2(eradication_path=self.eradication_path,
+                                      schema_path=manifest.schema_path_linux,
+                                      config_path=self.default_config_file,
+                                      param_custom_cb=set_param_fn, demog_builder=build_demog, ep4_custom_cb=None)
+        experiment = self.run_exp(task)
+
+        property_filename = "output/PropertyReport.json"
+
+        for sim in experiment.simulations:
+            files = self.platform.get_files(sim, [property_filename])
+            property_report = json.loads(files[property_filename])
+            pop_high = property_report['Channels']['Statistical Population:QualityOfCare:High']['Data'][0]
+            pop_low = property_report['Channels']['Statistical Population:QualityOfCare:Low']['Data'][0]
+            self.assertAlmostEqual(pop_high / pop_low, 0.1 / 0.9, delta=0.01)
+
+    def demographics_overlay_susceptibility_distribution_from_files_test(self):
+        """
+            Testing the Demographics and DemographicsOverlay from Emodapi and make sure it can be
+            consumed by the Eradication.
+        """
+        demog = Demographics.from_template_node()
+        demog.SetDefaultProperties()
+        demog.generate_file(self.demographics_file)
+
+        # generate overlay files
+        individual_attributes = IndividualAttributes()
+        individual_attributes.susceptibility_distribution = individual_attributes.SusceptibilityDistribution(
+            distribution_values=[3650, 7300],
+            result_scale_factor=1,
+            result_values=[0.2, 0.3])
+        # node_attributes = Node.Node.NodeAttributes(initial_population=100)  # todo, remove this once bug is fixed
+
+        overlay = Demographics.DemographicsOverlay(nodes=[1],
+                                                   individual_attributes=individual_attributes,
+                                                   node_attributes=None,
+                                                   meta_data={"IdReference": "Gridded world grump2.5arcmin"})
+        overlay_filename = os.path.join(manifest.demographics_folder, "demographics_susceptibility_overlay.json")
+        overlay.to_file(overlay_filename)
+
+        dfs.write_config_from_default_and_params(config_path=self.default_config_file,
+                                                 set_fn=partial(set_param_fn, implicit_config_set_fns=demog.implicits),
+                                                 config_out_path=self.config_file)
+        task = EMODTask.from_files(config_path=self.config_file, eradication_path=self.eradication_path,
+                                   demographics_paths=[self.demographics_file, overlay_filename], ep4_path=None)
+
+        experiment = self.run_exp(task)
+
+        demog_filename = os.path.join("Assets", os.path.basename(self.demographics_file))
+        demog_overlay_filename = "Assets/demographics_susceptibility_overlay.json"
+
+        for sim in experiment.simulations:
+            files = self.platform.get_files(sim, [demog_filename, demog_overlay_filename])
+            demographics = json.loads(files[demog_filename])
+            self.assertNotEqual(demographics['Defaults']['IndividualAttributes']["SusceptibilityDistribution"]
+                                ["DistributionValues"], [3650, 7300])
+            self.assertNotEqual(demographics['Defaults']['IndividualAttributes']["SusceptibilityDistribution"]
+                                ["ResultValues"], [0.2, 0.3])
+
+            demographics_overlay = json.loads(files[demog_overlay_filename])
+            self.assertListEqual(demographics_overlay['Defaults']['IndividualAttributes']
+                                 ["SusceptibilityDistribution"]["DistributionValues"], [3650, 7300])
+            self.assertListEqual(demographics_overlay['Defaults']['IndividualAttributes']
+                                 ["SusceptibilityDistribution"]["ResultValues"], [0.2, 0.3])
+            self.assertEqual(demographics_overlay['Defaults']['IndividualAttributes']
+                             ["SusceptibilityDistribution"]["ResultScaleFactor"], 1)
+
 
 # @pytest.mark.skip('skip tests for Windows Eradication for now')
 @pytest.mark.emod
@@ -405,6 +620,18 @@ class TestWorkflowDemographicsWin(TestWorkflowDemographics):
     def test_8_demographics_sweep_win(self):
         super().demographic_sweep_test()
 
+    def test_9_demographics_overlay_node_attributes_win(self):
+        super().demographics_overlay_node_attributes_test()
+
+    def test_10_demographics_overlay_individual_attributes_win(self):
+        super().demographics_overlay_individual_attributes_test()
+
+    def test_11_demographics_overlay_individual_properties_win(self):
+        super().demographics_overlay_individual_properties_test()
+
+    def test_12_demographics_overlay_susceptibility_distribution_from_files_win(self):
+        super().demographics_overlay_susceptibility_distribution_from_files_test()
+
 
 # @pytest.mark.skip('skip tests for Linux Eradication for now')
 @pytest.mark.emod
@@ -445,3 +672,15 @@ class TestWorkflowDemographicsLinux(TestWorkflowDemographics):
 
     def test_8_demographics_sweep_linux(self):
         super().demographic_sweep_test()
+
+    def test_9_demographics_overlay_node_attributes_linux(self):
+        super().demographics_overlay_node_attributes_test()
+
+    def test_10_demographics_overlay_individual_attributes_linux(self):
+        super().demographics_overlay_individual_attributes_test()
+
+    def test_11_demographics_overlay_individual_properties_linux(self):
+        super().demographics_overlay_individual_properties_test()
+
+    def test_12_demographics_overlay_susceptibility_distribution_from_files_linux(self):
+        super().demographics_overlay_susceptibility_distribution_from_files_test()

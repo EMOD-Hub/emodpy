@@ -66,5 +66,5 @@ setup(
     setup_requires=setup_requirements,
     test_suite='tests',
     extras_require=extras,
-    version='1.15.2'
+    version='1.17.1'
 )

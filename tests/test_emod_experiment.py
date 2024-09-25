@@ -100,8 +100,8 @@ class EMODExperimentTest(ABC):
         self.assertTrue(e.succeeded)
 
         for sim in e.simulations:
-            files = self.platform.get_files(sim, ["new_config.json"])
-            config_parameters = json.loads(files["new_config.json"])['parameters']
+            files = self.platform.get_files(sim, ["config.json"])
+            config_parameters = json.loads(files["config.json"])['parameters']
             self.assertEqual(config_parameters["Enable_Immunity"], 0)
 
     def download_singularity_ac(self, ac_id, out_filenames, output_path):

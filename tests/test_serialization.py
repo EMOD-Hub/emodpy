@@ -11,6 +11,7 @@ from emodpy.bamboo import get_model_files
 from examples.config_update_parameters import del_folder
 
 from . import manifest
+sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
 
 
 @pytest.mark.emod
@@ -19,7 +20,7 @@ class TestSerialization(ITestWithPersistence):
     @classmethod
     def setUpClass(cls) -> None:
         # cls.platform = Platform("Calculon", num_cores=2, node_group="idm_48cores", priority="Highest")
-        cls.platform = Platform("SLURM", num_cores=2, node_group="idm_48cores", priority="Highest")
+        cls.platform = Platform("SLURMStage", num_cores=2, node_group="idm_48cores", priority="Highest")
         cls.plan = EradicationBambooBuilds.GENERIC_LINUX
 
     def setUp(self) -> None:
@@ -88,6 +89,7 @@ class TestSerialization(ITestWithPersistence):
             ep4_custom_cb=None,
             schema_path=manifest.schema_file,
             param_custom_cb=set_param_fn)
+        task1.set_sif(sif_path)
 
         experiment1 = Experiment.from_task(task=task1, name=self.case_name + " create serialization")
         experiment1.run(wait_until_done=True, platform=self.platform)   # run simulation
@@ -131,6 +133,7 @@ class TestSerialization(ITestWithPersistence):
             ep4_custom_cb=None,
             schema_path=manifest.schema_file,
             param_custom_cb=set_param_from_sp_fn)
+        task2.set_sif(sif_path)
 
         task2.common_assets.add_directory(assets_directory=manifest.serialization_files_dir)
         experiment2 = Experiment.from_task(task=task2, name=self.case_name + " realod serialization")

@@ -33,6 +33,8 @@ schema_path = schema_file
 output_dir = os.path.join(current_directory, "output")
 serialization_files_dir = os.path.join(output_dir, "serialization_files", "output")
 
+sft_id = "e5d5ab18-cfcf-ec11-92e9-f0921c167864"
+sft_id_file = "stage_sif.id"
 
 plugins_folder = os.path.join(current_directory, "inputs", "plugins")
 if not os.path.isdir(plugins_folder):

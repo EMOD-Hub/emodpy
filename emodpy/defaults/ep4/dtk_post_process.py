@@ -14,5 +14,7 @@ sys.path.insert(0, LIBRARY_PATH)  # Very Important!
 
 
 def application(output_path):
+    if os.path.exists("config_xform.json") is False:
+        return
     dpp.application(output_path)
     print("dtk_post_process.py ran!")

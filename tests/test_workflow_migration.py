@@ -1,4 +1,6 @@
-import os
+from os import listdir
+import pathlib
+
 import pytest
 import shutil
 import json
@@ -25,6 +27,7 @@ from emod_api.demographics.Node import Node
 import emod_api.demographics.Demographics as Demographics
 
 from . import manifest
+sif_path = str(pathlib.Path(manifest.current_directory, "stage_sif.id"))
 """
 Test Migration object from emod_api and make sure it's consumable by Eradication and:
 1. Source and Destination nodes set in Migration object are honored.
@@ -41,7 +44,7 @@ Two migration types(local, regional) are tested in all scenarios. It can be easi
 types when they are supported in Emodpy.
 """
 
-current_directory = os.path.dirname(os.path.realpath(__file__))
+current_directory = pathlib.Path.cwd()
 
 MIGRATION_TYPE_ENUMS = {1: "local",
                         2: "air",
@@ -82,7 +85,7 @@ class TestMigration(ITestWithPersistence):
         cls.eradication_path = manifest.eradication_path_linux
         cls.schema_path = manifest.schema_path_linux
         cls.plugins_folder = manifest.plugins_folder
-        cls.config_file = os.path.join(manifest.config_folder, "generic_config_for_migration_workflow_l.json")
+        cls.config_file = pathlib.Path(manifest.config_folder, "generic_config_for_migration_workflow_l.json")
         cls.comps_platform = 'SLURM'
 
     @classmethod
@@ -94,17 +97,14 @@ class TestMigration(ITestWithPersistence):
         cls.platform = Platform(cls.comps_platform)
 
     def setUp(self) -> None:
-        self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
+        self.is_singularity = True
+        self.case_name = (pathlib.Path(__file__).name + "--" + self._testMethodName)
         print(self.case_name)
-        # self.get_exe_from_bamboo()
-        # self.get_schema_from_bamboo()
-        # self.get_plugins_from_bamboo()
-        # self.platform = Platform(self.comps_platform)
         manifest.delete_existing_file(self.config_file)
 
     @classmethod
     def get_exe_from_bamboo(cls):
-        if not os.path.isfile(cls.eradication_path):
+        if not pathlib.Path(cls.eradication_path).is_file():
             bamboo_api_login()
             print(
                 f"Getting Eradication from bamboo for plan {cls.plan}. Please run this script in console if this "
@@ -120,7 +120,7 @@ class TestMigration(ITestWithPersistence):
 
     @classmethod
     def get_schema_from_bamboo(cls):
-        if not os.path.isfile(cls.schema_path):
+        if not pathlib.Path(cls.schema_path).is_file:
             bamboo_api_login()
             print(
                 f"Getting Schema.json from bamboo for plan {cls.plan}. Please run this script in console if this "
@@ -136,8 +136,8 @@ class TestMigration(ITestWithPersistence):
 
     @classmethod
     def get_plugins_from_bamboo(cls):
-        if os.path.exists(cls.plugins_folder) and os.path.isdir(cls.plugins_folder):
-            if not os.listdir(cls.plugins_folder):
+        if pathlib.Path(cls.plugins_folder).is_dir():
+            if not listdir(cls.plugins_folder):
                 bamboo_api_login()
                 print(
                     f"Getting plugins from bamboo for plan {cls.plan}. Please run this script in console if this "
@@ -228,6 +228,8 @@ class TestMigration(ITestWithPersistence):
             ep4_custom_cb=None,
             demog_builder=partial_build_demog_mig,
             plugin_report=report)
+        if self.is_singularity:
+            task.set_sif(sif_path)
 
         if not migration_pattern_parameters or migration_pattern_parameters[0] == MIGRATION_PATTERN[1]:
             self.assertEqual(task.config.parameters['Migration_Pattern'], MIGRATION_PATTERN[1])
@@ -252,9 +254,8 @@ class TestMigration(ITestWithPersistence):
 
         filenames = get_output_filenames(migration_type, ["output/ReportHumanMigrationTracking.csv"])
 
-        output_folder = os.path.join(current_directory, 'inputs', 'migration', 'output')
-        if not os.path.isdir(output_folder):
-            os.mkdir(output_folder)
+        output_folder = pathlib.Path(current_directory, 'inputs', 'migration', 'output')
+        output_folder.mkdir(exist_ok=True)
 
         sims = self.platform.get_children_by_object(experiment)
         for simulation in sims:
@@ -350,6 +351,8 @@ class TestMigration(ITestWithPersistence):
                                           schema_path=manifest.schema_path_linux,
                                           config_path=self.config_file,
                                           param_custom_cb=None, demog_builder=None, plugin_report=report, ep4_custom_cb=None)
+            if self.is_singularity:
+                task.set_sif(sif_path)
             builder = SimulationBuilder()
             mult = [1, 2, 3]
             builder.add_sweep_definition(update_mig_type, mult)
@@ -361,13 +364,34 @@ class TestMigration(ITestWithPersistence):
             self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
             print(f"Experiment {experiment.uid} succeeded.")
 
+            experiment_directory_path = pathlib.Path(str(experiment.uid))
+            if experiment_directory_path.is_dir():
+                shutil.rmtree(experiment_directory_path)
+
+            files_to_fetch = ["stdout.txt", "stderr.txt", "status.txt"]
+            for f in files_to_fetch:
+                task.get_file_from_comps(exp_id=experiment.uid, filename=f)
+
+            self.assertTrue(experiment_directory_path.is_dir())
+            experiment_directory_contents = listdir(experiment_directory_path)
+            self.assertEqual(len(experiment_directory_contents), len(experiment.simulations))
+
+            sim_directory_path = pathlib.Path(str(experiment.uid), str(experiment.simulations[0].uid))
+            self.assertTrue(sim_directory_path.is_dir())
+            sim_directory_contents = listdir(sim_directory_path)
+            self.assertEqual(len(sim_directory_contents), len(files_to_fetch))
+            for f in files_to_fetch:
+                self.assertIn(f, sim_directory_contents)
+
+            # On success, delete these files
+            shutil.rmtree(experiment_directory_path, ignore_errors=True)
+
             self.assertEqual(len(experiment.simulations), len(mult))
 
         filenames = ["output/ReportHumanMigrationTracking.csv"]
 
-        output_folder = os.path.join(current_directory, 'inputs', 'migration', 'output')
-        if not os.path.isdir(output_folder):
-            os.mkdir(output_folder)
+        output_folder = pathlib.Path(current_directory, 'inputs', 'migration', 'output')
+        output_folder.mkdir(exist_ok=True)
 
         sims = self.platform.get_children_by_object(experiment)
         sweep_values = [1, 2, 3]
@@ -376,9 +400,9 @@ class TestMigration(ITestWithPersistence):
             self.platform.get_files_by_id(simulation.id, item_type=ItemType.SIMULATION, files=filenames,
                                           output=output_folder)
 
-            local_path = os.path.join(output_folder, str(simulation.uid))
-            migration_output_file = os.path.join(local_path, "output", "ReportHumanMigrationTracking.csv")
-            self.assertTrue(os.path.exists(migration_output_file))
+            local_path = pathlib.Path(output_folder, str(simulation.uid))
+            migration_output_file = pathlib.Path(local_path, "output", "ReportHumanMigrationTracking.csv")
+            self.assertTrue(migration_output_file.is_file())
             migration_output = pd.read_csv(migration_output_file)
 
             migration_output_from_one = migration_output[migration_output[' From_NodeID'] == 1]
@@ -451,18 +475,19 @@ class TestMigration(ITestWithPersistence):
             ep4_custom_cb=None,
             demog_builder=partial_build_demog_mig,
             plugin_report=report)
+        if self.is_singularity:
+            task.set_sif(sif_path)
 
         # Create the experiment from task and run
-        experiment = Experiment.from_task(task, name=self.case_name)
+        experiment = Experiment.from_task(task, name=str(self.case_name))
         self.platform.run_items(experiment)
         self.platform.wait_till_done(experiment)
         self.assertTrue(experiment.succeeded, "expected experiment succeeded")
 
         filenames = get_output_filenames(migration_type, ["output/ReportHumanMigrationTracking.csv"])
 
-        output_folder = os.path.join(current_directory, 'inputs', 'migration', 'output')
-        if not os.path.isdir(output_folder):
-            os.mkdir(output_folder)
+        output_folder = pathlib.Path(current_directory, 'inputs', 'migration', 'output')
+        output_folder.mkdir(exist_ok=True)
 
         sims = self.platform.get_children_by_object(experiment)
         for simulation in sims:
@@ -557,6 +582,8 @@ class TestMigration(ITestWithPersistence):
             ep4_custom_cb=None,
             demog_builder=partial_build_demog_mig,
             plugin_report=report)
+        if self.is_singularity:
+            task.set_sif(sif_path)
 
         # Create the experiment from task and run
         experiment = Experiment.from_task(task, name=self.case_name)
@@ -566,9 +593,8 @@ class TestMigration(ITestWithPersistence):
 
         filenames = get_output_filenames(migration_type, ["output/ReportHumanMigrationTracking.csv"])
 
-        output_folder = os.path.join(current_directory, 'inputs', 'migration', 'output')
-        if not os.path.isdir(output_folder):
-            os.mkdir(output_folder)
+        output_folder = pathlib.Path(current_directory, 'inputs', 'migration', 'output')
+        output_folder.mkdir(exist_ok=True)
 
         sims = self.platform.get_children_by_object(experiment)
         for simulation in sims:
@@ -607,7 +633,7 @@ class TestMigration(ITestWithPersistence):
 
     def _test(self):
 
-        migration_output_file = os.path.join(current_directory, 'inputs', 'migration', 'output',
+        migration_output_file = pathlib.Path(current_directory, 'inputs', 'migration', 'output',
                                              '3c1bf08b-ba5a-eb11-a2c2-f0921c167862', 'output',
                                              'ReportHumanMigrationTracking.csv')
         migration_type = Migration.REGIONAL
@@ -636,6 +662,8 @@ class TestMigration(ITestWithPersistence):
             ep4_custom_cb=None,
             demog_builder=partial_build_demog_mig,
             plugin_report=report)
+        if self.is_singularity:
+            task.set_sif(sif_path)
 
         # Create the experiment from task and run
         experiment = Experiment.from_task(task, name=self.case_name)
@@ -645,9 +673,8 @@ class TestMigration(ITestWithPersistence):
 
         filenames = get_output_filenames(migration_type, ["output/ReportHumanMigrationTracking.csv"])
 
-        output_folder = os.path.join(current_directory, 'inputs', 'migration', 'output')
-        if not os.path.isdir(output_folder):
-            os.mkdir(output_folder)
+        output_folder = pathlib.Path(current_directory, 'inputs', 'migration', 'output')
+        output_folder.mkdir(exist_ok=True)
 
         sims = self.platform.get_children_by_object(experiment)
         for simulation in sims:
@@ -660,11 +687,11 @@ class TestMigration(ITestWithPersistence):
         self.platform.get_files_by_id(simulation.id, item_type=ItemType.SIMULATION, files=filenames,
                                       output=output_folder)
         # validate files exist
-        local_path = os.path.join(output_folder, str(simulation.uid))
-        migration_file = os.path.join(local_path, filenames[1])
-        migration_output_file = os.path.join(local_path, "output", "ReportHumanMigrationTracking.csv")
-        self.assertTrue(os.path.exists(migration_file))
-        self.assertTrue(os.path.exists(migration_output_file))
+        local_path = pathlib.Path(output_folder, str(simulation.uid))
+        migration_file = pathlib.Path(local_path, filenames[1])
+        migration_output_file = pathlib.Path(local_path, "output", "ReportHumanMigrationTracking.csv")
+        self.assertTrue(migration_file.is_file())
+        self.assertTrue(migration_output_file.is_file())
 
         with open(migration_file, 'r') as file:
             migration_json = json.load(file)

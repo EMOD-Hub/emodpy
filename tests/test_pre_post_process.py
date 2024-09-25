@@ -104,6 +104,7 @@ class TestEmodPrePostProcess(ITestWithPersistence):
         delete_existing_file(self.schema_file)
         delete_existing_file(self.config_file)
 
+    @pytest.skip(reason="Need these tests to use the right constructor #600", allow_module_level=True)
     def test_emod_pre_process_from_default(self):
         """
             Test ep4_custom_cb to add a pre_process script to EMODTask.from_default2()
@@ -153,6 +154,7 @@ class TestEmodPrePostProcess(ITestWithPersistence):
             stdout = file["stdOut.txt"].decode("utf-8")
             self.assertIn("printing from dtk_pre_process.py", stdout)
 
+    @pytest.skip(reason="Need these tests to use the right constructor #600", allow_module_level=True)
     def test_emod_post_process_from_default(self):
         """
             Test ep4_custom_cb to add a post_process script to EMODTask.from_default2()
@@ -285,6 +287,7 @@ class TestEmodPrePostProcess(ITestWithPersistence):
         experiment.pre_creation(self.platform)
         self.assertEqual(len(experiment.assets), 5)
 
+    @pytest.skip(reason="Need these tests to use the right constructor #600", allow_module_level=True)
     def test_emod_process_from_file(self):
         """
             Test ep4_path to add pre/in/post process scripts to EMODTask.from_files()

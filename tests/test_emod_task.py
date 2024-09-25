@@ -7,6 +7,7 @@ import shutil
 from functools import partial
 
 from emodpy.emod_task import EMODTask
+from emodpy.emod_task import AssetCollection
 
 from idmtools.entities.experiment import Experiment
 from idmtools.entities.simulation import Simulation
@@ -84,10 +85,15 @@ class TestEMODTask(ITestWithPersistence):
         print(f"Telling emod-api to use {self.schema_path} as schema.")
         self.eradication_path = manifest.eradication_path_linux
 
-    def prepare_input_files(self, camp_path="campaign_test_emod_task.json", demo_path="demo_test_emod_task.json"):
+    def prepare_input_files(self, camp_path=None, demo_path=None):
+        if not camp_path:
+            camp_path = f"campaign_{self._testMethodName}.json"
+        if not demo_path:
+            demo_path = f"demo_{self._testMethodName}.json"
         self.prepare_schema_and_eradication()
-        config_name = 'config_emod_experiment_test_load_files.json'
-        default_config_file = 'default_config_emod_experiment_test_load_files.json'
+
+        config_name = f'config_{self._testMethodName}.json'
+        default_config_file = f'default_config_{self._testMethodName}.json'
         manifest.delete_existing_file(config_name)
         self.config_path = self.generate_config(config_name=config_name, schema_path=self.schema_path)
         self.default_config_file = self.generate_default_config(default_config=default_config_file,
@@ -436,6 +442,7 @@ class TestEMODTask(ITestWithPersistence):
         )
         shutil.copy(self.eradication_path, os.path.join(manifest.bin_folder, "Eradication"))
         task.common_assets.add_asset(os.path.join(manifest.bin_folder, "Eradication"))
+        task.set_sif(manifest.sft_id_file)
 
         experiment = Experiment.from_task(task, name="Existing_Eradication_File")
 
@@ -456,6 +463,9 @@ class TestEMODTask(ITestWithPersistence):
 
         shutil.copy(self.eradication_path, os.path.join(manifest.bin_folder, "Eradication"))
         task2.common_assets.add_asset(os.path.join(manifest.bin_folder, "Eradication"))
+        task2.set_sif(manifest.sft_id_file)
+        # sif_id = manifest.sft_id #TODO: uncomment this and the next line when #587 is closed
+        # task2.common_assets.add_assets(AssetCollection.from_id(sif_id))
         
         experiment2 = Experiment.from_task(task2, name="Existing_Eradication_Default")
         self.platform.run_items(experiment2)
@@ -467,7 +477,9 @@ class TestEMODTask(ITestWithPersistence):
             Test copy.deepcopy(EMODTask.config) is working.
         """
         self.prepare_input_files()
-        task = EMODTask.from_files(eradication_path=self.eradication_path, config_path=self.config_path, ep4_path=None)
+        task = EMODTask.from_files(eradication_path=self.eradication_path,
+                                   config_path=self.config_path,
+                                   ep4_path=None)
         import copy
         config = copy.deepcopy(task.config)
 

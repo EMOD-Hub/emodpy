@@ -1,4 +1,4 @@
 # flake8: noqa F821
 from emodpy.defaults.iemod_default import IEMODDefault
 
-__version__ = "1.18.2"
+__version__ = "1.19.0"

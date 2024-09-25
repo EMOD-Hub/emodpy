@@ -37,7 +37,7 @@ from . import manifest
 emod_version = '2.20.0'
 num_sim = 2
 num_sim_long = 20  # to catch issue like config is not deep copied #251 and #238
-sif_path = os.path.join(manifest.current_directory, "inputs/singularity/CentOS.id")
+sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
 
 print("Please run 'test_download_from_bamboo.py' (run from console for the first time to login to bamboo) before "
       "running this test")
@@ -82,7 +82,7 @@ class EMODExperimentTest(ABC):
             print("Setting params.")
             return config
 
-        self.platform = Platform("SLURM")
+        self.platform = Platform("SLURMStage")
         base_task = EMODTask.from_default2(eradication_path=self.get_emod_binary(),
                                            schema_path=self.get_emod_schema(),
                                            param_custom_cb=set_param_fn)
@@ -148,7 +148,7 @@ class EMODExperimentTest(ABC):
     @pytest.mark.long
     @pytest.mark.skip(reason="download AC from comps not supported currently")
     def test_experiment_from_task_with_singularity_from_local_file(self):
-        self.platform = Platform("SLURM")
+        self.platform = Platform("SLURMStage")
 
         # download sif from comps, currently not working, see issue: https://github.com/InstituteforDiseaseModeling/idmtools/issues/1574
         # ac_id = "3d366cfa-94c8-eb11-92dd-f0921c167860" # please update to the latest one
@@ -164,6 +164,7 @@ class EMODExperimentTest(ABC):
                               ep4_fn=ep4_fn)
 
     @pytest.mark.long
+    @pytest.mark.skip(reason="CentOS.sif file is out of date, needs python 3.9 which is not compatible with CentOS")
     def test_experiment_from_task_with_singularity(self):
         def make_sif(my_sif_path):
             """
@@ -183,7 +184,7 @@ class EMODExperimentTest(ABC):
             task = add_ep4_from_path(task, os.path.join(manifest.current_directory, "inputs/ep4/singularity"))
             return task
 
-        self.platform = Platform("SLURM")
+        self.platform = Platform("SLURMStage")
         # use the commented line to create a singularity image on Comps for the first time.
         # make_sif(sif_path)
         self.singularity_test(sif_path, ep4_fn)
@@ -199,7 +200,7 @@ class EMODExperimentTest(ABC):
             return config
 
         config_path = "config_from_default2_1"
-        self.platform = Platform("SLURM")
+        self.platform = Platform("SLURMStage")
         base_task = EMODTask.from_default2(config_path=config_path,
                                            eradication_path=self.get_emod_binary(),
                                            schema_path=self.get_emod_schema(),
@@ -258,11 +259,12 @@ class EMODExperimentTest(ABC):
         ob.schema_path = self.get_emod_schema()
         camp.schema_path = self.get_emod_schema()
 
-        config_path = "config_from_default2_2.json"
+        config_path = f"config_{self._testMethodName}.json"
         base_task = EMODTask.from_default2(config_path=config_path, eradication_path=self.get_emod_binary(),
                                            campaign_builder=build_camp, schema_path=self.get_emod_schema(),
                                            param_custom_cb=set_param_fn, ep4_custom_cb=None,
                                            demog_builder=build_demo)
+        base_task.set_sif(sif_path)
 
         builder = SimulationBuilder()
         # Sweep parameter "Run_Number"
@@ -288,8 +290,10 @@ class EMODExperimentTest(ABC):
         """
             Test idmtools.entities.experiment.Experiment.simulations.append(sim) with EMODTask.from_files()
         """
+        self.platform = Platform("SLURMStage")
         base_task = EMODTask.from_files(eradication_path=self.get_emod_binary(), config_path=self.get_emod_config(),
                                         ep4_path=None)
+        base_task.set_sif(sif_path)
         base_task.set_parameter('Enable_Immunity', 0)
         e = Experiment(
             name=self.case_name,
@@ -318,8 +322,10 @@ class EMODExperimentTest(ABC):
         """
             Test idmtools.entities.experiment.Experiment.from_builder() with EMODTask.from_files()
         """
+        self.platform = Platform("SLURMStage")
         base_task = EMODTask.from_files(eradication_path=self.get_emod_binary(), config_path=self.get_emod_config(),
                                         ep4_path=None)
+        base_task.set_sif(sif_path)
         builder = SimulationBuilder()
         # Sweep parameter "Run_Number"
         builder.add_sweep_definition(EMODTask.set_parameter_partial("Run_Number"), range(0, num_sim_long))

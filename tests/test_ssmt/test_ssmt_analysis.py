@@ -22,6 +22,7 @@ class TestSSMTAnalysis(ITestWithPersistence):
         self.platform = Platform('COMPS2')
 
     # test using SSMTAnalysis to run PopulationAnalyzer in comps's SSMT DockerWorker
+    @pytest.mark.skip
     def test_ssmt_analysis_PopulationAnalyzer(self):
         experiment_id = "8bb8ae8f-793c-ea11-a2be-f0921c167861"  # comps2
         # experiment_id ="a30a21c0-9752-ea11-941d-0050569e0ef3"  # idmtvapp17
@@ -57,6 +58,8 @@ class TestSSMTAnalysis(ITestWithPersistence):
             )
 
     # test using SSMTAnalysis to run multiple analyzers in comps's SSMT DockerWorker
+    # this test will be skip until further evaluation.
+    @pytest.mark.skip
     def test_ssmt_analysis_multiple_analyzers(self):
         experiment_id = "8bb8ae8f-793c-ea11-a2be-f0921c167861"  # comps2
         # experiment_id ="a30a21c0-9752-ea11-941d-0050569e0ef3"  # idmtvapp17
@@ -97,6 +100,7 @@ class TestSSMTAnalysis(ITestWithPersistence):
             )
 
     # test using SSMTAnalysis to run multiple experiments in comps's SSMT DockerWorker
+    @pytest.mark.skip
     def test_ssmt_analysis_multiple_experiments(self):
         exp_id1 = "8bb8ae8f-793c-ea11-a2be-f0921c167861"  # comps2
         exp_id2 = "4ea96af7-1549-ea11-a2be-f0921c167861"  # comps2

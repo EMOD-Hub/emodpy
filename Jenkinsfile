@@ -1,24 +1,36 @@
-podTemplate(cloud: 'OpenShift', label: 'rpmbuild') {
-  node('rpm-based') {
-    container('dtk-build'){
+podTemplate(
+    //idleMinutes : 30,
+    podRetention : onFailure(),
+    activeDeadlineSeconds : 3600,
+    containers: [
+        containerTemplate(
+            name: 'dtk-rpm-builder', 
+            image: 'docker-production.packages.idmod.org/idm/dtk-rpm-builder:0.1',
+            command: 'sleep', 
+            args: '30d'
+            )
+  ]) {
+  node(POD_LABEL) {
+    container('dtk-rpm-builder'){
 			stage('Cleanup Workspace') {		    
 				cleanWs()
 				echo "Cleaned Up Workspace For Project"
 				echo "${params.BRANCH}"
 			}
 			stage('Prepare') {
-				sh 'python --version'
-				sh 'python3.6 --version'
-				sh 'pip3.6 --version'
+				//sh 'python --version'
+				sh 'python3 --version'
+				sh 'pip3 --version'
 
-				sh 'python3.6 -m pip install --upgrade pip'
-				//sh 'python3.6 -m pip install --upgrade wheel'
-				sh "pip3.6 install wheel"
-				sh 'python3.6 -m pip install --upgrade setuptools'
-				sh 'pip3.6 freeze'
-				sh 'yum -y remove mpich'
-				sh 'yum -y install mpich-3.2'
-				sh 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/mpich/lib'
+				sh 'python3 -m pip install --upgrade pip'
+				//sh 'python3 -m pip install --upgrade wheel'
+				sh "pip3 install wheel"
+				sh 'python3 -m pip install --upgrade setuptools'
+				sh 'pip3 freeze'
+				// mpich should be installed in this container already
+				//sh 'yum -y remove mpich'
+				//sh 'yum -y install mpich-3.2'
+				//sh 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/mpich/lib'
 			}
 			stage('Code Checkout') {
 				if (env.CHANGE_ID) {
@@ -40,7 +52,7 @@ podTemplate(cloud: 'OpenShift', label: 'rpmbuild') {
 			stage('Build') {
 				sh 'pwd'
 				sh 'ls -a'
-				sh 'python3.6 setup.py bdist_wheel'
+				sh 'python3 setup.py bdist_wheel'
 				 
 			}
 			stage('Install') {
@@ -49,30 +61,31 @@ podTemplate(cloud: 'OpenShift', label: 'rpmbuild') {
 
 				echo "I am installing emodpy from wheel file built from code"
 				def wheelFile = sh(returnStdout: true, script: "find ./dist -name '*.whl'").toString().trim()
-				//def wheelFile = sh(returnStdout: true, script: "python3.6 ./.github/scripts/get_wheel_filename.py --package-file package_setup.py").toString().trim()
+				//def wheelFile = sh(returnStdout: true, script: "python3 ./.github/scripts/get_wheel_filename.py --package-file package_setup.py").toString().trim()
 				echo "This is the package file: ${wheelFile}"
-				sh "pip3.6 install $wheelFile --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple"
+				sh "pip3 install $wheelFile --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple"
 				 
-				sh "pip3.6 install py-make"
-				sh "pip3.6 install dataclasses"
-				sh "pip3.6 install idmtools_test --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple"
-				sh 'pip3.6 install keyrings.alt'
-				sh "pip3.6 freeze"
+				sh "pip3 install py-make"
+				// In python 3.9 environment, dataclasses should be installed at this point.
+				//sh "pip3 install dataclasses"
+				sh "pip3 install idmtools_test --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple"
+				sh 'pip3 install keyrings.alt'
+				sh "pip3 install pytest-xdist"
+				sh "pip3 freeze"
 			}
 			stage('Login and Test') {
 				withCredentials([string(credentialsId: 'Comps_emodpy_user', variable: 'user'), string(credentialsId: 'Comps_emodpy_password', variable: 'password'),
 				                 string(credentialsId: 'Bamboo_id', variable: 'bamboo_user'), string(credentialsId: 'Bamboo', variable: 'bamboo_password')]) {
-					sh 'python3.6 ".dev_scripts/create_auth_token_args.py" --comps_url https://comps2.idmod.org --username $user --password $password'
+					sh 'python3 ".dev_scripts/create_auth_token_args.py" --comps_url https://comps2.idmod.org --username $user --password $password'
 					dir('tests') {
-					    sh 'python3.6 bamboo_login_with_arguments.py -u $bamboo_user -p $bamboo_password'
+					    sh 'python3 bamboo_login_with_arguments.py -u $bamboo_user -p $bamboo_password'
 				    }
 				}
 				echo "Running Emodpy Tests"
 				dir('tests') {
-					sh 'python3.6 --version'
-					sh "pytest test_download_from_bamboo.py"
-					sh 'pytest -v -m emod --junitxml="result.xml"'
-				    junit '*.xml'
+					sh "pytest -n 0 test_download_from_bamboo.py"
+					sh 'pytest -n 10 --dist loadfile -v -m emod --junitxml="result.xml"'
+  		    junit '*.xml'
 				}
 			}
 		}

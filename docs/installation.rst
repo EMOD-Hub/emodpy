@@ -13,8 +13,6 @@ installation method you choose, the prerequisites are the same.
 Prerequisites
 =============
 
-* Windows 10 Pro or Enterprise
-
 * |Python_supp| (https://www.python.org/downloads/release)
 
 * Python virtual environments

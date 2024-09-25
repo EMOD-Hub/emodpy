@@ -94,6 +94,7 @@ class EMODTask(ITask):
 
     #: Add --python-script-path to command line
     use_embedded_python: bool = True
+    py_path_list: list = field(default_factory=lambda: [])
     is_linux: bool = False
     implicit_configs: list = field(default_factory=lambda: [])
     sif_filename: str = None
@@ -103,6 +104,7 @@ class EMODTask(ITask):
         from emodpy.utils import download_eradication
         super().__post_init__()
         self.executable_name = "Eradication"
+        self.py_path_list.append("./Assets/python")
         if self.eradication_path is not None:
             self.executable_name = os.path.basename(self.eradication_path)
             if urlparse(self.eradication_path).scheme in ('http', 'https'):
@@ -471,12 +473,23 @@ class EMODTask(ITask):
             )
         else:
             self.command = CommandLine(f"Assets/{self.executable_name}", "--config", f"{self.config_file_name}", "--dll-path", "./Assets")
+
         if self.use_embedded_python:    # This should be the always-use case but we're not quite there yet.
-            self.command._options.update({"--python-script-path": "./Assets/python"})
+            list_sep = ";"
+            self.command._options.update({"--python-script-path": list_sep.join(self.py_path_list)})
 
         # We do this here because CommandLine tries to be smart and quote input_path, but it isn't quite right...
         self.command.add_raw_argument("--input-path")
         self.command.add_raw_argument(input_path)
+
+    def add_py_path(self, path_to_add) -> NoReturn:
+        """
+        Add path to list of python paths prepended to sys.path in embedded interpreter
+
+        Returns:
+
+        """
+        self.py_path_list.append(path_to_add)
 
     def set_sif(self, path_to_sif, platform=None) -> NoReturn:
         """

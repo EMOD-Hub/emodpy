@@ -10,3 +10,4 @@ astunparse
 bs4
 keyring
 pyCOMPS~=2.6
+requests==2.29.0

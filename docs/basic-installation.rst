@@ -6,27 +6,30 @@ Follow the steps below if you will use |IT_s| to run and analyze simulations, bu
 source code changes.
 
 #.  Open a command prompt and create a virtual environment in any directory you choose. The
-    command below names the environment "emodpy", but you may use any desired name::
+    command below names the environment "emodpy", but you may use any desired name, and any 
+    available path you prefer::
 
-        python -m venv emodpy
+        python -m venv /path/to/venv/root/emodpy
 
 #.  Activate the virtual environment:
 
         * On Windows, enter the following::
 
-            emodpy\Scripts\activate
+            \path\to\venv\root\emodpy\Scripts\activate
 
         * On Linux, enter the following::
 
-            source emodpy/bin/activate
+            source /path/to/venv/root/emodpy/bin/activate
 
-#.  Install |IT_s| packages::
+#.  Install |IT_s| packages. ::
 
         pip install emodpy --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
 
-#.  Verify installation by pulling up |IT_s| help::
+    (It's strongly recommended that you edit your pip.ini or pip.conf so you don't have to specificy --index-url.)
 
-        emodpy --help
+#.  Verify installation by doing a test import::
+
+        python -c 'import emodpy'
 
 #.  When you are finished, deactivate the virtual environment by entering the following at a command prompt::
 

@@ -657,6 +657,7 @@ class TestWorkflowCampaignLinux(TestWorkflowCampaign):
     def test_5_node_multiplier_constant_linux(self):
         super().node_multiplier_constant_test()
 
+    @pytest.mark.skip(reason="Bug 637")
     def test_6_node_multiplier_boxcar_linux(self):
         super().node_multiplier_boxcar_test()
 

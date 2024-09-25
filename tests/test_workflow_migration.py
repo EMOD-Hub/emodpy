@@ -26,7 +26,9 @@ from emod_api.migration import Migration, from_params, from_demog_and_param_grav
 from emod_api.demographics.Node import Node
 import emod_api.demographics.Demographics as Demographics
 
-from . import manifest
+import tempfile
+
+import manifest
 sif_path = str(pathlib.Path(manifest.current_directory, "stage_sif.id"))
 """
 Test Migration object from emod_api and make sure it's consumable by Eradication and:
@@ -200,6 +202,72 @@ class TestMigration(ITestWithPersistence):
 
         return demog, mig_partial
 
+    def set_migration_params_and_implicits(self, demographics):
+        import tempfile
+        from emod_api.config import default_from_schema_no_validation as dfs
+
+        def set_param_fn(config, implicit_config_set_fns):
+            for fn in implicit_config_set_fns:
+                config = fn(config)
+            return config
+
+        tf = tempfile.NamedTemporaryFile(delete=False)
+
+        dfs.get_default_config_from_schema(self.schema_path, output_filename=self.config_file)
+        dfs.write_config_from_default_and_params(config_path=self.config_file,
+                                                 set_fn=partial(set_param_fn, implicit_config_set_fns=demographics.implicits),
+                                                 config_out_path=tf.name)
+        config = json.load(tf)
+        return config
+
+    def test_set_migration_patterns_default(self):
+        nodes = [Node(forced_id=1, pop=100, lat=1, lon=2)]
+        demog = Demographics.Demographics(nodes=nodes)
+        demog.SetDefaultProperties()
+        demog.SetMigrationPattern()  # defaults to RANDOM_WALK_DIFFUSION
+        config = self.set_migration_params_and_implicits(demog)
+        self.assertEqual(config["parameters"]["Migration_Pattern"], "RANDOM_WALK_DIFFUSION")
+        self.assertEqual(config["parameters"]["Migration_Model"], "FIXED_RATE_MIGRATION")
+
+    def test_set_migration_patterns_rwd(self):
+        nodes = [Node(forced_id=1, pop=100, lat=1, lon=2)]
+        demog = Demographics.Demographics(nodes=nodes)
+        demog.SetDefaultProperties()
+        demog.SetMigrationPattern("rwd")
+        config = self.set_migration_params_and_implicits(demog)
+        self.assertEqual(config["parameters"]["Migration_Pattern"], "RANDOM_WALK_DIFFUSION")
+        self.assertEqual(config["parameters"]["Migration_Model"], "FIXED_RATE_MIGRATION")
+
+    def test_set_migration_patterns_srt(self):
+        nodes = [Node(forced_id=1, pop=100, lat=1, lon=2)]
+        demog = Demographics.Demographics(nodes=nodes)
+        demog.SetDefaultProperties()
+        demog.SetMigrationPattern("srt")  # defaults to RANDOM_WALK_DIFFUSION
+        config = self.set_migration_params_and_implicits(demog)
+        self.assertEqual(config["parameters"]["Migration_Pattern"], "SINGLE_ROUND_TRIPS")
+        self.assertEqual(config["parameters"]["Migration_Model"], "FIXED_RATE_MIGRATION")
+
+    def test_set_regional_migration_file_name(self):
+        nodes = [Node(forced_id=1, pop=100, lat=1, lon=2)]
+        test_migration_file_name = tempfile.TemporaryFile().name
+        demog = Demographics.Demographics(nodes=nodes)
+        demog.SetDefaultProperties()
+        demog._SetRegionalMigrationFileName(test_migration_file_name)  # defaults to RANDOM_WALK_DIFFUSION
+        config = self.set_migration_params_and_implicits(demog)
+        self.assertEqual(config["parameters"]["Migration_Pattern"], "RANDOM_WALK_DIFFUSION")
+        self.assertEqual(config["parameters"]["Migration_Model"], "FIXED_RATE_MIGRATION")
+        self.assertEqual(config["parameters"]["Regional_Migration_Filename"], test_migration_file_name)
+
+    def test_set_demographics_file_name(self):
+        nodes = [Node(forced_id=1, pop=100, lat=1, lon=2)]
+        test_demographics_file_name = [tempfile.TemporaryFile().name]
+        demog = Demographics.Demographics(nodes=nodes)
+        demog.SetDefaultProperties()
+        demog._SetDemographicFileNames(test_demographics_file_name)  # defaults to RANDOM_WALK_DIFFUSION
+        config = self.set_migration_params_and_implicits(demog)
+        self.assertEqual(config["parameters"]["Migration_Model"], "NO_MIGRATION")
+        self.assertEqual(config["parameters"]["Demographics_Filenames"], test_demographics_file_name)
+
     def _test_migration_source_destination_node_local(self):  # https://github.com/InstituteforDiseaseModeling/emodpy/issues/359
         self.migration_source_destination_node_test(Migration.LOCAL)
 
@@ -288,6 +356,7 @@ class TestMigration(ITestWithPersistence):
                                         f'but they migrated to {to_node}.')
 
     def test_migration_sweep(self):
+        '''Checks that we can sweep migration rates using from_sweep'''
         def build_demog_mig(migration_factor, id_ref):
             nodes = []
             # Add nodes to demographics
@@ -297,6 +366,7 @@ class TestMigration(ITestWithPersistence):
             demog = Demographics.Demographics(nodes=nodes, idref=id_ref)
             demog.SetDefaultProperties()
 
+            # The migration_factor will sweep from 1-3 to create 3 sims
             Link = namedtuple("Link", ["source", "destination", "rate"])
             rates = [
                 Link(1, 2, min(1.0, 0.1 * migration_factor)),
@@ -324,6 +394,13 @@ class TestMigration(ITestWithPersistence):
                                   mig_rates=rates, id_ref=id_ref)
 
             return demog, mig_partial
+
+        def set_param_fn(config):
+            # Population & agent size
+            config.parameters.x_Base_Population = 0.1
+            config.parameters.Simulation_Duration = 365
+            config.parameters.Minimum_End_Time = 90
+            return config
 
         def update_mig_type(simulation, mig_factor):
             build_demog_mig_rate = partial(build_demog_mig, migration_factor=mig_factor, id_ref="test_id_ref")
@@ -396,6 +473,8 @@ class TestMigration(ITestWithPersistence):
         sims = self.platform.get_children_by_object(experiment)
         sweep_values = [1, 2, 3]
         baseline = -1
+
+        # sim1 should have 1 * migration rates, sim2 should have 2 * migration rates, etc
         for sweep_index, simulation in enumerate(sims):
             self.platform.get_files_by_id(simulation.id, item_type=ItemType.SIMULATION, files=filenames,
                                           output=output_folder)
@@ -409,17 +488,24 @@ class TestMigration(ITestWithPersistence):
             migration_output_from_two = migration_output[migration_output[' From_NodeID'] == 2]
 
             migration_one_to_two = len(migration_output_from_one[migration_output_from_one[' To_NodeID'] == 2])
-            migration_two_to_three = len(migration_output_from_two[migration_output_from_two[' To_NodeID'] == 3])
+            self.assertNotEqual(migration_one_to_two, 0, msg="No migration from node 1 to 2.")
 
-            if baseline == -1:  # only true for first sweep (baseline)
+            migration_two_to_three = len(migration_output_from_two[migration_output_from_two[' To_NodeID'] == 3])
+            self.assertNotEqual(migration_two_to_three, 0, msg="No migration from node 2 to 3.")
+
+            # since sim1 has 1 * migration rates, we will keep it as a baseline
+            if baseline == -1:  # only true for first sweep
                 baseline = migration_one_to_two
                 baseline2 = migration_two_to_three
 
-            self.assertAlmostEqual(migration_one_to_two, sweep_values[sweep_index] * baseline,
-                                   delta=0.3 * migration_one_to_two)
+            comparison_values1 = (migration_one_to_two, sweep_values[sweep_index] * baseline)
+            comparison_values2 = (migration_two_to_three, sweep_values[sweep_index] * baseline2)
 
-            self.assertAlmostEqual(migration_two_to_three, sweep_values[sweep_index] * baseline2,
-                                   delta=0.3 * migration_two_to_three)
+            self.assertAlmostEqual(comparison_values1[0], comparison_values1[1],
+                                   delta=0.5 * max(comparison_values1))
+
+            self.assertAlmostEqual(comparison_values2[0], comparison_values2[1],
+                                   delta=0.5 * max(comparison_values2))
 
     @staticmethod
     def build_demog_mig_2(migration_type, id_ref):

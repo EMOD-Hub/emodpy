@@ -106,7 +106,7 @@ pip install idmtools-test --index-url=https://packages.idmod.org/api/pypi/pypi-p
 
 Install all necessary documentation tools using ``pip install -r doc/requirements.txt`` and install emodpy in the same environment. Navigate to the docs folder and enter ``make html``. If you make updates to the docstrings, you must reinstall emodpy to pick up the latest changes in the documentation build. It's also good practice to run ``make clean`` before rebuilding the documentation to avoid missing errors or warnings. These steps are only for testing the build locally before committing changes. The documentation build on Read the Docs will run automatically when new code is committed. 
 
-### Disclaimer
+# Disclaimer
 
 The code in this repository was developed by IDM and other collaborators to support our joint research on flexible agent-based modeling.
  We've made it publicly available under the MIT License to provide others with a better understanding of our research and an opportunity to build upon it for 

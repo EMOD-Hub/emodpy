@@ -31,7 +31,7 @@ To build the documentation locally, do the following:
   - [Development Tips](#development-tips)
   - [To run examples or tests](#to-run-examples-or-tests)
   - [Building docs](#building-docs)
-    - [Disclaimer](#disclaimer)
+- [Disclaimer](#disclaimer)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 

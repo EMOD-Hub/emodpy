@@ -106,6 +106,13 @@ pip install idmtools-test --index-url=https://packages.idmod.org/api/pypi/pypi-p
 
 Install all necessary documentation tools using ``pip install -r doc/requirements.txt`` and install emodpy in the same environment. Navigate to the docs folder and enter ``make html``. If you make updates to the docstrings, you must reinstall emodpy to pick up the latest changes in the documentation build. It's also good practice to run ``make clean`` before rebuilding the documentation to avoid missing errors or warnings. These steps are only for testing the build locally before committing changes. The documentation build on Read the Docs will run automatically when new code is committed. 
 
+# Community
+The EMOD Community is made up of researchers and software developers, primarily focused on malaria and HIV research.
+We value mutual respect, openness, and a collaborative spirit. If these values resonate with you, 
+we invite you to join our EMOD Slack Community by completing this form:
+
+https://forms.office.com/r/sjncGvBjvZ
+
 # Disclaimer
 
 The code in this repository was developed by IDM and other collaborators to support our joint research on flexible agent-based modeling.

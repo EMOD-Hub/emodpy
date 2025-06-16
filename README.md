@@ -40,11 +40,11 @@ To build the documentation locally, do the following:
 # User Installation
 
 ```bash
-pip install emodpy --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
+pip install emodpy --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
 ```
 
 ## Pre-requisites
-- Python 3.6/3.7 x64
+- Python 3.9 x64
 
 
 # Development Environment Setup
@@ -54,7 +54,7 @@ When setting up your environment for the first time, you can use the following i
 ## First Time Setup
 1) Clone the repository:
    ```bash
-   > git clone https://github.com/InstituteforDiseaseModeling/emodpy.git
+   > git clone https://github.com/EMOD-Hub/emodpy.git
    ```
 2) Create a virtualenv. On Windows, please use venv to create the environment
    `python -m venv idmtools`
@@ -92,15 +92,15 @@ email:password is your company login credentials. password should be encoded for
 
 production artifactory with latest release packages:
 ```bash
-pip install idmtools[idm] --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
+pip install idmtools[idm] --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
 OR
-pip install idmtools[full] --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
+pip install idmtools[full] --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
 ```
 To run integration tests or examples, you also need to install idmtools-test package
 ```bash
-pip install idmtools-test --index-url=https://email:password@packages.idmod.org/api/pypi/pypi-staging/simple
+pip install idmtools-test --extra-index-url=https://email:password@packages.idmod.org/api/pypi/pypi-staging/simple
 OR
-pip install idmtools-test --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
+pip install idmtools-test --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
 ```
 
 ## Building docs

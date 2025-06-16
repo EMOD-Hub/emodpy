@@ -26,8 +26,8 @@ clean-all:  ## Deleting package info hides plugins so we only want to do that fo
 	@make clean
 	$(CLDIR) --dir-patterns "**/*.egg-info/"
 
-lint: ## check style with flake8
-	flake8 --ignore=E201,E202,E501,W291,W503,E261 --exclude="emodpy/campaign/**" $(PACKAGE_NAME) tests
+lint: ## check style with flake8 - E201,E202,E501,W291,W503,E261
+	flake8 --ignore=E501,E261,W503 --exclude="emodpy/tests/**" $(PACKAGE_NAME)
 
 test: ## Run our tests
 	$(FULL_TEST_CMD) -m "not comps and not docker"'
@@ -77,9 +77,10 @@ coverage-all: ## Generate a code-coverage report using all tests
 	$(PDS)/launch_dir_in_browser.py htmlcov/index.html
 
 # Release
-dist: ## build our package
+dist: ## build our package using pyproject.toml file
 	@make clean
-	python setup.py sdist bdist_wheel
+	pip install build
+	python -m build --wheel
 
 release-staging: ## perform a release to staging
 	@make dist

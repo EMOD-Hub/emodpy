@@ -1,116 +1,121 @@
-import os
-import pytest
+# flake8: noqa W605,F821
+import itertools
 import json
-import pandas as pd
-from abc import ABC, abstractmethod
+import os
+import time
+import pytest
+import unittest
+from emodpy.emod_task import logger
 from functools import partial
 
-from emod_api.config import default_from_schema_no_validation as dfs
-from emod_api.interventions import outbreak as ob
-from emod_api.interventions import simple_vaccine as sv
-from emod_api.interventions import import_pressure as ip
-from emod_api.interventions import node_multiplier as nm
-from emod_api import campaign as camp
+from emod_api import campaign
 
-from idmtools.core import ItemType
 from idmtools.entities.experiment import Experiment
 from idmtools.core.platform_factory import Platform
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 from idmtools.builders import SimulationBuilder
 
 from emodpy.emod_task import EMODTask
-from emodpy.emod_campaign import EMODCampaign
-from emodpy.utils import EradicationBambooBuilds
+from emodpy.campaign.emod_campaign import EMODCampaign
+from emodpy.campaign.node_intervention import ImportPressure
+from emodpy.campaign.distributor import add_intervention_scheduled, add_intervention_triggered
+from emodpy.campaign.individual_intervention import CommonInterventionParameters, SimpleVaccine, VaccineType, BroadcastEvent
+from emodpy.campaign.common import RepetitionConfig, TargetDemographicsConfig
+from emodpy.reporters.common import ReportEventRecorder
+import emodpy.campaign.waning_config as waning_config
 
-from tests import manifest
+from emodpy.utils.distributions import ConstantDistribution
 
-sif_path = manifest.sft_id_file
-default_config_file = "campaign_workflow_default_config.json"
+from pathlib import Path
+import sys
+parent = Path(__file__).resolve().parent
+sys.path.append(str(parent))
+import manifest
+import helpers
 
-
-class TestWorkflowCampaign(ITestWithPersistence, ABC):
+@pytest.mark.emod
+class TestWorkflowCampaign(unittest.TestCase):
     """
-        Base test class to test emod_api.campaign and  emod_api.interventions in a workflow
+        Tests for EMODTask
     """
-    @classmethod
-    @abstractmethod
-    def define_test_environment(cls):
-        cls.plan = EradicationBambooBuilds.CI_GENERIC
-        cls.eradication_path = manifest.eradication_path_win
-        cls.schema_path = manifest.schema_path_win
-        cls.config_file = os.path.join(manifest.config_folder, "generic_config_for_campaign_workflow.json")
-        cls.default_config_file = os.path.join(manifest.config_folder, default_config_file)
-        cls.camp_file = os.path.join(manifest.campaign_folder, "generic_campaign.json")
-        cls.comps_platform = "COMPS2"
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.define_test_environment()
-        manifest.delete_existing_file(cls.config_file)
-        manifest.delete_existing_file(default_config_file)
-        print("write_default_from_schema")
-        dfs.get_default_config_from_schema(cls.schema_path, output_filename=cls.default_config_file)
-        camp.schema_path = cls.schema_path
 
     def setUp(self) -> None:
-        self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
-        print(self.case_name)
-        self.platform = Platform(self.comps_platform)
-        manifest.delete_existing_file(self.camp_file)
+        self.num_sim = 2
+        self.num_sim_long = 20
+        self.case_name = os.path.basename(__file__) + "_" + self._testMethodName
+        print(f"\n{self.case_name}")
+        self.original_working_dir = os.getcwd()
+        self.task: EMODTask
+        self.experiment: Experiment
+        self.platform = Platform(manifest.comps_platform_name)
+        self.test_folder = helpers.make_test_directory(self.case_name)
+        self.setup_custom_params()
+
+    def setup_custom_params(self):
+        self.builders = helpers.BuildersCommon
+
+    def tearDown(self) -> None:
+        # Check if the test failed and leave the data in the folder if it did
+        test_result = self.defaultTestResult()
+        if test_result.errors:
+            with open("experiment_location.txt", "w") as f:
+                if self.experiment:
+                    f.write(f"The failed experiment can be viewed at {self.platform.endpoint}/#explore/"
+                            f"Simulations?filters=ExperimentId={self.experiment.uid}")
+                else:
+                    f.write("The experiment was not created.")
+            os.chdir(self.original_working_dir)
+            helpers.close_logger(logger.parent)
+        else:
+            helpers.close_logger(logger.parent)
+            if os.name == "nt":
+                time.sleep(1)  # only needed for windows
+            os.chdir(self.original_working_dir)
+            helpers.delete_existing_folder(self.test_folder)
 
     def run_exp(self, task):
         experiment = Experiment.from_task(task, name=self._testMethodName)
-
-        print("Run experiment...")
         experiment.run(platform=self.platform, wait_until_done=True)
-        with self.platform as plat:
-            # The last step is to call run() on the ExperimentManager to run the simulations.
-            experiment.run(platform=plat)
-            plat.wait_till_done(experiment, refresh_interval=1)
-
         self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
 
         print(f"Experiment {experiment.uid} succeeded.")
         return experiment
 
-    def outbreak_individual_from_file_test(self):
+    def test_campaign_from_file(self):
         """
-            Testing the campaign.add() to add campaign event from interventions.outbreak and campaign.save() to save
+            Testing the campaign.add() to add campaign event SimpleVaccine and campaign.save() to save
             a campaign file. Making sure it can be consumed by the Eradication with EMODTask.from_files. Make sure
             the following config parameters are set implicitly in config file:
                 Campaign_Filename = "campaign.json"
                 Enable_Intervention = 1
         """
+        # create campaign and save file to be consumed by EMODTask.from_files
+        import emod_api.campaign as campaign
+        campaign.set_schema(schema_path_in=self.builders.schema_path)
+        this_waning_config = waning_config.BoxExponential(25, 60, 0.89)
+        common_intervention_parameters = CommonInterventionParameters(cost=0.5,
+                                                                      dont_allow_duplicates=True,
+                                                                      intervention_name="Vaccine")
+        demographics = TargetDemographicsConfig(demographic_coverage=0.97)
+        repetitions = RepetitionConfig(3, 1)
+        vaccine = SimpleVaccine(campaign,
+                                waning_config=this_waning_config,
+                                vaccine_take=0.94,
+                                vaccine_type=VaccineType.TransmissionBlocking,
+                                common_intervention_parameters=common_intervention_parameters)
+        add_intervention_scheduled(campaign, intervention_list=[vaccine], start_day=2, repetition_config=repetitions,
+                                   target_demographics_config=demographics)
+        campaign.save("campaign.json")  # saves to self.test_folder
 
-        def set_param_fn(config):
-            config.parameters.Incubation_Period_Constant = 0
-            config.parameters.Infectious_Period_Constant = 1
-            config.parameters.Base_Infectivity_Constant = 1
-            config.parameters.Base_Mortality = 0
-            config.parameters.Simulation_Duration = 10
-            return config
-        dfs.write_config_from_default_and_params(config_path=self.default_config_file,
-                                                 set_fn=set_param_fn,
-                                                 config_out_path=self.config_file)
-        timestep = 2
-        coverage = 0.4
-        camp.add(ob.seed_by_coverage(camp, timestep, coverage), name="outbreak_individual", first=True)
-        camp.save(self.camp_file)
-        self.assertTrue(os.path.isfile(self.camp_file))
-
-        task = EMODTask.from_files(config_path=self.config_file, eradication_path=self.eradication_path,
-                                   campaign_path=self.camp_file)
-        task.set_sif(sif_path)
+        task = EMODTask.from_files(config_path=self.builders.config_file_basic,
+                                   eradication_path=self.builders.eradication_path,
+                                   campaign_path="campaign.json")
+        task.set_sif(self.builders.sif_path, platform=self.platform)
         self.assertTrue(isinstance(task.campaign, EMODCampaign))
         self.assertEqual(len(task.campaign.events), 1)
-        self.assertEqual(task.campaign.events[0]["Start_Day"], timestep)
-        self.assertEqual(task.campaign.events[0]["Event_Coordinator_Config"]["Demographic_Coverage"], coverage)
+        self.assertEqual(task.campaign.events[0]["Start_Day"], 2)
+        self.assertEqual(task.campaign.events[0]["Event_Coordinator_Config"]["Demographic_Coverage"], 0.97)
         self.assertEqual(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["class"],
-                         "OutbreakIndividual")
-
-        # these will not be changed until task.pre_creation()
-        # self.assertEqual("campaign.json", task.config["Campaign_Filename"])
-        # self.assertEqual(1, task.config["Enable_Intervention"])
+                         "SimpleVaccine")
 
         experiment = self.run_exp(task)
 
@@ -123,33 +128,14 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
 
             campaign_file = json.loads(files["campaign.json"].decode("utf-8"))
             campaign_file.pop("Campaign_Name")
-            with open(self.camp_file, "r") as camp_file:
+            with open(self.builders.campaign_file, "r") as camp_file:
                 campaign_file_from_disk = json.load(camp_file)
             self.assertEqual(campaign_file, campaign_file_from_disk)
 
             stdout = files["stdout.txt"].decode("utf-8")
-            self.assertIn("'OutbreakIndividual' interventions at node", stdout)
+            self.assertIn("'SimpleVaccine' interventions at node", stdout)
 
-    @staticmethod
-    def build_camp(time_step, demographic_coverage):
-        camp.add(ob.seed_by_coverage(camp, time_step, demographic_coverage), name="outbreak_individual", first=True)
-        return camp
-
-    @staticmethod
-    def update_outbreak_coverage_1(simulation, value):
-        # ideally we should use the following pattern but it's not working at this moment.
-        # for event in simulation.task.campaign.events:
-        #     event.Event_Coordinator_Config.Demographic_Coverage = value
-        # https://github.com/InstituteforDiseaseModeling/emodpy/issues/379
-        simulation.task.campaign.events[0]["Event_Coordinator_Config"]["Demographic_Coverage"] = value
-        return {"Demographic_Coverage": value}  # optional, for tag in Comps
-
-    def update_outbreak_coverage_2(self, simulation, value):
-        build_demog_prevalence = partial(self.build_camp, coverage=value)
-        simulation.task.create_campaign_from_callback(build_demog_prevalence)
-        return {"Demographic_Coverage": value}  # optional, for tag in Comps
-
-    def campaign_sweeping_test(self, update_outbreak_coverage):
+    def campaign_sweeping_test(self, update_coverage):
         """
         Add an example of sweeping campaign parameter
         Please note that in this test, I am not testing the intervention itself, just verifying that
@@ -157,31 +143,17 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
         simulation it generated.
         """
 
-        def set_param_fn(config):
-            config.parameters.Incubation_Period_Constant = 0
-            config.parameters.Infectious_Period_Constant = 1
-            config.parameters.Base_Infectivity_Constant = 1
-            config.parameters.Base_Mortality = 0
-            config.parameters.Simulation_Duration = 10
-            return config
-
-        timestep = 2
-        coverage = 0.4
-
-        config_path = self.config_file[:-5] + "_3.json"
-        task = EMODTask.from_default2(config_path=config_path, eradication_path=self.eradication_path,
-                                      campaign_builder=partial(self.build_camp, timestep, coverage),
-                                      schema_path=self.schema_path,
-                                      param_custom_cb=set_param_fn, ep4_custom_cb=None, demog_builder=None)
-        task.set_sif(sif_path)
+        task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
+                                      campaign_builder=self.builders.campaign_builder,
+                                      schema_path=self.builders.schema_path,
+                                      demographics_builder=self.builders.demographics_builder,
+                                      config_builder=self.builders.config_builder)
+        task.set_sif(self.builders.sif_path, platform=self.platform)
 
         builder = SimulationBuilder()
         coverages = [0.1, 0.5]
-        builder.add_sweep_definition(update_outbreak_coverage, coverages)
-
+        builder.add_sweep_definition(update_coverage,  coverages)
         experiment = Experiment.from_builder(builder, task, name=self._testMethodName)
-
-        print("Run experiment...")
         experiment.run(platform=self.platform, wait_until_done=True)
 
         self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
@@ -189,10 +161,11 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
         print(f"Experiment {experiment.uid} succeeded.")
 
         # num of simulations should be the same as the length of sweeping parameters
-        for sim, c in zip(experiment.simulations, coverages):
-            files = self.platform.get_files(sim, ["generic_config_for_campaign_workflow_l_3.json", "campaign.json", "stdout.txt"])
+        for sim, coverage in zip(experiment.simulations, coverages):
+            files = self.platform.get_files(sim, [f"config.json", "campaign.json",
+                                                  "stdout.txt"])
 
-            config_file = json.loads(files["generic_config_for_campaign_workflow_l_3.json"].decode("utf-8"))
+            config_file = json.loads(files[f"config.json"].decode("utf-8"))
             self.assertEqual("campaign.json", config_file["parameters"]["Campaign_Filename"])
             self.assertEqual(1, config_file["parameters"]["Enable_Interventions"])
 
@@ -200,431 +173,383 @@ class TestWorkflowCampaign(ITestWithPersistence, ABC):
             # not changed
             campaign_file = json.loads(files["campaign.json"].decode("utf-8"))
             self.assertEqual(len(campaign_file["Events"]), 1)
-            self.assertEqual(campaign_file["Events"][0]["Start_Day"], timestep)
-            self.assertEqual(campaign_file["Events"][0]["Event_Coordinator_Config"]["Demographic_Coverage"], c)
+            self.assertEqual(campaign_file["Events"][0]["Event_Coordinator_Config"]["Demographic_Coverage"], coverage)
             self.assertEqual(campaign_file["Events"][0]["Event_Coordinator_Config"]["Intervention_Config"]["class"],
-                             "OutbreakIndividual")
+                             "SimpleVaccine")
 
             # verify simulation tag
             self.assertIn("Demographic_Coverage", sim.tags)
-            self.assertEqual(sim.tags["Demographic_Coverage"], c)
+            self.assertEqual(sim.tags["Demographic_Coverage"], coverage)
 
             stdout = files["stdout.txt"].decode("utf-8")
-            self.assertIn("'OutbreakIndividual' interventions at node", stdout)
+            self.assertIn("'SimpleVaccine' interventions at node", stdout)
 
-    def campaign_sweeping_test_1(self):
-        self.campaign_sweeping_test(update_outbreak_coverage=self.update_outbreak_coverage_1)
+    def test_campaign_sweeping_test_1(self):
+        def update_vaccine_coverage(simulation, coverage):
+            # ideally we should use the following pattern, but it's not working at this moment.
+            # for event in simulation.task.campaign.events:
+            #     event.Event_Coordinator_Config.Demographic_Coverage = value
+            # https://github.com/InstituteforDiseaseModeling/emodpy-old/issues/379
+            simulation.task.campaign.events[0]["Event_Coordinator_Config"]["Demographic_Coverage"] = coverage
+            return {"Demographic_Coverage": coverage}  # optional, for tag in Comps
 
-    def campaign_sweeping_test_2(self):
-        self.campaign_sweeping_test(update_outbreak_coverage=self.update_outbreak_coverage_2)
+        self.campaign_sweeping_test(update_coverage=update_vaccine_coverage)
 
-    def ip_and_sv_from_default_test(self):
+    def test_campaign_sweeping_test_2(self):
+        def update_vaccine_coverage(simulation, coverage):
+            sweep_vaccine_coverage = partial(self.builders.campaign_builder,  demographic_coverage=coverage)
+            simulation.task.create_campaign_from_callback(sweep_vaccine_coverage)
+            return {"Demographic_Coverage": coverage}  # optional, for tag in Comps
+
+        self.campaign_sweeping_test(update_coverage=update_vaccine_coverage)
+
+    def test_from_defaults(self):
         """
-            Testing the campaign.add() to add campaign event from interventions.import_pressure and
-            interventions.simple_vaccine. Making sure it can be consumed by the Eradication with EMODTask.from_default2.
+            Testing campaign creation. Making sure it can be consumed by the
+            Eradication with EMODTask.from_defaults. Make sure the following config parameters are set implicitly in
+            config file:
+                Campaign_Filename = "campaign.json"
+                Enable_Intervention = 1
+        """
+        demographic_coverage = 0.27
+        vaccine_take = 0.87
+        vaccine_box_duration = 57
+
+        config_name = "config.json"
+        def config_builder_builtin(config):
+            config = self.builders.config_builder(config)
+            config.parameters.Enable_Demographics_Builtin = 1
+            return config
+
+        task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
+                                      campaign_builder=partial(self.builders.campaign_builder,
+                                                               demographic_coverage=demographic_coverage,
+                                                               vaccine_take=vaccine_take,
+                                                               vaccine_box_duration=vaccine_box_duration),
+                                      schema_path=self.builders.schema_path,
+                                      config_builder=config_builder_builtin)
+        task.set_sif(self.builders.sif_path, platform=self.platform)
+
+        self.assertTrue(isinstance(task.campaign, EMODCampaign))
+        self.assertEqual(len(task.campaign.events), 1)
+        self.assertEqual(
+            task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["Vaccine_Take"],
+            vaccine_take)
+        self.assertEqual(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["Waning_Config"]["Box_Duration"],
+                         vaccine_box_duration)
+        self.assertEqual(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["class"],
+                         "SimpleVaccine")
+
+        experiment = self.run_exp(task)
+        sim = experiment.simulations[0]
+        files = self.platform.get_files(sim, [config_name, "campaign.json", "stdout.txt"])
+
+        config_file = json.loads(files[config_name].decode("utf-8"))
+        self.assertEqual("campaign.json", config_file["parameters"]["Campaign_Filename"])
+        self.assertEqual(1, config_file["parameters"]["Enable_Interventions"])
+
+        campaign_file = json.loads(files["campaign.json"].decode("utf-8"))
+        self.assertEqual(len(campaign_file["Events"]), 1)
+
+        stdout = files["stdout.txt"].decode("utf-8")
+        self.assertIn("'SimpleVaccine' interventions at node", stdout)
+
+    def test_scheduled_and_triggered_from_defaults(self):
+        """
+            Testing the campaign_builder with add_intervention_scheduled() and add_intervention_triggered to add
+            campaign event with both individual and node interventions. Making sure it can be consumed by the
+            Eradication with EMODTask.from_defaults.
             Make sure the following config parameters are set implicitly in config file:
                 Campaign_Filename = "campaign.json"
                 Enable_Intervention = 1
         """
+        def build_campaign(campaign, start_day_triggered, set_durations, set_daily_import_pressures, start_day_scheduled):
+            broadcast_events = [BroadcastEvent(campaign, broadcast_event="GP_EVENT_000"),
+                                BroadcastEvent(campaign, broadcast_event="GP_EVENT_001")]
+            add_intervention_scheduled(campaign, intervention_list=broadcast_events, start_day=start_day_scheduled,
+                                       event_name="Broadcast_Event", delay_distribution=ConstantDistribution(1))
 
-        def set_param_fn(config):
-            config.parameters.Incubation_Period_Constant = 0
-            config.parameters.Infectious_Period_Constant = 1
-            config.parameters.Base_Infectivity_Constant = 1
-            config.parameters.Base_Mortality = 0
-            config.parameters.Simulation_Duration = 20
-            return config
+            import_pressure = ImportPressure(campaign, durations=set_durations,
+                                             daily_import_pressures=set_daily_import_pressures)
+            add_intervention_triggered(campaign, intervention_list=[import_pressure], triggers_list=["GP_EVENT_000"],
+                                       start_day=start_day_triggered, event_name="import_pressure", node_ids=[1])
+            return campaign
 
-        def build_camp(t, dur, dip, t_sv):
-            def _set_config_param_implicitly(config, trigger_name):
-                config.parameters.Report_Event_Recorder_Events = [trigger_name]
-                return config
-            silly_example = partial(_set_config_param_implicitly, trigger_name=test_trigger_name)
-            camp.implicits.append(silly_example)
-            camp.add(ip.new_intervention(t, dur, dip, nods=[]),
-                     name="import_pressure", first=True)
-            camp.add(sv.new_intervention(t_sv), name="vaccine", first=False)
-            return camp
+        def build_reporter(reporters, trigger_name):
+            reporters.add(ReportEventRecorder(reporters_object=reporters, event_list=[trigger_name]))
+            return reporters
 
         test_trigger_name = "Births"
-        sv.schema_path = self.schema_path
-        ip.schema_path = self.schema_path
         timestep = 2
         durations = [10, 20]
         daily_import_pressures = [50, 100]
-        timestep_sv = 10
+        timestep_be = 3
 
-        config_path = self.config_file[:-5] + "_2.json"
-        task = EMODTask.from_default2(config_path=config_path, eradication_path=self.eradication_path,
-                                      campaign_builder=partial(build_camp, timestep, durations, daily_import_pressures,
-                                                               timestep_sv),
-                                      schema_path=self.schema_path,
-                                      param_custom_cb=set_param_fn, ep4_custom_cb=None, demog_builder=None)
-        task.set_sif(sif_path)
+        config_name = "config.json"
+        def config_builder_builtin(config):
+            config = self.builders.config_builder(config)
+            config.parameters.Enable_Demographics_Builtin = 1
+            return config
 
+        task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
+                                      campaign_builder=partial(build_campaign, start_day_triggered=timestep,
+                                                               set_durations=durations,
+                                                               set_daily_import_pressures=daily_import_pressures,
+                                                               start_day_scheduled=timestep_be),
+                                      schema_path=self.builders.schema_path,
+                                      config_builder=config_builder_builtin,
+                                      report_builder=partial(build_reporter, trigger_name=test_trigger_name))
+        task.set_sif(self.builders.sif_path, platform=self.platform)
         self.assertTrue(isinstance(task.campaign, EMODCampaign))
         self.assertEqual(len(task.campaign.events), 2)
-        self.assertEqual(task.campaign.events[0]["Start_Day"], timestep)
-        self.assertEqual(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["Daily_Import_Pressures"],
-                         daily_import_pressures)
-        self.assertEqual(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["Durations"],
-                         durations)
-        self.assertEqual(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["class"],
+        self.assertEqual(task.campaign.events[0]['Start_Day'], timestep_be)
+        self.assertEqual(task.campaign.events[0]['Event_Coordinator_Config']['Intervention_Config']['class'],
+                         'DelayedIntervention')
+        self.assertEqual(
+            task.campaign.events[0]['Event_Coordinator_Config']['Intervention_Config']['Delay_Period_Constant'], 1)
+
+        actual_interventions = task.campaign.events[0]['Event_Coordinator_Config']['Intervention_Config'][
+            'Actual_IndividualIntervention_Configs']
+        self.assertEqual(len(actual_interventions), 2)
+        self.assertEqual(actual_interventions[0]['class'], 'BroadcastEvent')
+        self.assertEqual(actual_interventions[0]['Broadcast_Event'], 'GP_EVENT_000')
+        self.assertEqual(actual_interventions[1]['class'], 'BroadcastEvent')
+        self.assertEqual(actual_interventions[1]['Broadcast_Event'], 'GP_EVENT_001')
+
+        self.assertEqual(task.campaign.events[1]['Start_Day'], timestep)
+        self.assertEqual(task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config']['class'],
+                         'NodeLevelHealthTriggeredIV')
+        self.assertEqual(task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config'][
+                             'Actual_NodeIntervention_Config']['class'],
                          "ImportPressure")
-
-        self.assertEqual(task.campaign.events[1]["Start_Day"], timestep_sv)
-        self.assertEqual(task.campaign.events[1]["Event_Coordinator_Config"]["Intervention_Config"]["class"],
-                         "Vaccine")
-
-        # these will not be changed until task.pre_creation()
-        # self.assertEqual("campaign.json", task.config["Campaign_Filename"])
-        # self.assertEqual(1, task.config["Enable_Intervention"])
-        self.assertEqual([test_trigger_name], task.config["parameters"]["Report_Event_Recorder_Events"])
+        self.assertEqual(
+            task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config']['Trigger_Condition_List'],
+            ["GP_EVENT_000"])
+        self.assertEqual(
+            task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config'][
+                'Actual_NodeIntervention_Config']['Daily_Import_Pressures'],
+            daily_import_pressures)
+        self.assertEqual(
+            task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config'][
+                'Actual_NodeIntervention_Config']['Durations'],
+            durations)
 
         experiment = self.run_exp(task)
-        config_basename = os.path.basename(config_path)
 
         for sim in experiment.simulations:
-            files = self.platform.get_files(sim, [config_basename, "campaign.json", "stdout.txt"])
+            files = self.platform.get_files(sim, [config_name, "campaign.json", "stdout.txt"])
 
-            config_file = json.loads(files[config_basename].decode("utf-8"))
+            config_file = json.loads(files[config_name].decode("utf-8"))
             self.assertEqual("campaign.json", config_file["parameters"]["Campaign_Filename"])
             self.assertEqual(1, config_file["parameters"]["Enable_Interventions"])
-
+            self.assertEqual([test_trigger_name], config_file["parameters"]["Report_Event_Recorder_Events"])
             campaign_file = json.loads(files["campaign.json"].decode("utf-8"))
             self.assertEqual(len(campaign_file["Events"]), 2)
 
             stdout = files["stdout.txt"].decode("utf-8")
-            self.assertIn("distributed 'ImportPressure' intervention to node", stdout)
-            self.assertIn("'Vaccine' interventions at node", stdout)
+            self.assertIn("Distributed 'ImportPressure' intervention to node 1", stdout)
+            self.assertIn("'DelayedIntervention' interventions at node", stdout)
 
-        camp.reset()
-
-    def node_multiplier_constant_test(self):
+    def test_campaign_and_demographics_sweep(self):
         """
-            Testing the campaign.add() to add campaign event from emodapi.interventions.node_multiplier.
-            Making sure it can be consumed by the Eradication with EMODTask.from_default2.
-            Make sure the following config parameters are set implicitly in config file:
-                Campaign_Filename = "campaign.json"
-                Enable_Intervention = 1
+        Testing that sweeping demographics and campaign works correctly
         """
 
-        def set_param_fn(config):
-            config.parameters.Incubation_Period_Constant = 0
-            config.parameters.Infectious_Period_Constant = 1
-            config.parameters.Base_Infectivity_Constant = 2
-            config.parameters.Base_Mortality = 0
-            config.parameters.Simulation_Duration = 20
-            config.parameters.Report_Event_Recorder_Events = ["NewInfection"]
-            config.parameters.Post_Infection_Acquisition_Multiplier = 1
-            config.parameters.Post_Infection_Transmission_Multiplier = 1
-            return config
+        def update_demographics_and_campaign(simulation, _aliens_distribution, total_population, vaccine_coverage):
+            """
+                This callback function modifies several demographics parameters
+            Args:
+                simulation: simulation object that will be created in comps
+                _aliens_distribution: alien_distribution parameter which will be modified in the sweep
+                total_population: total population distributed between the nodes
+                vaccine_coverage: demographics_coverage parameter which will be modified in the sweep
 
-        def build_camp(t, new_infectivity, profile):
-            camp.add(nm.new_scheduled_event(camp, start_day=t, new_infectivity=new_infectivity, profile=profile),
-                     name="node_multiplier_constant", first=True)
-            camp.add(ob.seed_by_coverage(camp, 1))
-            # for i in range(12):  # one outbreak each month
-            #     camp.add(ob.seed_by_coverage(t + 1 + i * 30, camp))
-            return camp
+            Returns:
+                tag that will be used with the simulation
+            """
+            build_demog_partial = partial(self.builders.demographics_builder, aliens_distribution=_aliens_distribution,
+                                          total_population=total_population)
+            simulation.task.create_demographics_from_callback(build_demog_partial, from_sweep=True)
+            sweep_vaccine_coverage = partial(self.builders.campaign_builder, demographic_coverage=vaccine_coverage)
+            simulation.task.create_campaign_from_callback(sweep_vaccine_coverage)
+            return dict(aliens_distribution=_aliens_distribution, initial_population=total_population,
+                        vaccine_coverage=vaccine_coverage)
 
-        camp.schema_path = self.schema_path
-        timestep = 5
-        new_infectivity = 0.1
-        profile = "CONST"
+        task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
+                                      campaign_builder=None,
+                                      schema_path=self.builders.schema_path,
+                                      config_builder=self.builders.config_builder,
+                                      demographics_builder=None)
 
-        config_path = self.config_file[:-5] + "_5.json"
-        task = EMODTask.from_default2(config_path=config_path, eradication_path=self.eradication_path,
-                                      campaign_builder=partial(build_camp, timestep, new_infectivity, profile),
-                                      schema_path=self.schema_path,
-                                      param_custom_cb=set_param_fn, ep4_custom_cb=None, demog_builder=None)
-        task.set_sif(sif_path)
+        task.set_sif(self.builders.sif_path, platform=self.platform)
 
-        self.assertTrue(isinstance(task.campaign, EMODCampaign))
-        self.assertEqual(len(task.campaign.events), 2)
-        self.assertEqual(task.campaign.events[0]["Start_Day"], timestep)
-        self.assertEqual(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["class"],
-                         "NodeInfectivityMult")
+        builder = SimulationBuilder()
+        # this will sweep over the entire parameter space in a cross-product fashion
+        # you will get 2x3x2 simulations
+        aliens_distribution_sweep = [[0, 0, 1], [0.5, 0.5, 0]],
+        initial_population_sweep = [1000, 700, 200],
+        vaccine_coverage_sweep = [0.3, 0.5]
 
-        experiment = self.run_exp(task)
-        filenames = ["output/InsetChart.json"]
+        builder.add_multiple_parameter_sweep_definition(
+            update_demographics_and_campaign,
+            dict(
+                _aliens_distribution=[[0, 0, 1], [0.5, 0.5, 0]],
+                total_population=[1000, 700, 200],
+                vaccine_coverage=[0.3, 0.5]
+            )
+        )
+        experiment = Experiment.from_builder(builder, task, name=self._testMethodName)
+        experiment.run(platform=self.platform, wait_until_done=True)
 
-        sims = self.platform.get_children_by_object(experiment)
-        output_folder = manifest.output_folder
-        for simulation in sims:
-            # download files from simulation
-            self.platform.get_files_by_id(simulation.id, item_type=ItemType.SIMULATION, files=filenames,
-                                          output=output_folder)
-            # validate files exist
-            local_path = os.path.join(output_folder, str(simulation.uid))
-            file_path = os.path.join(local_path, "output", "InsetChart.json")
-            self.assertTrue(os.path.isfile(file_path))
-            # validate result
-            with open(file_path, "r") as json_file:
-                inset_chart = json.load(json_file)
+        self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
 
-            infected = inset_chart["Channels"]["Infected"]["Data"]
+        print(f"Experiment {experiment.uid} succeeded.")
+        self.assertEqual(len(experiment.simulations), 12)
+        expected_combos = list(itertools.product([[0, 0, 1], [0.5, 0.5, 0]], [1000, 700, 200],
+                                                 [0.3, 0.5]))
+        # num of simulations should be the same as the length of sweeping parameters
+        actual_combos = []
+        for sim in experiment.simulations:
+            files = self.platform.get_files(sim, ["config.json", "campaign.json",
+                                                  "stdout.txt"])
 
-            self.assertTrue(all(infected[i] <= infected[i + 1] for i in range(timestep - 1)),
-                            msg=f"Test failed: infected should be in ascending order until time step {timestep}, "
-                                f"got {infected[:timestep]}.")
-            self.assertTrue(all(infected[i] >= infected[i + 1] for i in range(timestep, len(infected) - 1)),
-                            msg=f"Test failed: infected should be in descending order until time step {timestep}, "
-                                f"got {infected[timestep:]}.")
+            config_file = json.loads(files["config.json"].decode("utf-8"))
+            self.assertEqual("campaign.json", config_file["parameters"]["Campaign_Filename"])
+            self.assertEqual(1, config_file["parameters"]["Enable_Interventions"])
 
-    def node_multiplier_boxcar_test(self):
+
+            campaign_file = json.loads(files["campaign.json"].decode("utf-8"))
+            self.assertEqual(len(campaign_file["Events"]), 1)
+            coverage = campaign_file["Events"][0]["Event_Coordinator_Config"]["Demographic_Coverage"]
+            self.assertEqual(campaign_file["Events"][0]["Event_Coordinator_Config"]["Intervention_Config"]["class"],
+                             "SimpleVaccine")
+
+            # get demographics file
+            demographics_filename = config_file["parameters"]["Demographics_Filenames"][0]
+            demographics_files = self.platform.get_files(sim, [demographics_filename])
+            demographics_file = json.loads(demographics_files[demographics_filename].decode("utf-8"))
+            aliens_distribution = demographics_file["Defaults"]["IndividualProperties"][0]["Initial_Distribution"]
+            initial_population = demographics_file["Nodes"][0]["NodeAttributes"]["InitialPopulation"]
+
+            # verify simulation tag
+            self.assertIn("vaccine_coverage", sim.tags)
+            self.assertEqual(sim.tags["vaccine_coverage"], coverage)
+            self.assertIn("initial_population", sim.tags)
+            self.assertEqual(sim.tags["initial_population"], initial_population)
+            self.assertIn("aliens_distribution", sim.tags)
+            self.assertEqual(sim.tags["aliens_distribution"], aliens_distribution)
+            actual_combos.append((aliens_distribution, initial_population, coverage))
+
+            stdout = files["stdout.txt"].decode("utf-8")
+            self.assertIn("'SimpleVaccine' interventions at node", stdout)
+
+        self.assertEqual(expected_combos, actual_combos)
+
+    def test_campaign_no_sweep_others_sweep(self):
         """
-            Testing the campaign.add() to add campaign event from emodapi.interventions.node_multiplier.
-            Making sure it can be consumed by the Eradication with EMODTask.from_default2.
-            Make sure the following config parameters are set implicitly in config file:
-                Campaign_Filename = "campaign.json"
-                Enable_Intervention = 1
+        Testing that sweeping config but not campaign works correctly
         """
+        def update_demographics_and_campaign(simulation, aliens_distribution, total_population):
+            """
+                This callback function modifies several demographics parameters
+            Args:
+                simulation: simulation object that will be created in comps
+                aliens_distribution: alien_distribution parameter which will be modified in the sweep
+                total_population: total population distributed between the nodes
 
-        def set_param_fn(config):
-            config.parameters.Incubation_Period_Constant = 0
-            config.parameters.Infectious_Period_Constant = 1
-            config.parameters.Base_Infectivity_Constant = 0.2
-            config.parameters.Base_Mortality = 0
-            config.parameters.Simulation_Duration = 40
-            config.parameters.Report_Event_Recorder_Events = ["NewInfection"]
-            config.parameters.Post_Infection_Acquisition_Multiplier = 1
-            config.parameters.Post_Infection_Transmission_Multiplier = 1
-            return config
+            Returns:
+                tag that will be used with the simulation
+            """
+            build_demog_partial = partial(self.builders.demographics_builder, aliens_distribution=aliens_distribution,
+                                          total_population=total_population)
+            simulation.task.create_demographics_from_callback(build_demog_partial, from_sweep=True)
+            return dict(aliens_distribution=aliens_distribution, initial_population=total_population)
 
-        def build_camp(t, **kwargs):
-            camp.add(nm.new_scheduled_event(camp, start_day=t, new_infectivity=new_infectivity, profile=profile,
-                                            **kwargs),
-                     name="node_multiplier_boxcar", first=True)
-            camp.add(ob.seed_by_coverage(camp, 1))
-            return camp
+        task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
+                                      campaign_builder=self.builders.campaign_builder,
+                                      schema_path=self.builders.schema_path,
+                                      config_builder=self.builders.config_builder,
+                                      demographics_builder=None)
 
-        camp.schema_path = self.schema_path
-        timestep = 5
-        new_infectivity = 10
-        peak_dur = 8
-        profile = "TRAP"
+        task.set_sif(self.builders.sif_path, platform=self.platform)
 
-        config_path = self.config_file[:-5] + "_6.json"
-        task = EMODTask.from_default2(config_path=config_path, eradication_path=self.eradication_path,
-                                      campaign_builder=partial(build_camp, timestep, peak_dur=peak_dur),
-                                      schema_path=self.schema_path,
-                                      param_custom_cb=set_param_fn, ep4_custom_cb=None, demog_builder=None)
-        task.set_sif(sif_path)
+        builder = SimulationBuilder()
+        # this will sweep over the entire parameter space in a cross-product fashion
+        # you will get 2x3x2 simulations
 
-        self.assertTrue(isinstance(task.campaign, EMODCampaign))
-        self.assertEqual(len(task.campaign.events), 2)
-        self.assertEqual(task.campaign.events[0]["Start_Day"], timestep)
-        self.assertEqual(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["class"],
-                         "NodeInfectivityMult")
+        builder.add_multiple_parameter_sweep_definition(
+            update_demographics_and_campaign,
+            dict(
+                aliens_distribution=[[0, 0, 1], [0.5, 0.5, 0]],
+                total_population=[1000, 700, 200]
+            )
+        )
+        experiment = Experiment.from_builder(builder, task, name=self._testMethodName)
+        experiment.run(platform=self.platform, wait_until_done=True)
 
-        experiment = self.run_exp(task)
-        filenames = ["output/InsetChart.json"]
+        self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
 
-        sims = self.platform.get_children_by_object(experiment)
-        output_folder = manifest.output_folder
-        for simulation in sims:
-            # download files from simulation
-            self.platform.get_files_by_id(simulation.id, item_type=ItemType.SIMULATION, files=filenames,
-                                          output=output_folder)
-            # validate files exist
-            local_path = os.path.join(output_folder, str(simulation.uid))
-            file_path = os.path.join(local_path, "output", "InsetChart.json")
-            self.assertTrue(os.path.isfile(file_path))
-            # validate result
-            with open(file_path, "r") as json_file:
-                inset_chart = json.load(json_file)
+        print(f"Experiment {experiment.uid} succeeded.")
+        self.assertEqual(len(experiment.simulations), 6)
+        expected_combos = list(itertools.product([[0, 0, 1], [0.5, 0.5, 0]], [1000, 700, 200]))
+        # num of simulations should be the same as the length of sweeping parameters
+        actual_combos = []
+        for sim in experiment.simulations:
+            files = self.platform.get_files(sim, ["config.json", "campaign.json",
+                                                  "stdout.txt"])
 
-            infected = inset_chart["Channels"]["Infected"]["Data"]
-
-            self.assertTrue(all(infected[i] <= infected[i + 1] for i in range(timestep, timestep + peak_dur)),
-                            msg=f"Test failed: infected should be in ascending order during the peak duration"
-                                f" {timestep} - {timestep + peak_dur} for boxcar durations, "
-                                f"got {infected[timestep: timestep + peak_dur]}.")
-            self.assertTrue(all(infected[i] >= infected[i + 1] for i in range(timestep + peak_dur + 1, len(infected) - 1)),
-                            msg=f"Test failed: infected should be in descending order after peak time "
-                                f"{timestep + peak_dur} for boxcar durations, got {infected[timestep + peak_dur:]}.")
-
-    def node_multiplier_target_multiple_nodes(self):
-        """
-            Testing the campaign.add() to add campaign event from emodapi.interventions.node_multiplier.
-            Making sure it can be consumed by the Eradication with EMODTask.from_default2.
-            Make sure the following config parameters are set implicitly in config file:
-                Campaign_Filename = "campaign.json"
-                Enable_Intervention = 1
-        """
-
-        def set_param_fn(config):
-            config.parameters.Incubation_Period_Constant = 0
-            config.parameters.Infectious_Period_Constant = 1
-            config.parameters.Base_Infectivity_Constant = 1
-            config.parameters.Base_Mortality = 0
-            config.parameters.Simulation_Duration = 20
-            config.parameters.Report_Event_Recorder_Events = ["NewInfection"]
-            config.parameters.Post_Infection_Acquisition_Multiplier = 1
-            config.parameters.Post_Infection_Transmission_Multiplier = 1
-            return config
-
-        def build_camp(t):
-            first = True
-            for i in range(len(new_infectivities)):
-                new_infectivity = new_infectivities[i]
-                node_ids = []
-                for j in range(number_of_nodes_per_group):
-                    node_ids.append(j + 1 + number_of_nodes_per_group * i)
-                camp.add(nm.new_scheduled_event(camp, start_day=t, new_infectivity=new_infectivity, profile=profile,
-                                                node_ids=node_ids),
-                         name="node_multiplier_target_multiple_nodes", first=first)
-                first = False
-            camp.add(ob.seed_by_coverage(camp, 1))
-            return camp
-
-        camp.schema_path = self.schema_path
-        timestep = 5
-        number_of_nodes_per_group = 20
-        new_infectivities = [0, 0.25, 0.75, 1]
-        profile = "CONST"
-
-        config_path = self.config_file[:-5] + "_7.json"
-        task = EMODTask.from_default2(config_path=config_path, eradication_path=self.eradication_path,
-                                      campaign_builder=partial(build_camp, timestep),
-                                      schema_path=self.schema_path,
-                                      param_custom_cb=set_param_fn, ep4_custom_cb=None, demog_builder=None)
-        task.set_sif(sif_path)
-
-        self.assertTrue(isinstance(task.campaign, EMODCampaign))
-        self.assertEqual(len(task.campaign.events), len(new_infectivities) + 1)
-        self.assertEqual(task.campaign.events[0]["Start_Day"], timestep)
-        self.assertEqual(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["class"],
-                         "NodeInfectivityMult")
-
-        experiment = self.run_exp(task)
-        filenames = ["output/ReportEventRecorder.csv"]
-
-        sims = self.platform.get_children_by_object(experiment)
-        output_folder = manifest.output_folder
-        for simulation in sims:
-            # download files from simulation
-            self.platform.get_files_by_id(simulation.id, item_type=ItemType.SIMULATION, files=filenames,
-                                          output=output_folder)
-            # validate files exist
-            local_path = os.path.join(output_folder, str(simulation.uid))
-            file_path = os.path.join(local_path, "output", "ReportEventRecorder.csv")
-            self.assertTrue(os.path.isfile(file_path))
-            # validate result
-            report_df = pd.read_csv(file_path)[["Time", "Event_Name", "Node_ID"]]
-            report_df_groupby = report_df[report_df["Time"] >= timestep].groupby(["Node_ID"]).size()
-            average_new_infection_per_node = {}
-
-            for i in range(len(new_infectivities) + 1):
-                if i < len(new_infectivities):
-                    new_infectivity = new_infectivities[i]
-                else:
-                    new_infectivity = "NA"
-                for j in range(number_of_nodes_per_group):
-                    node_id = j + 1 + number_of_nodes_per_group * i
-                    if new_infectivity == 0:
-                        df = report_df[(report_df["Node_ID"] == node_id) & (report_df["Time"] >= timestep)]
-                        self.assertTrue(df.empty,
-                                        msg=f"Test failed: there should not be any New Infection in node {node_id} "
-                                            f"after t {timestep}, new_infectivity = {new_infectivity}. "
-                                            f"Got {df}.")
-                    else:
-                        if new_infectivity not in average_new_infection_per_node:
-                            average_new_infection_per_node[new_infectivity] = report_df_groupby[node_id]
-                        else:
-                            average_new_infection_per_node[new_infectivity] += report_df_groupby[node_id]
-            for key, value in average_new_infection_per_node.items():
-                average_new_infection_per_node[key] = value / number_of_nodes_per_group
-
-            print(average_new_infection_per_node)
-
-            self.assertGreater(average_new_infection_per_node[0.75], average_new_infection_per_node[0.25],
-                               msg="Test failed: expect more new infections while new_infectivity = 0.75, compared to "
-                                   "new_infectivity = 0.25")
-            self.assertGreater(average_new_infection_per_node[1], average_new_infection_per_node[0.75],
-                               msg="Test failed: expect more new infections while new_infectivity = 1, compared to "
-                                   "new_infectivity = 0.75")
-            self.assertAlmostEqual(average_new_infection_per_node[1], average_new_infection_per_node["NA"], delta=50,
-                                   msg="Test failed: expect about the same number of new infections while "
-                                       "new_infectivity = 1, compared to nodes which receive no intervention.")
+            config_file = json.loads(files["config.json"].decode("utf-8"))
+            self.assertEqual("campaign.json", config_file["parameters"]["Campaign_Filename"])
+            self.assertEqual(1, config_file["parameters"]["Enable_Interventions"])
 
 
-@pytest.mark.skip("skip tests for Windows Eradication for now")
-@pytest.mark.emod
-class TestWorkflowCampaignWin(TestWorkflowCampaign):
-    """
-        Tested with Windows version of Generic Eradication
-    """
-    @classmethod
-    def define_test_environment(cls):
-        cls.plan = EradicationBambooBuilds.GENERIC_WIN
-        cls.eradication_path = manifest.eradication_path_win
-        cls.schema_path = manifest.schema_path_win
-        cls.config_file = os.path.join(manifest.config_folder, "generic_config_for_campaign_workflow.json")
-        cls.default_config_file = os.path.join(manifest.config_folder, default_config_file)
-        cls.camp_file = os.path.join(manifest.campaign_folder, "generic_campaign_for_campaign_workflow.json")
-        cls.comps_platform = "COMPS2"
+            campaign_file = json.loads(files["campaign.json"].decode("utf-8"))
+            self.assertEqual(len(campaign_file["Events"]), 1)
+            coverage = campaign_file["Events"][0]["Event_Coordinator_Config"]["Demographic_Coverage"]
+            self.assertEqual(campaign_file["Events"][0]["Event_Coordinator_Config"]["Intervention_Config"]["class"],
+                             "SimpleVaccine")
+            self.assertEqual(coverage, 0.97)
 
-    def test_1_outbreak_individual_from_file_win(self):
-        super().outbreak_individual_from_file_test()
+            # get demographics file
+            demographics_filename = config_file["parameters"]["Demographics_Filenames"][0]
+            demographics_files = self.platform.get_files(sim, [demographics_filename])
+            demographics_file = json.loads(demographics_files[demographics_filename].decode("utf-8"))
+            aliens_distribution = demographics_file["Defaults"]["IndividualProperties"][0]["Initial_Distribution"]
+            initial_population = demographics_file["Nodes"][0]["NodeAttributes"]["InitialPopulation"]
 
-    def test_2_ip_and_sv_from_default_win(self):
-        super().ip_and_sv_from_default_test()
+            # verify simulation tag
+            self.assertIn("initial_population", sim.tags)
+            self.assertEqual(sim.tags["initial_population"], initial_population)
+            self.assertIn("aliens_distribution", sim.tags)
+            self.assertEqual(sim.tags["aliens_distribution"], aliens_distribution)
+            actual_combos.append((aliens_distribution, initial_population))
 
-    def test_3_campaign_sweeping_1_win(self):
-        super().campaign_sweeping_test_1()
+            stdout = files["stdout.txt"].decode("utf-8")
+            self.assertIn("'SimpleVaccine' interventions at node", stdout)
 
-    def test_4_campaign_sweeping_2_win(self):
-        super().campaign_sweeping_test_2()
-
-    def test_5_node_multiplier_constant_win(self):
-        super().node_multiplier_constant_test()
-
-    def test_6_node_multiplier_boxcar_win(self):
-        super().node_multiplier_boxcar_test()
-
-    def test_7_node_multiplier_target_multiple_nodes_win(self):
-        super().node_multiplier_target_multiple_nodes()
+        self.assertEqual(expected_combos, actual_combos)
 
 
 @pytest.mark.emod
-class TestWorkflowCampaignLinux(TestWorkflowCampaign):
+@pytest.mark.skip(reason="Interventions are meaningfully different in Generic-Ongoing and emodpy not "
+                         "support Generic-Ongoing interventions yet.")
+class TestWorkflowCampaignGeneric(TestWorkflowCampaign):
     """
-        Tested with Linux version of Generic Eradication
+        Tests for EMODTask using Generic-Ongoing EMOD
     """
-    @classmethod
-    def define_test_environment(cls):
-        cls.plan = EradicationBambooBuilds.GENERIC_LINUX
-        cls.eradication_path = manifest.eradication_path_linux
-        cls.schema_path = manifest.schema_path_linux
-        cls.config_file = os.path.join(manifest.config_folder, "generic_config_for_campaign_workflow_l.json")
-        cls.default_config_file = os.path.join(manifest.config_folder, default_config_file)
-        cls.camp_file = os.path.join(manifest.campaign_folder, "generic_campaign_for_campaign_workflow_l.json")
-        cls.comps_platform = "SLURMStage"
 
-    def test_1_outbreak_individual_from_file_linux(self):
-        super().outbreak_individual_from_file_test()
-
-    def test_2_ip_and_sv_from_default_linux(self):
-        super().ip_and_sv_from_default_test()
-
-    def test_3_campaign_sweeping_1_linux(self):
-        super().campaign_sweeping_test_1()
-
-    def test_4_campaign_sweeping_2_linux(self):
-        super().campaign_sweeping_test_1()
-
-    def test_5_node_multiplier_constant_linux(self):
-        super().node_multiplier_constant_test()
-
-    def test_6_node_multiplier_boxcar_linux(self):
-        super().node_multiplier_boxcar_test()
-
-    def test_7_node_multiplier_target_multiple_nodes_linux(self):
-        super().node_multiplier_target_multiple_nodes()
+    def setup_custom_params(self):
+        self.builders.sif_path = manifest.sif_path_common
+        self.builders.config_builder = helpers.config_builder_common
+        self.builders.campaign_builder = helpers.campaign_builder_common
+        self.reporter_builder = helpers.reports_builder_common
+        self.builders.demographics_builder = helpers.demographics_builder_common
+        self.builders.schema_path = manifest.generic_schema_path
+        self.builders.eradication_path = manifest.generic_eradication_path
+        self.input_folder = manifest.inputs_generic
 
 
 if __name__ == "__main__":
     import unittest
+
     unittest.main()

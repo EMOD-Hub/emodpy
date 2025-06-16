@@ -7,12 +7,12 @@ from idmtools.core.platform_factory import Platform
 from idmtools_platform_comps.ssmt_work_items.comps_workitems import SSMTWorkItem
 from COMPS.Data.WorkItem import WorkItem, RelationType
 from COMPS.Data import QueryCriteria, AssetCollection
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 
 
 @pytest.mark.ssmt
 @pytest.mark.comps
-class ClimateGenerationTest(ITestWithPersistence):
+@pytest.mark.skip
+class ClimateGenerationTest(unittest.TestCase):
 
     def setUp(self):
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName

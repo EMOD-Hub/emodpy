@@ -1,39 +1,64 @@
 import json
 import os
+import sys
+import shutil
 import pytest
-from idmtools_platform_comps.utils.download.download import DownloadWorkItem, CompressType
-from idmtools.core.platform_factory import Platform
+import unittest
+import time
+from pathlib import Path
+
 from idmtools.entities.experiment import Experiment
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
-from emodpy.emod_task import EMODTask
-from emodpy.utils import EradicationBambooBuilds
-from emodpy.bamboo import get_model_files
-from examples.config_update_parameters import del_folder
+from idmtools.core.platform_factory import Platform
+from emodpy.emod_task import EMODTask, logger
+parent = Path(__file__).resolve().parent
+sys.path.append(str(parent))
+import manifest
+import helpers
 
-from tests import manifest
+sim_duration = 10  # in years
+num_seeds = 1
 
-sif_path = manifest.sft_id_file
+def param_update(simulation, param, value):
+    return simulation.set_parameter(param, value)
 
 
 @pytest.mark.emod
-class TestSerialization(ITestWithPersistence):
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        # cls.platform = Platform("Calculon", num_cores=2, node_group="idm_48cores", priority="Highest")
-        cls.platform = Platform("SLURMStage", num_cores=2, node_group="idm_48cores", priority="Highest")
-        cls.plan = EradicationBambooBuilds.GENERIC_LINUX
-
+class TestSerialization(unittest.TestCase):
+    """
+        To test dtk_pre_process and dtk_pre_process through EMODTask
+    """
     def setUp(self) -> None:
-        self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
-        print(self.case_name)
-        self.config_file = os.path.join(manifest.config_folder, 'default_config.json')
-        # manifest.delete_existing_file(manifest.schema_file)
-        manifest.delete_existing_file(self.config_file)
+        self.num_sim = 2
+        self.num_sim_long = 20
+        self.case_name = os.path.basename(__file__) + "_" + self._testMethodName
+        print(f"\n{self.case_name}")
+        self.original_working_dir = os.getcwd()
+        self.task: EMODTask
+        self.experiment: Experiment
+        self.platform = Platform(manifest.comps_platform_name)
+        self.test_folder = helpers.make_test_directory(self.case_name)
+        self.setup_custom_params()
+    def setup_custom_params(self):
+        self.builders = helpers.BuildersCommon
 
-        # download files needed to run sim, e.g. schema and eradication
-        if not os.path.isfile(manifest.schema_file) or (not os.path.isfile(manifest.eradication_path)):
-            get_model_files(self.plan, manifest)
+    def tearDown(self) -> None:
+        # Check if the test failed and leave the data in the folder if it did
+        test_result = self.defaultTestResult()
+        if test_result.errors:
+            with open("experiment_location.txt", "w") as f:
+                if hasattr(self, "experiment"):
+                    f.write(f"The failed experiment can be viewed at {self.platform.endpoint}/#explore/"
+                            f"Simulations?filters=ExperimentId={self.experiment.uid}")
+                else:
+                    f.write("The experiment was not created.")
+            os.chdir(self.original_working_dir)
+            helpers.close_logger(logger.parent)
+        else:
+            helpers.close_logger(logger.parent)
+            if os.name == "nt":
+                time.sleep(1)  # only needed for windows
+            os.chdir(self.original_working_dir)
+            helpers.delete_existing_folder(self.test_folder)
 
     @pytest.mark.long
     def test_serialization(self):
@@ -46,13 +71,12 @@ class TestSerialization(ITestWithPersistence):
         """
 
         def set_param_base(config):
+            config = self.builders.config_builder(config)
             config.parameters.Enable_Demographics_Reporting = 1
             config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
             config.parameters.Incubation_Period_Constant = 2
             config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
             config.parameters.Infectious_Period_Constant = 3
-            config.parameters.Base_Infectivity_Distribution = "CONSTANT_DISTRIBUTION"
-            config.parameters.Base_Infectivity_Constant = 0.2
             config.parameters.Post_Infection_Acquisition_Multiplier = 0.7
             config.parameters.Post_Infection_Transmission_Multiplier = 0.4
             config.parameters.Post_Infection_Mortality_Multiplier = 0.3
@@ -70,88 +94,64 @@ class TestSerialization(ITestWithPersistence):
             set_param_base(config)
             config.parameters.Serialized_Population_Reading_Type = "READ"
             config.parameters.Serialized_Population_Path = "Assets"
-            config.parameters.Serialized_Population_Filenames = ["state-00010-000.dtk", "state-00010-001.dtk"]
+            config.parameters.Serialized_Population_Filenames = ["state-00010.dtk"]
             return config
 
-        def build_camp():
-            from emod_api.interventions import outbreak as ob
-            from emod_api import campaign as camp
-
-            camp.set_schema( manifest.schema_file )
-            event = ob.new_intervention(camp, 1, cases=10)
-            camp.add(event)
-            return camp
 
         # 1) Run eradication to generate serialized population files
-        task1 = EMODTask.from_default2(
-            config_path=self.config_file,
-            eradication_path=manifest.eradication_path,
-            campaign_builder=build_camp,
-            ep4_custom_cb=None,
-            schema_path=manifest.schema_file,
-            param_custom_cb=set_param_fn)
-        task1.set_sif(sif_path)
+        task1 = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
+                                       campaign_builder=self.builders.campaign_builder,
+                                       schema_path=self.builders.schema_path,
+                                       config_builder=set_param_fn,
+                                       demographics_builder=self.builders.demographics_builder)
+        task1.set_sif(self.builders.sif_path, platform=self.platform)
 
-        experiment1 = Experiment.from_task(task=task1, name=self.case_name + " create serialization")
-        experiment1.run(wait_until_done=True, platform=self.platform)   # run simulation
-        self.assertTrue(experiment1.succeeded, msg=f"Experiment {experiment1.uid} failed.")
+        self.experiment = Experiment.from_task(task=task1, name=self.case_name + " create serialization")
+        self.experiment.run(wait_until_done=True, platform=self.platform)
 
-        # Cleanup the output path and download serialized population files
-        del_folder(manifest.output_dir)
-        dl_wi2 = DownloadWorkItem(
-            related_experiments=[experiment1.uid.hex],
-            file_patterns=["output/*.dtk", "output/InsetChart.json"],
-            simulation_prefix_format_str='serialization_files',
-            verbose=True,
-            output_path=manifest.output_dir,
-            delete_after_download=False,
-            include_assets=True,
-            compress_type=CompressType.deflate)
+        sim = self.experiment.simulations[0]
+        self.platform.get_files(sim, files=['output/state-00010.dtk',
+                                                    'output/InsetChart.json'], output=self.test_folder)
 
-        dl_wi2.run(wait_on_done=True, platform=self.platform)
-
-        # Add a wait time(max = 10s) for DownloadWorkItem to finish downloading
-        import time
-        time_to_wait = 10
-        time_counter = 0
-        while not os.path.exists(manifest.serialization_files_dir):
-            time.sleep(1)
-            print("Waiting for DownloadWorkItem().\n")
-            time_counter += 1
-            if time_counter > time_to_wait:
-                break
-
-        self.assertTrue(os.path.isdir(manifest.serialization_files_dir))
-        self.assertTrue(os.path.isfile(os.path.join(manifest.serialization_files_dir, 'state-00010-000.dtk')))
-        self.assertTrue(os.path.isfile(os.path.join(manifest.serialization_files_dir, 'state-00010-001.dtk')))
-        self.assertTrue(os.path.isfile(os.path.join(manifest.serialization_files_dir, 'InsetChart.json')))
+        serialized_files = os.path.join(self.test_folder, sim.id, "output")
+        self.assertTrue(os.path.isdir(serialized_files))
+        self.assertTrue(os.path.isfile(os.path.join(serialized_files, 'state-00010.dtk')))
+        self.assertTrue(os.path.isfile(os.path.join(serialized_files, 'InsetChart.json')))
 
         # 2) Create new experiment and sim with previous serialized file
-        task2 = EMODTask.from_default2(
-            config_path=self.config_file,
-            eradication_path=manifest.eradication_path,
-            campaign_builder=build_camp,
-            ep4_custom_cb=None,
-            schema_path=manifest.schema_file,
-            param_custom_cb=set_param_from_sp_fn)
-        task2.set_sif(sif_path)
-
-        task2.common_assets.add_directory(assets_directory=manifest.serialization_files_dir)
-        experiment2 = Experiment.from_task(task=task2, name=self.case_name + " realod serialization")
+        task2 = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
+                                       campaign_builder=self.builders.campaign_builder,
+                                       schema_path=self.builders.schema_path,
+                                       demographics_builder=self.builders.demographics_builder,
+                                       config_builder=set_param_from_sp_fn)
+        task2.set_sif(self.builders.sif_path, platform=self.platform)
+        task2.common_assets.add_directory(assets_directory=serialized_files)
+        experiment2 = Experiment.from_task(task=task2, name=self.case_name + " reaload serialization")
         experiment2.run(wait_until_done=True, platform=self.platform)
         self.assertTrue(experiment2.succeeded, msg=f"Experiment {experiment2.uid} failed.")
 
         files = self.platform.get_files(experiment2.simulations[0], ["output/InsetChart.json"])
-        path = os.path.join(manifest.serialization_files_dir, "InsetChart.json")
+        path = os.path.join(serialized_files, "InsetChart.json")
         with open(path) as f:
             experiment1_inset = json.load(f)['Header']
             experiment2_inset = json.loads(files['output/InsetChart.json'])['Header']
-            del experiment1_inset["DateTime"]   # different, remove
+            del experiment1_inset["DateTime"]  # different, remove
             del experiment2_inset["DateTime"]
 
         self.assertEqual(experiment1_inset, experiment2_inset, msg="Inset charts are not equal.")
 
 
+@pytest.mark.emod
+class TestSerializationGeneric(TestSerialization):
+    """
+    Testing using Generic-Ongoing EMOD
+    """
+
+    def setup_custom_params(self):
+        self.builders = helpers.BuildersGeneric
+
+
 if __name__ == "__main__":
     import unittest
+
     unittest.main()

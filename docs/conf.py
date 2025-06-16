@@ -231,6 +231,10 @@ html_context = {
     "default_mode": "light",
 }
 
+# Add customizations
+def setup(app):
+    app.add_css_file("theme_overrides.css")
+
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
@@ -465,12 +469,10 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'emod_api': ('https://docs.idmod.org/projects/emod-api/en/latest/', None),
-                       'emodpy_generic': ('https://docs.idmod.org/projects/emodpy-generic/en/latest/', None),
-                       'emodpy_malaria': ('https://docs.idmod.org/projects/emodpy-generic/en/latest/', None),
-                       'emodpy_measles': ('https://docs.idmod.org/projects/emodpy-measles/en/latest/', None),
-                       'emodpy_tbhiv': ('https://docs.idmod.org/projects/emodpy-tbhiv/en/latest/', None),
                        'idmtools': ('https://docs.idmod.org/projects/idmtools/en/latest/', None),
                        'emod-generic': ('https://docs.idmod.org/projects/emod-generic/en/latest/', None),
+                       'emod-hiv': ('https://docs.idmod.org/projects/emodpy-hiv/en/latest/', None),
+                       'emod-malaria': ('https://docs.idmod.org/projects/emodpy-malaria/en/latest/', None),
                        'pycomps': ('https://docs.idmod.org/projects/pycomps/en/latest/', None)
                        }
 

@@ -6,12 +6,11 @@ on:
   push:
     branches:
       # only run this on
-      - 'dev**'
+      - 'main'
       - 'release**'
     paths:
       - 'emodpy/**'
-      - 'requirements.txt'
-      - 'setup.py'
+      - "pyproject.toml"
 
 jobs:
   deploy-emodpy-staging:
@@ -19,30 +18,38 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'Bump version: ')"
     steps:
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.7'
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v1
+          python-version: '3.9'
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('.dev_scripts/build-requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: |
           pip install -r ./.dev_scripts/build-requirements.txt
           git config --global user.name "IDM Tools"
           git config --global user.email "idmtools@idmod.org"
-      - uses: actions/checkout@v2
-      - name: Bump build
+
+      - uses: actions/checkout@v4
+
+      - name: Bump version
         run: |
-          bump2version build --commit --allow-dirty
+          bump2version patch --commit
+
       - name: Build and publish
         env:
           TWINE_REPOSITORY_URL: https://packages.idmod.org/api/pypi/idm-pypi-staging/
           TWINE_USERNAME: ${{ secrets.PYPI_STAGING_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_STAGING_PASSWORD }}
         run: |
-          python setup.py sdist bdist_wheel
+          pip install build
+          python -m build --wheel
+          git push
           twine upload dist/*

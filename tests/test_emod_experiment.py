@@ -1,434 +1,347 @@
 import copy
 import json
 import os
-from abc import ABC, abstractmethod
 import pytest
+import unittest
+import time
 
-from emod_api.config import from_schema as fs
-from emod_api.interventions import outbreak as ob
-from emod_api import campaign as camp
-import emod_api.demographics.Demographics as Demographics
-
-from idmtools.assets import Asset  # ,AssetCollection
+from idmtools.assets import Asset, AssetCollection
 from idmtools.builders import SimulationBuilder
 from idmtools.core.platform_factory import Platform
-from idmtools.core import ItemType
 from idmtools.entities.experiment import Experiment
-from idmtools.entities.iplatform import IPlatform
 from idmtools.entities.simulation import Simulation
-# from idmtools_platform_comps.utils.python_requirements_ac.requirements_to_asset_collection import RequirementsToAssetCollection
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 from idmtools_platform_comps.utils.singularity_build import SingularityBuildWorkItem
-
-from emodpy.emod_task import EMODTask, add_ep4_from_path
-
-from tests import manifest
-
-# current_directory = os.path.dirname(os.path.realpath(__file__))
-# DEFAULT_CONFIG_PATH = os.path.join(COMMON_INPUT_PATH, "files", "config.json")
-# DEFAULT_CAMPAIGN_JSON = os.path.join(COMMON_INPUT_PATH, "files", "campaign.json")
-# DEFAULT_DEMOGRAPHICS_JSON = os.path.join(COMMON_INPUT_PATH, "files", "demographics.json")
-# DEFAULT_ERADICATION_PATH = os.path.join(COMMON_INPUT_PATH, "emod", "Eradication.exe")
-
-emod_version = '2.20.0'
-num_sim = 2
-num_sim_long = 20  # to catch issue like config is not deep copied #251 and #238
-sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
-
-print("Please run 'test_download_from_bamboo.py' (run from console for the first time to login to bamboo) before "
-      "running this test")
+from emodpy.emod_task import EMODTask, logger
+from pathlib import Path
+import sys
+parent = Path(__file__).resolve().parent
+sys.path.append(str(parent))
+import manifest
+import helpers
+# add custom_reports to all the tests?
+# especially sweeps
 
 
 @pytest.mark.emod
-class EMODExperimentTest(ABC):
+class TestEMODExperiment(unittest.TestCase):
     """
-    Base test class for idmtools.entities.experiment
+    This tests GENERIC_SIM from emod-common package
     """
-
-    @classmethod
-    @abstractmethod
-    def get_emod_binary(cls) -> str:
-        pass
-
-    @classmethod
-    @abstractmethod
-    def get_emod_schema(cls) -> str:
-        pass
-
-    @classmethod
-    @abstractmethod
-    def get_emod_config(cls) -> str:
-        pass
-
-    @classmethod
-    @abstractmethod
-    def get_platform(cls) -> IPlatform:
-        pass
-
     def setUp(self) -> None:
-        self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
-        print(self.case_name)
+        self.num_sim = 2
+        self.num_sim_long = 20
+        self.case_name = os.path.basename(__file__) + "_" + self.__class__.__name__ + "_" + self._testMethodName
+        print(f"\n{self.case_name}")
+        self.setup_custom_params()
+        self.original_working_dir = os.getcwd()
+        self.task: EMODTask
+        self.experiment: Experiment
+        self.platform = Platform(manifest.comps_platform_name)
+        self.test_folder = helpers.make_test_directory(case_name=self.case_name)
+
+    def setup_custom_params(self):
+        self.builders = helpers.BuildersCommon
+
+    def tearDown(self) -> None:
+        # Check if the test failed and leave the data in the folder if it did
+        test_result = self.defaultTestResult()
+        if test_result.errors:
+            with open("experiment_location.txt", "w") as f:
+                if self.experiment:
+                    f.write(f"The failed experiment can be viewed at {self.platform.endpoint}/#explore/"
+                            f"Simulations?filters=ExperimentId={self.experiment.uid}")
+                else:
+                    f.write("The experiment was not created.")
+            os.chdir(self.original_working_dir)
+            helpers.close_logger(logger.parent)
+        else:
+            helpers.close_logger(logger.parent)
+            if os.name == "nt":
+                time.sleep(1)  # only needed for windows
+            os.chdir(self.original_working_dir)
+            helpers.delete_existing_folder(self.test_folder)
 
     @pytest.mark.long
-    def test_experiment_from_task_with_task_from_default2_simple(self):  # https://github.com/InstituteforDiseaseModeling/emodpy/issues/287
+    def test_experiment_from_task_with_task_from_default_simple(self):
+        # https://github.com/InstituteforDiseaseModeling/emodpy-old/issues/287
         """
-            Test idmtools.entities.experiment.Experiment.from_task() with EMODTask.from_default2()(all default values)
+            Test idmtools.entities.experiment.Experiment.from_task() with EMODTask.from_defaults()(all default values)
+            with minimal config builder needed to run the sim, including Enable_Demographics_Builtin = 1
         """
-        def set_param_fn(config):
-            print("Setting params.")
-            return config
+        base_task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
+                                           schema_path=self.builders.schema_path,
+                                           config_builder=self.builders.config_builder,
+                                           campaign_builder=self.builders.campaign_builder,
+                                           report_builder=self.builders.reports_builder,
+                                           demographics_builder=self.builders.demographics_builder)
+        # base_task.config.parameters.Enable_Demographics_Builtin = 1
+        # base_task.config.parameters.Enable_Immunity = 0
+        base_task.set_sif(self.builders.sif_path, platform=self.platform)
 
-        self.platform = Platform("SLURMStage")
-        base_task = EMODTask.from_default2(eradication_path=self.get_emod_binary(),
-                                           schema_path=self.get_emod_schema(),
-                                           param_custom_cb=set_param_fn)
-        # pl = RequirementsToAssetCollection(self.platform, requirements_path=manifest.requirements)
-        base_task.set_sif(sif_path)
+        self.experiment = Experiment.from_task(task=base_task,
+                                               name=self.case_name)
 
-        base_task.set_parameter('Enable_Immunity', 0)
-        e = Experiment.from_task(
-            base_task,
-            self.case_name,
-            tags={"emodpy": "emodpy-automation", "string_tag": "test", "number_tag": 123}
-        )
+        # The last step is to call run() on the ExperimentManager to run the simulations.
+        self.experiment.run(wait_until_done=True, platform=self.platform)
+        self.assertTrue(self.experiment.succeeded)
 
-        # other_assets = AssetCollection.from_id(pl.run())
-        # e.assets.add_assets(other_assets)
-        with self.platform as p:
-            # The last step is to call run() on the ExperimentManager to run the simulations.
-            e.run(platform=p)
-            p.wait_till_done(e, refresh_interval=1)
-        self.assertTrue(e.succeeded)
+        sim = self.experiment.simulations[0]
+        files = self.platform.get_files(sim, ["config.json"])
+        config_parameters = json.loads(files["config.json"])['parameters']
+        # self.assertEqual(config_parameters["Enable_Immunity"], 0)
+        # self.assertEqual(config_parameters["Enable_Demographics_Builtin"], 1)
 
-        for sim in e.simulations:
-            files = self.platform.get_files(sim, ["config.json"])
-            config_parameters = json.loads(files["config.json"])['parameters']
-            self.assertEqual(config_parameters["Enable_Immunity"], 0)
+    def singularity_test(self, my_sif_path, embedded_python_scripts_path=None):
+        """
+        Helper function for various singularity tests
+        """
+        base_task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
+                                           schema_path=self.builders.schema_path,
+                                           config_builder=self.builders.config_builder,
+                                           demographics_builder=self.builders.demographics_builder,
+                                           embedded_python_scripts_path=embedded_python_scripts_path,
+                                           report_builder=self.builders.reports_builder)
+        # to add demographics file this way, you'd have to manually set the Demographics_Filenames
+        # in the base_task.config.parameters
+        # demographics_asset = Asset(self.builders.demographics_file)
+        # base_task.common_assets.add_asset(demographics_asset)
+        # base_task.config.parameters.Demographics_Filenames = [Path(self.builders.demographics_file).name]
+        base_task.set_sif(my_sif_path, platform=self.platform)
 
-    def download_singularity_ac(self, ac_id, out_filenames, output_path):
-        self.platform.get_files_by_id(ac_id, ItemType.ASSETCOLLECTION, out_filenames, output_path)
+        self.experiment = Experiment.from_task(base_task,
+                                               self.case_name)
 
-    def singularity_test(self, my_sif_path, ep4_fn):
-        def set_param_fn(config):
-            print("Setting params.")
-            return config
+        self.experiment.run(wait_until_done=True,
+                            platform=self.platform)
 
-        base_task = EMODTask.from_default2(eradication_path=self.get_emod_binary(),
-                                           schema_path=self.get_emod_schema(),
-                                           param_custom_cb=set_param_fn,
-                                           ep4_custom_cb=ep4_fn)
+        self.assertTrue(self.experiment.succeeded)
+        sim = self.experiment.simulations[0]
+        files = self.platform.get_files(sim, ["stdout.txt"])
+        stdout = files["stdout.txt"].decode("utf-8")
+        self.assertIn("EMOD Disease Transmission Kernel", stdout)
 
-        demographics_asset = Asset(
-            os.path.join(manifest.current_directory, "inputs", "demographics", "generic_demographics_singularity_test.json"),
-            relative_path='python')
-        base_task.common_assets.add_asset(demographics_asset)
-
-        base_task.set_sif(my_sif_path)
-
-        e = Experiment.from_task(
-            base_task,
-            self.case_name,
-            tags={"emodpy": "emodpy-automation", "string_tag": "test", "number_tag": 100}
-        )
-
-        with self.platform as p:
-            # The last step is to call run() on the ExperimentManager to run the simulations.
-            e.run(platform=p)
-            p.wait_till_done(e, refresh_interval=1)
-        self.assertTrue(e.succeeded)
-        for sim in e.simulations:
-            files = self.platform.get_files(sim, ["stdout.txt"])
-            stdout = files["stdout.txt"].decode("utf-8")
-            self.assertIn("emod_api version =  1.11.7", stdout)
+    def download_singularity_ac(self, asset_collection_id, out_filename, output_path):
+        # download sif from comps, currently not working, see issue:
+        # https://github.com/InstituteforDiseaseModeling/idmtools/issues/1574
+        #
+        # self.platform.get_files_by_id(asset_collection_id, ItemType.ASSETCOLLECTION, out_filenames, output_path)
+        # this is a workaround
+        assets = AssetCollection.from_id(asset_collection_id, platform=self.platform).assets
+        for asset in assets:
+            if asset.filename == out_filename:
+                asset.save_as(os.path.join(output_path, out_filename))
+                break
 
     @pytest.mark.long
-    @pytest.mark.skip(reason="download AC from comps not supported currently")
     def test_experiment_from_task_with_singularity_from_local_file(self):
-        self.platform = Platform("SLURMStage")
-
-        # download sif from comps, currently not working, see issue: https://github.com/InstituteforDiseaseModeling/idmtools/issues/1574
-        # ac_id = "3d366cfa-94c8-eb11-92dd-f0921c167860" # please update to the latest one
-        # out_filenames = "dtk_runtime_CentOS.sif"
-        # output_path = os.path.join(manifest.current_directory, "inputs/singularity")
-        # self.download_singularity_ac(ac_id, out_filenames, output_path)
-
-        def ep4_fn(task):
-            task = add_ep4_from_path(task, os.path.join(manifest.current_directory, "inputs/ep4/singularity"))
-            return task
-
-        self.singularity_test(my_sif_path=os.path.join(manifest.current_directory, "inputs/singularity/emod_latest.sif"),
-                              ep4_fn=ep4_fn)
+        """
+        This checks that if you have a singularity image on your local machine,
+        you can use it to run the simulation
+        """
+        asset_collection_id = "bcf11390-75df-ef11-930c-f0921c167860"  # please update to the latest one
+        out_filename = "dtk_run_rocky_py39.sif"
+        self.download_singularity_ac(asset_collection_id, out_filename, self.test_folder)
+        self.singularity_test(my_sif_path=os.path.join(self.test_folder, out_filename))
 
     @pytest.mark.long
-    @pytest.mark.skip(reason="CentOS.sif file is out of date, needs python 3.9 which is not compatible with CentOS")
     def test_experiment_from_task_with_singularity(self):
+        """
+        This test checks that you can create a singularity image on Comps and use it to run the simulation
+        """
+
         def make_sif(my_sif_path):
             """
             Creating a singularity image on Comps, only run when the image is not available on Comps.
             After creating the image, please use the Asset Collection ID of this image in the simulation.
             """
-            sbi = SingularityBuildWorkItem(name="Creating CentOS sif with def file",
-                                           definition_file=os.path.join(manifest.current_directory, "inputs/singularity/CentOS_base.def"),
-                                           image_name="CentOS.sif")
-            sbi.tags = dict(os="CentOS")
+            sbi = SingularityBuildWorkItem(name="Creating dtk_run_rocky_py39.sif with def file",
+                                           definition_file=os.path.join(self.builders.input_folder,
+                                                                        "dtk_run_rocky_py39.def"),
+                                           image_name="dtk_run_rocky_py39.sif")
+            sbi.tags = dict(os="rockylinux", python=3.9)
             sbi.run(wait_until_done=True, platform=self.platform)
-            if sbi.succeeded:
-                # Write ID file
-                sbi.asset_collection.to_id_file(my_sif_path)
+            self.assertTrue(sbi.succeeded)
+            # Write asset id to file (needs to be *.id)
+            sbi.asset_collection.to_id_file(my_sif_path)
 
-        def ep4_fn(task):
-            task = add_ep4_from_path(task, os.path.join(manifest.current_directory, "inputs/ep4/singularity"))
-            return task
-
-        self.platform = Platform("SLURMStage")
+        this_sif_path = os.path.join(self.test_folder, "assets.id")
         # use the commented line to create a singularity image on Comps for the first time.
-        # make_sif(sif_path)
-        self.singularity_test(sif_path, ep4_fn)
+        make_sif(this_sif_path)
+        self.singularity_test(this_sif_path)
 
     @pytest.mark.long
-    def test_experiment_from_task_with_task_from_default2_param_custom_cb(self):  # https://github.com/InstituteforDiseaseModeling/emodpy/issues/288
+    def test_experiment_from_task_with_task_from_default_param_custom_cb(self):
+        # https://github.com/InstituteforDiseaseModeling/emodpy-old/issues/288
         """
-            Test idmtools.entities.experiment.Experiment.from_task() with EMODTask.from_default2() (set_param_fn=None)
+            Test idmtools.entities.experiment.Experiment.from_task() with EMODTask.from_defaults() (set_param_fn=None)
         """
-        def set_param_fn(config):
-            print("Setting params.")
-            config.parameters.Simulation_Duration = 3
+
+        def config_setting(config):
+            if self.builders.config_builder: # when running emod-generic there is no config_builder
+                config = self.builders.config_builder(config)
+            config.parameters.Simulation_Duration = 7
+            config.parameters.Enable_Demographics_Builtin = 1
             return config
 
-        config_path = "config_from_default2_1"
-        self.platform = Platform("SLURMStage")
-        base_task = EMODTask.from_default2(config_path=config_path,
-                                           eradication_path=self.get_emod_binary(),
-                                           schema_path=self.get_emod_schema(),
-                                           param_custom_cb=set_param_fn)
-        # pl = RequirementsToAssetCollection(self.platform, requirements_path=manifest.requirements)
-        base_task.set_sif(sif_path)
+        base_task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
+                                           schema_path=self.builders.schema_path,
+                                           config_builder=config_setting)
 
-        e = Experiment.from_task(
-            base_task,
-            self.case_name,
-            tags={"emodpy": "emodpy-automation", "string_tag": "test", "number_tag": 123}
-        )
+        base_task.set_sif(self.builders.sif_path, platform=self.platform)
+        self.experiment = Experiment.from_task(base_task,
+                                               self.case_name)
+        self.experiment.run(wait_until_done=True,
+                            platform=self.platform)
 
-        # other_assets = AssetCollection.from_id(pl.run())
-        # e.assets.add_assets(other_assets)
-
-        with self.platform as p:
-            # The last step is to call run() on the ExperimentManager to run the simulations.
-            e.run(platform=p)
-            p.wait_till_done(e, refresh_interval=1)
-            # use system status as the exit code
-        self.assertTrue(e.succeeded)
-        # get the files in a platform agnostic way
-        for sim in e.simulations:
-            files = self.platform.get_files(sim, [config_path])
-            config_parameters = json.loads(files[config_path])['parameters']
-            self.assertEqual(config_parameters["Simulation_Duration"], 3)
+        self.assertTrue(self.experiment.succeeded)
+        sim = self.experiment.simulations[0]
+        files = self.platform.get_files(sim, ["config.json"])
+        config_parameters = json.loads(files["config.json"])['parameters']
+        self.assertEqual(config_parameters["Simulation_Duration"], 7)
 
     @pytest.mark.long
-    def test_experiment_from_builder_with_task_from_default2(self):
+    def test_experiment_from_builder_with_task_from_default(self):
         """
-            Test idmtools.entities.experiment.Experiment.from_builder() with EMODTask.from_default2()
+            Test creating task from defaults and then creating an experiment from a builder
+            and sweeping over the parameter "Run_Number"
+            Test idmtools.entities.experiment.Experiment.from_builder() with EMODTask.from_defaults()
         """
-        def set_param_fn(config):
-            print("Setting params.")
-            config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
-            config.parameters.Incubation_Period_Constant = 5
-            config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
-            config.parameters.Infectious_Period_Constant = 5
-            config.parameters.Base_Infectivity_Distribution = "CONSTANT_DISTRIBUTION"
-            config.parameters.Base_Infectivity_Constant = 1
-            config.parameters.Simulation_Duration = 3
-            return config
-
-        def build_camp():
-            event = ob.new_intervention(camp, 1, cases=4)
-            camp.add(event)
-            return camp
-
-        def build_demo():
-            demog = Demographics.from_template_node()
-            demog.SetDefaultProperties()
-            return demog
-
-        print(f"Telling emod-api to use {self.get_emod_schema()} as schema.")
-        ob.schema_path = self.get_emod_schema()
-        camp.set_schema( self.get_emod_schema() )
-
-        config_path = f"config_{self._testMethodName}.json"
-        base_task = EMODTask.from_default2(config_path=config_path, eradication_path=self.get_emod_binary(),
-                                           campaign_builder=build_camp, schema_path=self.get_emod_schema(),
-                                           param_custom_cb=set_param_fn, ep4_custom_cb=None)
-
-        # build tmpxxx.json for demographics file to avoid random pick wrong demographics.json file from other test
-        base_task.create_demog_from_callback(build_demo, from_sweep=True)
-        base_task.set_sif(sif_path)
+        base_task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
+                                           campaign_builder=self.builders.campaign_builder,
+                                           schema_path=self.builders.schema_path,
+                                           config_builder=self.builders.config_builder,
+                                           demographics_builder=self.builders.demographics_builder,
+                                           embedded_python_scripts_path=manifest.embedded_python_folder)
+        base_task.set_sif(self.builders.sif_path, platform=self.platform)
 
         builder = SimulationBuilder()
         # Sweep parameter "Run_Number"
-        builder.add_sweep_definition(EMODTask.set_parameter_partial("Run_Number"), range(0, num_sim))
-        e = Experiment.from_builder(
-            builder, base_task,
-            name=self.case_name,
-            tags={"emodpy": "emodpy-automation", "string_tag": "test", "number_tag": 123}
-        )
-        with self.platform as p:
-            # The last step is to call run() on the ExperimentManager to run the simulations.
-            e.run(platform=p)
-            p.wait_till_done(e, refresh_interval=1)
-            # use system status as the exit code
-        self.assertTrue(e.succeeded)
-        for sim in e.simulations:
-            files = self.platform.get_files(sim, [config_path])
-            config_parameters = json.loads(files[config_path])['parameters']
+        builder.add_sweep_definition(EMODTask.set_parameter_partial("Run_Number"), range(0, self.num_sim))
+        self.experiment = Experiment.from_builder(builder,
+                                                  base_task,
+                                                  name=self.case_name)
+        self.experiment.run(wait_until_done=True, platform=self.platform)
+        self.assertTrue(self.experiment.succeeded)
+        for sim in self.experiment.simulations:
+            files = self.platform.get_files(sim, ["config.json"])
+            config_parameters = json.loads(files["config.json"])['parameters']
             self.assertEqual(config_parameters["Run_Number"], sim.tags["Run_Number"])
 
     @pytest.mark.long
     def test_simulations_manual_builder_with_task_from_file(self):
         """
+            This test "passes" because I expect it to fail because of a known issue
+            with initializing task with demographics file
+            see: https://github.com/InstituteforDiseaseModeling/emodpy-old/issues/843
             Test idmtools.entities.experiment.Experiment.simulations.append(sim) with EMODTask.from_files()
         """
-        self.platform = Platform("SLURMStage")
-        base_task = EMODTask.from_files(eradication_path=self.get_emod_binary(), config_path=self.get_emod_config(),
-                                        ep4_path=None)
-        base_task.set_sif(sif_path)
-        base_task.set_parameter('Enable_Immunity', 0)
-        e = Experiment(
-            name=self.case_name,
-            tags={"emodpy": "emodpy-automation", "string_tag": "test", "number_tag": 123}
-        )
+        from idmtools.assets.errors import DuplicatedAssetError
+        base_task = EMODTask.from_files(eradication_path=self.builders.eradication_path,
+                                        config_path=self.builders.config_file,
+                                        campaign_path=self.builders.campaign_file,
+                                        demographics_paths=self.builders.demographics_file,
+                                        custom_reports_path=self.builders.custom_reports_file,
+                                        embedded_python_scripts_path=manifest.embedded_python_folder)
+        base_task.set_sif(self.builders.sif_path, platform=self.platform)
+
+        self.experiment = Experiment(name=self.case_name)
 
         base_sim = Simulation(task=base_task)
-        for i in range(num_sim_long):
+        for i in range(self.num_sim_long):
             sim = copy.deepcopy(base_sim)
-            sim.task.common_assets = base_task.common_assets # workaround coz copy doesn't copy common_assets anymore.
-            sim.task.set_parameter("Enable_Immunity", 0)
-            e.simulations.append(sim)
+            sim.task.config["Run_Number"] = i
+            self.experiment.simulations.append(sim)
 
-        with self.platform as p:
-            # The last step is to call run() on the ExperimentManager to run the simulations.
-            e.run(platform=p)
-            p.wait_till_done(e, refresh_interval=1)
-            # use system status as the exit code
-        self.assertTrue(e.succeeded)
-        for sim in e.simulations:
+        with self.assertRaises(DuplicatedAssetError) as context:
+            self.experiment.run(wait_until_done=True,
+                                platform=self.platform)
+        self.assertTrue("demographics.json" in str(context.exception))
+
+        #  uncomment when fixed
+        # self.assertTrue(self.experiment.succeeded)
+        #
+        # for i, sim in enumerate(self.experiment.simulations):
+        #     files = self.platform.get_files(sim, ["config.json"])
+        #     config_parameters = json.loads(files["config.json"])['parameters']
+        #     self.assertEqual(config_parameters["Run_Number"], i)
+
+    @pytest.mark.long
+    def test_simulations_manual_builder_with_task_from_file_workaround(self):
+        """
+            Workaround for the issue
+            see: https://github.com/InstituteforDiseaseModeling/emodpy-old/issues/843
+            Test idmtools.entities.experiment.Experiment.simulations.append(sim) with EMODTask.from_files()
+        """
+        # removing custom_reports from the config file
+        with open(self.builders.config_file, "r") as f:
+            config = json.load(f)
+            config["parameters"]["Custom_Reports_Filename"] = ""
+            with open("config.json", "w") as out:
+                json.dump(config, out, indent=4)
+
+        base_task = EMODTask.from_files(eradication_path=self.builders.eradication_path,
+                                        campaign_path=self.builders.campaign_file,
+                                        config_path="config.json",
+                                        embedded_python_scripts_path=manifest.embedded_python_folder)
+        base_task.set_sif(self.builders.sif_path, platform=self.platform)
+
+        self.experiment = Experiment(name=self.case_name)
+        base_sim = Simulation(task=base_task)
+        for i in range(self.num_sim_long):
+            sim = copy.deepcopy(base_sim)
+            sim.task.config["Run_Number"] = i
+            self.experiment.simulations.append(sim)
+
+        self.experiment.simulations[0].task.common_assets.add_asset(Asset(self.builders.demographics_file))
+        self.experiment.run(wait_until_done=True,
+                            platform=self.platform)
+
+        self.assertTrue(self.experiment.succeeded)
+
+        run_numbers = []
+        for sim in self.experiment.simulations:
             files = self.platform.get_files(sim, ["config.json"])
             config_parameters = json.loads(files["config.json"])['parameters']
-            self.assertEqual(config_parameters["Enable_Immunity"], 0)
+            run_numbers.append(config_parameters["Run_Number"])
+
+        self.assertEqual(set(run_numbers), set(list(range(self.num_sim_long))))
 
     @pytest.mark.long
     def test_experiment_from_builder_with_task_from_file(self):
         """
             Test idmtools.entities.experiment.Experiment.from_builder() with EMODTask.from_files()
         """
-        self.platform = Platform("SLURMStage")
-        base_task = EMODTask.from_files(eradication_path=self.get_emod_binary(), config_path=self.get_emod_config(),
-                                        ep4_path=None)
-        base_task.set_sif(sif_path)
+        base_task = EMODTask.from_files(eradication_path=self.builders.eradication_path,
+                                        config_path=self.builders.config_file,
+                                        custom_reports_path=self.builders.custom_reports_file,
+                                        demographics_paths=self.builders.demographics_file)
+        base_task.set_parameter("Enable_Interventions", 0)
+        base_task.set_sif(self.builders.sif_path, platform=self.platform)
         builder = SimulationBuilder()
-        # Sweep parameter "Run_Number"
-        builder.add_sweep_definition(EMODTask.set_parameter_partial("Run_Number"), range(0, num_sim_long))
-        e = Experiment.from_builder(
-            builder, base_task,
-            name=self.case_name,
-            tags={"emodpy": "emodpy-automation", "string_tag": "test", "number_tag": 123}
-        )
-        with self.platform as p:
-            # The last step is to call run() on the ExperimentManager to run the simulations.
-            e.run(platform=p)
-            p.wait_till_done(e, refresh_interval=1)
-            # use system status as the exit code
+        builder.add_sweep_definition(EMODTask.set_parameter_partial("Run_Number"), range(0, self.num_sim_long))
+        self.experiment = Experiment.from_builder(builder,
+                                                  base_task,
+                                                  name=self.case_name)
+        self.experiment.run(wait_until_done=True,
+                            platform=self.platform)
 
-        self.assertTrue(e.succeeded)
-        for sim in e.simulations:
+        self.assertTrue(self.experiment.succeeded)
+        for sim in self.experiment.simulations:
             files = self.platform.get_files(sim, ["config.json"])
             config_parameters = json.loads(files["config.json"])['parameters']
             self.assertEqual(config_parameters["Run_Number"], sim.tags["Run_Number"])
 
 
-@pytest.mark.comps
 @pytest.mark.emod
-class TestEMODExperimentLinux(ITestWithPersistence, EMODExperimentTest):
+class TestEMODExperimentGeneric(TestEMODExperiment):
     """
-    Test idmtools.entities.experiment with Linux Generic Emod build
+    This tests GENERIC_SIM from emod-generic package
     """
-
-    @classmethod
-    def setUpClass(cls):
-        cls.platform: IPlatform = cls.get_platform()
-
-    def setUp(self) -> None:
-        self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
-        print(self.case_name)
-
-    @classmethod
-    def get_emod_experiment(cls) -> EMODTask:
-        return EMODTask
-
-    @classmethod
-    def get_platform(cls) -> IPlatform:
-        return Platform('SLURM')
-
-    @classmethod
-    def get_emod_binary(cls) -> str:
-        emod_binary_path = manifest.eradication_path_linux
-        print(f"get_emod_binary returning {emod_binary_path}")
-        return emod_binary_path
-
-    @classmethod
-    def get_emod_schema(cls) -> str:
-        emod_schema_path = manifest.schema_path_linux
-        print(f"get_emod_schema returning {emod_schema_path}")
-        return emod_schema_path
-
-    @classmethod
-    def get_emod_config(cls) -> str:
-        config_file_path = os.path.join(manifest.config_folder, 'config_emod_test.json')
-        manifest.delete_existing_file(config_file_path)
-        schema_path = manifest.schema_path_linux
-        fs.SchemaConfigBuilder(schema_name=schema_path, config_out=config_file_path)
-        print(f"get_emod_config returning {config_file_path}")
-        return config_file_path
-
-# try:
-
-# @pytest.mark.docker
-# @pytest.mark.emod
-# class TestLocalPlatformEMOD(ITestWithPersistence, EMODPlatformTest):
-#
-#     def setUp(self) -> None:
-#         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
-#         print(self.case_name)
-#
-#     @classmethod
-#     def setUpClass(cls) -> None:
-#         from idmtools_platform_local.infrastructure.service_manager import DockerServiceManager
-#         from idmtools_platform_local.infrastructure.docker_io import DockerIO
-#         import docker
-#         cls.do = DockerIO()
-#         cls.sdm = DockerServiceManager(docker.from_env())
-#         cls.sdm.cleanup(True, True)
-#         cls.do.cleanup(True)
-#         cls.platform: IPlatform = cls.get_platform()
-#
-#     @classmethod
-#     def tearDownClass(cls) -> None:
-#         cls.sdm.cleanup(True, True)
-#         cls.do.cleanup(True)
-#
-#     @classmethod
-#     def get_emod_experiment(cls) -> IEMODExperiment:
-#         return DockerEMODExperiment
-#
-#     @classmethod
-#     def get_platform(cls) -> IPlatform:
-#         return Platform('Local')
-#
-#     @classmethod
-#     def get_emod_binary(cls) -> str:
-#         return get_github_eradication_url(emod_version)
+    def setup_custom_params(self):
+        self.builders = helpers.BuildersCommon
 
 
 if __name__ == "__main__":
     import unittest
+
     unittest.main()

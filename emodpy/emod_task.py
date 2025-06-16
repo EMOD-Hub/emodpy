@@ -6,10 +6,11 @@ import tempfile
 from dataclasses import dataclass, field
 from functools import partial
 from logging import getLogger, DEBUG
-from typing import Union, NoReturn, Optional, Any, Dict, List, Type
+from typing import Union, Optional, Any, Dict, List, Type, Callable
 from urllib.parse import urlparse
 import pathlib
-import sqlite3  # for caching experiment data
+from pathlib import Path
+import warnings
 
 from idmtools import IdmConfigParser
 from idmtools.assets import Asset
@@ -21,50 +22,24 @@ from idmtools.entities.simulation import Simulation
 from idmtools.registry.task_specification import TaskSpecification
 from idmtools.utils.json import load_json_file
 from idmtools.entities.iplatform import IPlatform
-from COMPS.utils import get_output_files_for_experiment as comps_getter
-from COMPS.Data import Experiment, QueryCriteria
-
 from emodpy.emod_file import ClimateFiles, DemographicsFiles, MigrationFiles
-from emodpy.emod_campaign import EMODCampaign
-from emodpy.interventions import EMODEmptyCampaign
-from emodpy.reporters import Reporters
+from emodpy.campaign.emod_campaign import EMODCampaign
+from emodpy.reporters.base import Reporters
 
-# from emod_api.schema import get_schema as gs # only needed if we go back to schema regen
+import datetime
+import random
+import string
+
 from emod_api.config import default_from_schema_no_validation as dfs
+from emod_api.schema_to_class import ReadOnlyDict
+from emod_api.demographics.Demographics import Demographics
 
 user_logger = getLogger('user')
 logger = getLogger(__name__)
 dev_mode = False
 
-"""
-Note that these 3 functions could be member functions of EMODTask but Python modules are already pretty good at being 'static classes'.
-"""
 
-
-def add_ep4_from_path(task, ep4_path="EP4"):  # default added for back-compat
-    """
-    Add embedded Python scripts from a given path.
-    """
-
-    for entry_name in os.listdir(ep4_path):
-        full_path = os.path.join(ep4_path, entry_name)
-        if (os.path.isfile(full_path) and entry_name.endswith(".py")):
-            py_file_asset = Asset(full_path, relative_path="python")
-            task.common_assets.add_asset(py_file_asset)
-
-    return task
-
-
-def default_ep4_fn(task, ep4_path=None):
-    # If user specifies absolutely nothing, use the built-in ones so that we get default behaviour easy-peasy.
-    if ep4_path is None:
-        ep4_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "defaults/ep4")
-
-    task = add_ep4_from_path(task, ep4_path)
-    return task
-
-
-@dataclass()
+@dataclass
 class EMODTask(ITask):
     """
     EMODTask allows easy running and configuration of EMOD Experiments and Simulations
@@ -86,26 +61,27 @@ class EMODTask(ITask):
     config: dict = field(default_factory=lambda: {})
     config_file_name: str = "config.json"
     #: Campaign configuration
-    campaign: EMODCampaign = field(default_factory=lambda: EMODEmptyCampaign.campaign())
+    campaign: EMODCampaign = field(default_factory=lambda: EMODCampaign(name="Empty Campaign", events=[], use_defaults=True))
     #: Simulation level demographics such as overlays
     simulation_demographics: DemographicsFiles = field(default_factory=lambda: DemographicsFiles())
     #: Simulation level migrations
     simulation_migrations: MigrationFiles = field(default_factory=lambda: MigrationFiles())
+    schema_path: str = None
 
     #: Add --python-script-path to command line
-    use_embedded_python: bool = True
+    use_embedded_python: bool = False
     py_path_list: list = field(default_factory=lambda: [])
     is_linux: bool = False
     implicit_configs: list = field(default_factory=lambda: [])
     sif_filename: str = None
-    sif_path = None # one is for slurm only
+    sif_path = None  # one is for slurm only
 
     def __post_init__(self):
-        from emodpy.utils import download_eradication
+        from emodpy.utils.download_utils import download_eradication
         super().__post_init__()
         self.executable_name = "Eradication"
         self.py_path_list.append("./Assets/python")
-        if self.eradication_path is not None:
+        if self.eradication_path:
             self.executable_name = os.path.basename(self.eradication_path)
             if urlparse(self.eradication_path).scheme in ('http', 'https'):
                 self.eradication_path = download_eradication(self.eradication_path)
@@ -116,16 +92,57 @@ class EMODTask(ITask):
                 self.eradication_path = eradication_path
                 self.executable_name = os.path.basename(self.eradication_path)
 
-    def create_campaign_from_callback(self, builder, params=None):
+    def create_campaign_from_callback(self, builder: Callable, verbose: bool = False, bootstrapped: bool = False) -> None:
         """
-        Parameters:
-            write_campaign (str):  if not None, the path to write the campaign to
+        This function is responsible for generating and configuring a campaign using a provided
+        builder function. It also handles the custom events that are generated by the campaign by
+        adding them to the config.
+
+        Args:
+            builder: Function that creates and adds interventions to the campaign module. The function needs to take
+                the campaign module as the first required argument, which can then be followed by parameters that you
+                want to modify within the interventions. These additional parameters are then available to be modified
+                in a sweep. The function must return the campaign module at the end.
+
+                Example::
+
+                    def campaign_builder(campaign, another_param=0.3):
+                        from emodpy.campaign.individual_intervention import CommonInterventionParameters, SimpleVaccine, VaccineType
+                        from emodpy.campaign.distributor import add_intervention_scheduled
+                        import emodpy.campaign.waning_config as waning_config
+
+                        this_waning_config = waning_config.BoxExponential(25, 60, 0.89)
+                        common_intervention_parameters = CommonInterventionParameters(cost=0.5,
+                                                                                      dont_allow_duplicates=True)
+                        vaccine = SimpleVaccine(campaign,
+                                                waning_config=this_waning_config,
+                                                vaccine_take=another_param,
+                                                vaccine_type=VaccineType.TransmissionBlocking,
+                                                common_intervention_parameters=common_intervention_parameters)
+                        add_intervention_scheduled(campaign, intervention_list=[vaccine], start_day=2)
+                        return campaign
+
+            verbose: If True, prints debug information about the generated file.
+            bootstrapped: Set to True if the campaign builder will build a campaign from scratch itself. False if it
+                will accept an initialized campaign from this function instead and then modify it. Default False.
+
+        Returns:
+            None
         """
-        # params param needs to be totally optional for back-compat
-        if params is None:
+        if builder is None:
+            return
+
+        if bootstrapped:
             campaign = builder()
         else:
-            campaign = builder(params=params)
+            default_campaign = self.build_default_campaign(schema_path=self.schema_path)
+            campaign = builder(default_campaign)
+
+        if getattr(campaign, '__name__', None) != 'emod_api.campaign':
+            # verify the campaign is an emod_api.campaign module
+            raise ValueError("Something went wrong with campaign_builder, "
+                             "please make sure that the campaign_builder function returns the campaign module.")
+
         if "implicits" in dir(campaign) and campaign.implicits:
             self.implicit_configs.extend(campaign.implicits)
 
@@ -134,14 +151,13 @@ class EMODTask(ITask):
         # from mucking with each other.
         campaign_dict = json.loads(json.dumps(campaign.campaign_dict))
         self.campaign = EMODCampaign.load_from_dict(campaign_dict)
-        # self.campaign = EMODCampaign.load_from_dict(copy.deepcopy(campaign.campaign_dict))
         adhoc_events = campaign.get_adhocs()
         if dev_mode:
             campaign.save()
 
         if adhoc_events:
-            # print("Found adhoc events in campaign. Needs some special processing behind the scenes.")
-            logger.debug("Found adhoc events in campaign. Needs some special processing behind the scenes.")
+            if verbose:
+                logger.debug("Found adhoc events in campaign. Needs some special processing behind the scenes.")
             if "Custom_Individual_Events" in self.config.parameters:
                 self.config.parameters.Custom_Individual_Events = [x for x in adhoc_events.keys()]
             else:
@@ -156,168 +172,252 @@ class EMODTask(ITask):
         if hasattr(campaign, "get_custom_node_events") and "Custom_Node_Events" in self.config.parameters:
             self.config.parameters.Custom_Node_Events = campaign.get_custom_node_events()
 
-        # This might be a great place to reset the campaign object so users don't have to.
+        # This might be a great place to reset the campaign module so users don't have to.
         campaign.reset()
 
-    def create_demog_from_callback(self, builder, from_sweep=False, params=None):
+    def create_demographics_from_callback(self, builder: Callable,
+                                          from_sweep: bool = False,
+                                          verbose: bool = False) -> None:
+        """
+        Creates a demographics file using a builder function and manages its storage.
+
+        Args:
+            builder: A function that generates the demographics object.
+            from_sweep (bool): If True, the demographics file is stored in a temporary location.
+            verbose (bool): If True, prints debug information about the generated file.
+
+        Returns:
+            None
+        """
+        # If no builder function is provided, exit early.
         if builder is None:
             return
 
+        # Determine the storage path for the demographics file.
         if from_sweep:
             demog_path = tempfile.NamedTemporaryFile(delete=False).name + '.json'
         else:
-            demog_path = "demographics.json"
+            # Create a uniquely named directory to prevent conflicts when running multiple scripts.
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            random_string = ''.join(random.choices(string.ascii_letters + string.digits, k=3))
+            demog_folder = f"demographics_{timestamp}_{random_string}"
+            # Ensure the directory exists.
+            os.makedirs(demog_folder, exist_ok=True)
+            # Keep the demographics file name consistent with the original name, so that the comps platform can
+            # recognize the demographics file and not recreate AssetCollection if the file already exists.
+            demog_path = os.path.join(demog_folder, "demographics.json")
 
-        # params param needs to be totally optional for back-compat
-        builders = builder() if params is None else builder(params=params)
+        if verbose:
+            print(f"Generating demographics file {demog_path}.")
 
-        print(f"Generating demographics file {demog_path}.")
-        demographics = builders
-        if type(builders) is tuple:  # backwards-compatibility, remove this in major version bump
-            def old_way(builders, demog_path):
-                demographics = builders[0]
-                demographics.implicits.extend(builders[0].implicits)
-                demog_path = demographics.generate_file(demog_path)
-                mig = builders[1]
-                # if mig is a function, invoke it. If it's a Migration object, use it.
-                import emod_api.migration
-                # Wanted to have tempfile only but too tedious to fix tests.
-                if from_sweep:
-                    mig_filename = tempfile.NamedTemporaryFile(delete=False).name + ".bin"
-                else:
-                    mig_filename = "regional_migration.bin"
-                if isinstance(mig, emod_api.migration.Migration):
-                    # it's an object
-                    mig_path = mig.to_file(pathlib.Path(mig_filename))
-                else:
-                    # it's a function
-                    mig_path = mig(demographics_file_path=demog_path).to_file(pathlib.Path(mig_filename))
+        # Generate and save the demographics file.
+        demographics = builder()
+        if not demographics or not isinstance(demographics, Demographics):
+            raise ValueError("Something went wrong with demographics_builder, "
+                             "please make sure that the demographics_builder function returns a Demographics object.")
 
-                if mig_path is not None:
-                    import emod_api.demographics.DemographicsTemplates as DT
-                    demographics.implicits.append(DT._set_migration_model_fixed_rate)
-                    set_mig_filename = partial(DT._set_regional_migration_filenames, file_name=pathlib.PurePath(mig_path).name)
-                    demographics.implicits.append(set_mig_filename)
+        demog_path = demographics.generate_file(demog_path)
 
-                demographics.migration_files.append(mig_path)
-                return demographics
-            demographics = old_way(builders, demog_path)
-        else:
-            demog_path = demographics.generate_file(demog_path)
-
+        # Process associated migration files and add them to the asset collection.
         for mig_path in demographics.migration_files:
-            user_logger.info("Adding migration file and json to assets.")
+            if verbose:
+                user_logger.info("Adding migration file and json to assets.")
             self.transient_assets.add_asset(str(mig_path))
             self.transient_assets.add_asset(str(mig_path) + ".json")
 
+        # Add the generated demographics file to the appropriate asset collection.
         if from_sweep:
             self.transient_assets.add_asset(demog_path)
         else:
             self.common_assets.add_asset(demog_path)
 
+        # Set the demographics file name for the simulation.
         demog_files = [pathlib.PurePath(demog_path).name]
         demographics._SetDemographicFileNames(demog_files)
 
-        # handle implicit parameters before builder object is destroyed
+        # Apply implicit parameters before the demographics object is destroyed.
         for fn in demographics.implicits:
             if fn:
                 self.config = fn(self.config)
 
-    def handle_implicit_configs(self):
+    def handle_implicit_configs(self) -> None:
         """
         Execute the implicit config functions created by the demographics builder.
+
+        Returns:
+            None
         """
-        logger.debug(f"Executing {len(self.implicit_configs)} implicit config functions from demog and mig land.")
+        if dev_mode:
+            logger.debug(f"Executing {len(self.implicit_configs)} implicit config functions from demographics and "
+                         f"migration.")
         for fn in self.implicit_configs:
             if fn:
                 self.config = fn(self.config)
 
-    @classmethod
-    def from_default2(
-            cls,
-            eradication_path,   # : str = None,
-            schema_path,    # : str
-            param_custom_cb=None,
-            config_path="config.json",
-            campaign_builder=None,
-            ep4_custom_cb=default_ep4_fn,
-            demog_builder=None,
-            plugin_report=None,
-            serial_pop_files=None,
-            write_default_config=None,
-            ep4_path=None,
-            **kwargs) -> "EMODTask":
+    @staticmethod
+    def build_default_config(schema_path: Union[str, Path]) -> ReadOnlyDict:
         """
-        Create a task from emod-api Defaults
+        Build the default config object from the schema.
 
         Args:
-            eradication_path: Path to Eradication binary.
-            schema_path: Path to schema.json.
-            param_custom_cb: Function that sets parameters for config.
-            campaign_builder: Function that builds the campaign.
-            ep4_custom_cb: Function that sets EP4 assets.  There are 4 options for specificying EP4 scripts:
-                1) Set ep4_custom_cb=None. This just says "don't even attempt to use EP4 scripts". Not the default.
-                2) All defaults. This uses the built-in ep4 scripts (inside emodpy module) which does some standard pre- and post-processing. You can't edit these scripts.
-                3) Set the (new) ep4_path to your local path where your custom scripts are. Leave out ep4_custom_cb so it uses the default function (but with your path).
-                4) Power mode where you set ep4_custom_cb to your own function which gives you all the power. Probably don't need this.
-            demog_builder: Function that builds the demographics configuration and optional migration configuration.
-            plugin_report: Custom reports file.
-            serial_pop_files: Input ".dtk" serialized population files.
-            config_path: Optional filename for the generated config.json, if you don't like that name.
-            write_default_config: Set to true if you want to have the default_config.json written locally for inspection.
-            ep4_path: See ep4_custom_cb section.
+            schema_path: Path to the schema file.
+
+        Returns:
+            ReadOnlyDict: The default config based on the schema.
+        """
+        default_config = dfs.get_default_config_from_schema(path_to_schema=schema_path, as_rod=True)
+        # needed by emodpy_hiv.country_model.build_config
+        default_config["schema_path"] = schema_path
+        return default_config
+
+    @staticmethod
+    def build_default_campaign(schema_path: Union[str, Path]):
+        """
+        Build the default (empty) campaign and set its schema_path.
+
+        Args:
+            schema_path: Path to the schema file.
+
+        Returns:
+            Fresh initialized campaign module with schema_path set
+        """
+        import emod_api.campaign as default_campaign
+        default_campaign.set_schema(schema_path_in=schema_path)
+        return default_campaign
+
+    @classmethod
+    def from_defaults(cls,
+                      schema_path: str,
+                      eradication_path: str = None,
+                      config_builder: Callable = None,
+                      campaign_builder: Callable = None,
+                      demographics_builder: Callable = None,
+                      report_builder: Callable[[Reporters], Reporters] = None,
+                      embedded_python_scripts_path: Union[str, Path, List[Union[str, Path]]] = None,
+                      serialized_population_files: Union[str, List[str]] = None,
+                      bootstrapped: bool = False) -> "EMODTask":
+        """
+        Create a task from emod-api defaults and functions to update them.
+
+        Args:
+            schema_path: Path to processed schema.json, including the filename.
+            eradication_path: Path to Eradication binary, including the filename. You can also add Eradication as an
+                asset.
+            config_builder: Function that sets parameters for config. The function must have config object as the
+                parameter and return the config object. Inside the function, the config object will be modified in
+                the following way: config.parameters.<parameter_name> = <value>, with <parameter_name> being an
+                attribute.
+
+                Example::
+
+                    def config_builder(config):
+                        import emodpy.emod_enum as emod_enum
+                        config.parameters.Incubation_Period_Distribution = emod_enum.DistributionType.CONSTANT_DISTRIBUTION
+                        config.parameters.Incubation_Period_Constant = 5
+                        config.parameters.Infectious_Period_Distribution = emod_enum.DistributionType.CONSTANT_DISTRIBUTION
+                        config.parameters.Infectious_Period_Constant = 5
+                        config.parameters.Simulation_Duration = 80
+                        return config
+
+            campaign_builder: Function that creates and adds interventions to the campaign module. The function needs
+                to take the campaign module as the first required argument, which can then be followed by parameters
+                that you  want to modify within the interventions. These additional parameters are then available to
+                be modified in a sweep. The function must return the campaign module at the end.
+
+                Example::
+
+                    def campaign_builder(campaign, additional_param=0.3):
+                        from emodpy.campaign.individual_intervention import CommonInterventionParameters, SimpleVaccine, VaccineType
+                        from emodpy.campaign.distributor import add_intervention_scheduled
+                        import emodpy.campaign.waning_config as waning_config
+
+                        this_waning_config = waning_config.BoxExponential(box_duration=25,
+                                                                          decay_time_constant=60,
+                                                                          initial_effect=0.89)
+                        common_intervention_parameters = CommonInterventionParameters(cost=0.5,
+                                                                                      dont_allow_duplicates=True)
+                        vaccine = SimpleVaccine(campaign,
+                                                waning_config=this_waning_config,
+                                                vaccine_take=additional_param,
+                                                vaccine_type=VaccineType.TransmissionBlocking,
+                                                common_intervention_parameters=common_intervention_parameters)
+                        add_intervention_scheduled(campaign, intervention_list=[vaccine], start_day=2)
+                        return campaign
+
+
+
+            demographics_builder: Function that builds the demographics configuration and optional migration
+                configuration.
+
+                Example::
+
+                    def demographics_builder():
+                        import emodpy.demographics.Demographics as Demographics
+
+                        demographics_object = Demographics.from_template_node(pop=500)
+                        # other code setting demographics parameters
+                        return demographics_object
+
+            report_builder: Function that creates reports to be used in the experiment. The function must have Reporters
+                object as the parameter and return that object. It is assumed that all the reporters come from the
+                reporters that are part of EMOD main code. EMOD also supports reporters as custom plug-in dlls,
+                however, not through the current emodpy system.
+
+                Example::
+
+                        def report_builder(reporters):
+                            from emodpy.reporters.reporters import ReportEventCounter, ReportFilter
+
+                            report_filter = ReportFilter(start_day=0, end_day=365, filename_suffix="LifeEvents")
+                            reporters.add(ReportEventCounter(reporters_object=reporters,
+                                               report_filter=report_filter,
+                                               event_list=["DiseaseDeaths", "Births", "HappyBirthday"]))
+                            return reporters
+
+
+            embedded_python_scripts_path: Path to folder with python scripts or a list of paths to specific python
+                scripts. When path to folder, all python scripts in the folder will be added to the experiment.
+                embedded_python_scripts_path may also be a list of such items, each added independently.
+                Note: We no longer support passing in a function for this parameter.
+            serialized_population_files: Path to folder containing .dtk serialized population files or specific
+                .dtk file, including the filename. All .dtk files in the folder will be added and used in the
+                experiment.
+            bootstrapped: Set to True if the campaign builder will build a campaign from scratch itself. False if it
+                will accept an initialized campaign from this function instead and then modify it. Default False.
 
         Returns:
             EMODTask
-
         """
-        task = cls(eradication_path=eradication_path, **kwargs)
-
-        # we do not regenerate the schema from a binary because there are too many issues with matching platforms,
-        # so we use a schema file.
-        default_config = dfs.get_default_config_from_schema(path_to_schema=schema_path, as_rod=True,
-                                                            output_filename=write_default_config)
+        task = cls(eradication_path=eradication_path, schema_path=schema_path)
+        # We do not regenerate the schema from the Eradication binary because we can't guarantee this code is running
+        # on a matching platform, so we use a schema file.
+        default_config = cls.build_default_config(schema_path=task.schema_path)
         task.available_config_parameters = list(default_config['parameters'].keys())
 
-        # Invoke new custom param fn callback here.
-        task.config = dfs.get_config_from_default_and_params(config=default_config, set_fn=param_custom_cb)
+        task.config = dfs.get_config_from_default_and_params(config=default_config, set_fn=config_builder)
+        if not isinstance(task.config, ReadOnlyDict):
+            raise ValueError("Something went wrong with config_builder, please make sure "
+                             "the config_builder function returns a config object.")
 
-        if config_path is None:
-            config_path = "config.json"
-        task.config_file_name = pathlib.Path(config_path).name
-
-        # Let's do the demographics building here...  
-        if demog_builder:
-            task.create_demog_from_callback(demog_builder)
+        # Let's do the demographics building here...
+        if demographics_builder:
+            task.create_demographics_from_callback(demographics_builder)
 
         if campaign_builder:
-            task.create_campaign_from_callback(builder=campaign_builder)
+            task.create_campaign_from_callback(builder=campaign_builder, bootstrapped=bootstrapped)
 
-        else:
-            task.campaign = None
+        if embedded_python_scripts_path:
+            task.add_embedded_python_scripts_from_path(path=embedded_python_scripts_path)
 
-        if ep4_custom_cb is not None:
-            if ep4_path:
-                task = ep4_custom_cb(task, ep4_path)
-            else:
-                task = ep4_custom_cb(task)  # for back-compat
-        else:
-            task.use_embedded_python = False
+        if report_builder:
+            task.reporters = Reporters(schema_path=task.schema_path)
+            returned = report_builder(task.reporters)
+            if not returned or not isinstance(returned, Reporters):
+                raise ValueError("Something went wrong with report_builder, please make sure "
+                                 "the report_builder function returns a Reporters object.")
 
-        if plugin_report:
-            # Look for reporters DLLs files
-            task.is_linux = True
-            task.config.parameters.Custom_Reports_Filename = "custom_reports.json"
-
-            # this assumes user has set this.
-            task.reporters.add_dll_folder(plugin_report.asset_dir)
-            task.reporters.add_reporter(plugin_report)
-
-        if serial_pop_files:
-            for serial_pop_file in serial_pop_files:
-                task.common_assets.add_asset(serial_pop_file)
-                task.config.parameters.Serialized_Population_Filenames = [pathlib.Path(serial_pop_file).name]
-            task.config.parameters.Serialized_Population_Path = "Assets"
+        if serialized_population_files:
+            task.add_serialized_population_files_from_path(serialized_population_files)
 
         task.handle_implicit_configs()
 
@@ -325,88 +425,76 @@ class EMODTask(ITask):
 
     @classmethod
     def from_files(cls,
-                   eradication_path=None,
-                   config_path=None,
-                   campaign_path=None,
-                   demographics_paths=None,
-                   ep4_path=None,
-                   custom_reports_path=None,
-                   asset_path=None,
-                   **kwargs):
-
+                   eradication_path: str = None,
+                   config_path: str = None,
+                   campaign_path: str = None,
+                   demographics_paths: Union[str, list] = None,
+                   custom_reports_path: str = None,
+                   embedded_python_scripts_path: Union[str, list[str]] = None,
+                   serialized_population_files: Union[str, list[str]] = None,
+                   asset_path: str = None) -> "EMODTask":
         """
         Load custom |EMOD_s| files when creating :class:`EMODTask`.
 
         Args:
-            asset_path: If an asset path is passed, the climate, dlls, and migrations will be searched there
-            eradication_path: The eradication.exe path.
-            config_path: The custom configuration file.
-            campaign_path: The custom campaign file.
-            demographics_paths: The custom demographics files (single file or a list).
-            custom_reports_path: Custom reports file
+            eradication_path: Path to Eradication binary, including the filename.
+            config_path: Path to the configuration file, including the filename.
+            campaign_path: Path to the campaign file, including the filename.
+            demographics_paths: Path or a list of paths to the folder containing demographics files or path to a
+                specific demographics file, including the filename. When path to folder, all .json files in the folder
+                will be added to the experiment as demographics files.
+            custom_reports_path: Path to the custom reports file, including the filename. It is assumed that all the
+                reporters in the file come from the reporters that are part of EMOD main code. EMOD also supports
+                reporters as custom plug-in dlls, however, not through the current emodpy system.
+            embedded_python_scripts_path: Path to folder with python scripts or path to a specific python script,
+                including the filename. When path to folder, all python scripts in the folder will be added to the
+                experiment.
+                Note: We no longer support passing in a function for this parameter.
+            serialized_population_files: Path to folder containing .dtk serialized population files or specific
+                .dtk file, including the filename. All .dtk files in the folder will be added and used in the
+                experiment.
+            asset_path: Path to migration and/or climate files.
 
-        Returns: An initialized experiment
+        Returns:
+            An initialized experiment
         """
         # Create the experiment
-        task = cls(eradication_path=eradication_path, **kwargs)
+        task = cls(eradication_path=eradication_path)
 
-        # Load the files
-        task.load_files(config_path=config_path, campaign_path=campaign_path, demographics_paths=demographics_paths,
-                        custom_reports_path=custom_reports_path, asset_path=asset_path)
-
-        if ep4_path is not None:
-            # Load dtk_*_process.py to COMPS Assets/python folder
-            task = add_ep4_from_path(task, ep4_path)
-        else:
-            task.use_embedded_python = False
-
-        return task
-
-    def load_files(self, config_path=None, campaign_path=None, custom_reports_path=None, demographics_paths=None,
-                   asset_path=None) -> NoReturn:
-        """
-        Load files in the experiment/base_simulation.
-
-        Args:
-            asset_path: Path to find assets
-            config_path: Configuration file path
-            campaign_path: Campaign file path
-            demographics_paths: Demographics file path
-            custom_reports_path: Path for the custom reports file
-
-        """
-        if config_path:
-            self.config = load_json_file(config_path)["parameters"]
-        else:
-            self.config = None
+        task.config = load_json_file(config_path)["parameters"]
 
         if campaign_path:
-            self.campaign = EMODCampaign.load_from_file(campaign_path)
-        else:
-            self.campaign = None
+            task.campaign = EMODCampaign.load_from_file(campaign_path)
 
-        if demographics_paths: 
-            logger.debug(f"demographics_paths = {demographics_paths}.")
-            for demog_path in [demographics_paths] if isinstance(demographics_paths, str) else demographics_paths:
-                self.demographics.add_demographics_from_file(demog_path)
-            if isinstance(demographics_paths, str):
-                self.config['Demographics_Filenames'] = [pathlib.PurePath(demographics_paths).name]
+        if demographics_paths:
+            if isinstance(demographics_paths, list):
+                for path in demographics_paths:
+                    task.demographics.add_demographics_from_files(path)
             else:
-                self.config['Demographics_Filenames'] = [pathlib.PurePath(demographics_path).name for demographics_path in demographics_paths]
-            self.config['Enable_Demographics_Builtin'] = 0
+                task.demographics.add_demographics_from_files(demographics_paths)
+            task.demographics.set_task_config(task)  # adds the demographics to the config
 
         if custom_reports_path:
-            self.reporters.read_custom_reports_file(custom_reports_path)
-            if asset_path:
-                # Look for reporters DLLs files
-                self.reporters.add_dll_folder(asset_path)
+            custom_reports_path = os.path.abspath(custom_reports_path)
+            task.transient_assets.add_asset(custom_reports_path)
+            # need to do this explicitly because this is usually added by the Reporters object,
+            # but we are not using it here.
+            custom_reports_filename = os.path.basename(custom_reports_path)
+            task.config["Custom_Reports_Filename"] = custom_reports_filename
+
+        if embedded_python_scripts_path is not None:
+            task.add_embedded_python_scripts_from_path(path=embedded_python_scripts_path)
+
+        if serialized_population_files is not None:
+            task.add_serialized_population_files_from_path(serialized_population_files)
 
         if asset_path and config_path:
             # Look for climate
-            self.climate.read_config_file(config_path, asset_path)
-
+            task.climate.read_config_file(config_path, asset_path)
             # Look for migrations
-            self.migrations.read_config_file(config_path, asset_path)
+            task.migrations.read_config_file(config_path, asset_path)
+
+        return task
 
     def pre_creation(self, parent: Union[Simulation, IWorkflowItem], platform: 'IPlatform'):
         """
@@ -425,21 +513,22 @@ class EMODTask(ITask):
         # self.climate.set_task_config(self)
 
         # Set the reporters
-        self.reporters.set_task_config(self)
+        # this only runs for when using from_defaults,
+        # because with "from_files" we bypass Reporters object creation
+        if self.reporters.builtin_reporters:
+            self.config.parameters.Custom_Reports_Filename = "custom_reports.json"
+        for reporter in self.reporters.config_reporters:
+            for i in reporter.parameters:
+                setattr(self.config.parameters, i, reporter.parameters[i])
 
         # Set the campaign filename
         if self.campaign:
-            # business logic: auto-set config for campaign.
-            # TBD: This is where we could do custom event stuff automatically
-            # self.config: dict = field(default_factory=lambda: {}) # This is a wacky line to get a failing test to work after I remove config initialiation from ctor.
-
-            # this may need to be done both ways.
-            if type(self.config) is dict:
+            if type(self.config) is dict:  # when "from_files" was used
                 self.config["Campaign_Filename"] = "campaign.json"
-                self.config["Enable_Interventions"] = 1     # implicit?
-            else:
+                self.config["Enable_Interventions"] = 1  # implicit?
+            else:    # when using from_defaults
                 self.config.parameters.Campaign_Filename = "campaign.json"
-                self.config.parameters.Enable_Interventions = 1     # implicit
+                self.config.parameters.Enable_Interventions = 1  # implicit
 
         # Gather the custom coordinator, individual, and node events
         self.set_command_line()
@@ -448,7 +537,7 @@ class EMODTask(ITask):
             # print( "Target is LINUX!" )
             self.is_linux = True
 
-    def set_command_line(self) -> NoReturn:
+    def set_command_line(self) -> None:
         """
         Build and set the command line object.
 
@@ -475,13 +564,14 @@ class EMODTask(ITask):
                 f"Assets/{self.executable_name}",
                 "--config",
                 f"{self.config_file_name}",
-                "--dll-path",
+                "--dll-path",   # for Generic-Ongoing Eradication
                 "./Assets",
             )
         else:
-            self.command = CommandLine(f"Assets/{self.executable_name}", "--config", f"{self.config_file_name}", "--dll-path", "./Assets")
+            self.command = CommandLine(f"Assets/{self.executable_name}", "--config",
+                                       f"{self.config_file_name}", "--dll-path", "./Assets")
 
-        if self.use_embedded_python:    # This should be the always-use case but we're not quite there yet.
+        if self.use_embedded_python:
             list_sep = ";"
             self.command._options.update({"--python-script-path": list_sep.join(self.py_path_list)})
 
@@ -489,7 +579,7 @@ class EMODTask(ITask):
         self.command.add_raw_argument("--input-path")
         self.command.add_raw_argument(input_path)
 
-    def add_py_path(self, path_to_add) -> NoReturn:
+    def add_py_path(self, path_to_add) -> None:
         """
         Add path to list of python paths prepended to sys.path in embedded interpreter
 
@@ -498,31 +588,62 @@ class EMODTask(ITask):
         """
         self.py_path_list.append(path_to_add)
 
-    def set_sif(self, path_to_sif, platform=None) -> NoReturn:
+    def set_sif(self, path_to_sif: Union[Path, str], platform: IPlatform) -> None:
         """
-        Set the Singularity Image File.
+        Set the singularity image file to use for creating the EMOD execution environment.
+
+        Args:
+            path_to_sif:
+
+                non-COMPSPlatforms: The file system path to the sif file for creating the EMOD execution environment.
+                COMPSPlatform: Either:
+
+                    a) The same sif file path as with other platforms
+                    b) A .id file containing a COMPS AssetCollection id containing the desired sif file, formatted e.g.::
+
+                        8df53802-53f3-ec11-a9f9-b88303911bc1::Asset Collection
+
+                ContainerPlatform: No sif file specification is used.
+
+            platform: Platform object to use for this task.
 
         Returns:
-
+            None
         """
-        if platform:
-            p = platform.__class__.__name__.lower()
-            if p.startswith('slurm') or p.startswith('file') or p.startswith('process'):
+        platform_type = platform.__class__.__name__
+        path_to_sif = Path(path_to_sif)
+        suffix = path_to_sif.suffix
+        is_sif_file = path_to_sif.suffix == '.sif'
+        is_id_file = path_to_sif.suffix == '.id'
+
+        # path_to_sif = str(path_to_sif)  # code below is written to require strings
+        platforms = ['SlurmPlatform', 'FilePlatform', 'ProcessPlatform']
+        if platform_type in platforms:
+            # only .sif is valid for these platforms
+            if is_id_file:
+                platforms_str = ', '.join(platforms)
+                raise ValueError(f"Cannot use a .id file for sif specification on these platforms: {platforms_str}")
+            elif is_sif_file:
                 self.sif_path = path_to_sif
             else:
-                raise ValueError( f"platform of type {p} not valid for using SIF." )
-        else:
-            # check if file is a SIF or an ID.
-            if path_to_sif.endswith(".id"):
+                raise ValueError(f"Unknown sif file with extension: {suffix}")
+        elif platform_type == 'COMPSPlatform':
+            # .sif and .id files are valid for COMPSPlatform
+            if is_id_file:
                 ac = AssetCollection.from_id_file(path_to_sif)
-                sif_asset = ac.assets[0]
-                self.sif_filename = [
-                    acf.filename for acf in ac.assets if acf.filename.endswith(".sif")
-                ][0]
-            else:
+                sif_asset = [acf for acf in ac.assets if Path(acf.filename).suffix == ".sif"][0]
+                self.sif_filename = sif_asset.filename
+            elif is_sif_file:
                 sif_asset = path_to_sif
-                self.sif_filename = pathlib.Path(path_to_sif).name
+                self.sif_filename = path_to_sif.name
+            else:
+                raise ValueError(f"Unknown sif file with extension: {suffix}")
             self.common_assets.add_asset(sif_asset)
+        elif platform_type == 'ContainerPlatform':
+            warnings.warn('.sif or .id file specified for platform of type ContainerPlatform . '
+                          'This is unnecessary and is being ignored.', RuntimeWarning)
+        else:
+            raise ValueError(f"Unknown platform type for setting sif file: {platform_type}")
 
     def gather_common_assets(self) -> AssetCollection:
         """
@@ -532,53 +653,60 @@ class EMODTask(ITask):
         """
         # check whether there are any .sif or .img files in the common assets diretories...
         # Add Eradication.exe to assets
-        logger.debug(f"Adding {self.eradication_path}")
-        if (self.eradication_path):
-            self.common_assets.add_asset(
-                Asset(absolute_path=self.eradication_path, filename=self.executable_name),
-                fail_on_duplicate=False)
+        if self.eradication_path:
+            self.common_assets.add_asset(Asset(absolute_path=self.eradication_path,
+                                               filename=self.executable_name),
+                                         fail_on_duplicate=False)
 
         # Add demographics to assets
-        self.common_assets.extend(self.demographics.gather_assets())
+        if self.demographics.assets:
+            self.common_assets.extend(self.demographics.gather_assets())
 
-        # Add DLLS to assets
-        self.common_assets.extend(self.reporters.gather_assets(is_linux=self.is_linux))
         # Add the migrations
-        self.common_assets.extend(self.migrations.gather_assets())
+        if self.migrations.assets:
+            self.common_assets.extend(self.migrations.gather_assets())
 
         # Add the climate
-        self.common_assets.extend(self.climate.gather_assets())
+        if self.climate.assets:
+            self.common_assets.extend(self.climate.gather_assets())
+
         return self.common_assets
 
-    def _enforce_non_schema_coherence(self):
+    def _enforce_non_schema_coherence(self) -> None:
         """
-        This function enforces business logic that can't be encoded in the schema. 
+        This function enforces business logic that can't be encoded in the schema.
         Rules:
-        1) if >starttime + Sim_Duration < min_sim_endtime => ERROR
+            Start_Time + Simulation_Duration >= Minimum_End_Time
+
+        Returns:
+            None
         """
-        if self.config.parameters.Start_Time + self.config.parameters.Simulation_Duration < self.config.parameters.Minimum_End_Time:
-            raise ValueError(f"{self.config.parameters.Start_Time} + {self.config.parameters.Simulation_Duration} (Start_Time + Simulation_Duration) < {self.config.parameters.Minimum_End_Time} (Minimum_End_Time)")
+        if "Miminum_End_Time" in self.config:  # only present when we enable Enable_Termination_On_Zero_Total_Infectivity
+            if (self.config['Start_Time'] + self.config['Simulation_Duration']) < self.config['Minimum_End_Time']:
+                raise ValueError(f"{self.config['Start_Time']} + {self.config['Simulation_Duration']} "
+                                 f"(Start_Time + Simulation_Duration) < "
+                                 f"{self.config['Minimum_End_Time']} (Minimum_End_Time)")
 
     def gather_transient_assets(self) -> AssetCollection:
         """
         Gather assets that are per simulation
         Returns:
-
+            AssetCollection
         """
 
         # This config code needs to be rewritten
         # task.config contains emod-api version of config i.e., with schema. Needs to be finalized and written.
-        if logger.isEnabledFor(DEBUG):
+        if logger.isEnabledFor(DEBUG) and dev_mode:
             logger.debug("DEBUG: Calling finalize.")
 
         # Add config and campaign to assets as needed
 
         if self.config:
-            if type(self.config) is dict:   # old/basic style
+            if type(self.config) is dict:  # old/basic style, when "from_files" is used
                 self.config = {"parameters": self.config}
             else:
-                self._enforce_non_schema_coherence()
                 self.config.parameters.finalize()
+            self._enforce_non_schema_coherence()
             if dev_mode:
                 with open(self.config_file_name, "w") as fp:
                     json.dump(self.config, fp, sort_keys=True, indent=4)
@@ -601,28 +729,30 @@ class EMODTask(ITask):
                     print(data[i].strip())
 
         # Add custom_reporters.json if needed
-        if not self.reporters.empty:
+        if self.reporters.builtin_reporters:
             asset = Asset(filename="custom_reports.json", content=self.reporters.json)
             self.transient_assets.add_asset(asset=asset, fail_on_duplicate=False)
 
         # Add demographics files to assets
-        self.transient_assets.extend(self.simulation_demographics.gather_assets())
+        if self.simulation_demographics.assets:
+            self.transient_assets.extend(self.simulation_demographics.gather_assets())
 
         # Add the migrations
-        self.transient_assets.extend(self.simulation_migrations.gather_assets())
+        if self.simulation_migrations.assets:
+            self.transient_assets.extend(self.simulation_migrations.gather_assets())
 
         return self.transient_assets
 
     def copy_simulation(self, base_simulation: 'Simulation') -> 'Simulation':
         """
-        Called when making copies of a simulation.
+        Called when making copies of a simulation. We deep copy parts of the simulation to ensure we don't
+        accidentally share objects between simulations.
 
-        Here we deep copy parts of the simulation to ensure we don't accidentally update objects
         Args:
             base_simulation: Base Simulation
 
         Returns:
-
+            New Simulation
         """
         simulation = copy.deepcopy(base_simulation)
 
@@ -659,17 +789,15 @@ class EMODTask(ITask):
         Returns:
             Tags to set
         """
-        logger.warning(
-            "'set_parameter' will be deprecated in the future in favor of emod_api.config. You are not getting full schema enforcement when using this function."
-        )
-        if "parameters" in self.config:
-            config = self.config.parameters
+        if not self.config:
+            raise ValueError("task.config is empty. Please load a config file or dictionary"
+                             " or create a new one using from_defaults.")
+        if type(self.config) is dict:  # old style, when "from_files" is used
+            self.config[name] = value  # no checks against the schema
+        elif hasattr(self.config.parameters, name):
+            setattr(self.config.parameters, name, value)
         else:
-            config = self.config
-        if name in config:
-            config[name] = value
-        else:
-            raise ValueError( f"parameter '{name}' not in schema." )
+            raise ValueError(f"Parameter '{name}' not a valid parameter based on schema.")
 
         return {name: value}
 
@@ -687,7 +815,7 @@ class EMODTask(ITask):
             Tags to set on simulation
         """
         if not hasattr(simulation.task, 'set_parameter'):
-            raise ValueError("update_task_with_set_parameter can only be used on tasks with a set_parameter")
+            raise ValueError("set_parameter_sweep_callback can only be used on tasks with a set_parameter")
         return simulation.task.set_parameter(param, value)
 
     @classmethod
@@ -699,7 +827,7 @@ class EMODTask(ITask):
             parameter: Parameter to set
 
         Returns:
-
+            Partial function
         """
         return partial(cls.set_parameter_sweep_callback, param=parameter)
 
@@ -716,132 +844,102 @@ class EMODTask(ITask):
         """
         return self.config.get(name, default)
 
-    def update_parameters(self, params):
+    @staticmethod
+    def _add_files_from_path(path: str, valid_extension: str, process_file_callback: Callable) -> List[str]:
         """
-        Bulk update the configuration parameter values. This will be deprecated in the future in favour of
-        emod_api.config.
+        Generalized function to add files from a path (file or directory) based on a valid extension.
 
         Args:
-            params: A dictionary with new values.
+            path (str): Path to a file or directory.
+            valid_extension (str): Extension of the files to process (e.g., ".dtk" or ".py").
+            process_file_callback (Callable[[str], None]): Function to handle valid files.
 
         Returns:
-            None
+            List[str]: List of filenames added.
         """
-        logger.warning(
-            "'update_parameters' will be deprecated in the future in favor of emod_api.config."
-        )
-        self.config.update(params)
+        path = os.path.abspath(path)
+
+        files_added = []
+        if os.path.isfile(path):
+            if path.endswith(valid_extension):
+                files_added.append(os.path.basename(path))
+                process_file_callback(path)
+            else:
+                raise ValueError(f"File {path} is not a {valid_extension} file.")
+        elif os.path.isdir(path):  # it's a directory
+            for entry_name in os.listdir(path):
+                full_path = os.path.join(path, entry_name)
+                if os.path.isfile(full_path) and entry_name.endswith(valid_extension):
+                    files_added.append(entry_name)
+                    process_file_callback(full_path)
+            if not files_added:
+                raise ValueError(f"No {valid_extension} files found in {path}")
+        else:
+            raise ValueError(f"Path {path} is not a file or a folder.")
+
+        return files_added
+
+    def add_embedded_python_scripts_from_path(self, path: Union[str, Path, List[Union[str, Path]]]) -> None:
+        """
+        Adds embedded python scripts from the path to the common assets
+
+        Args:
+            path: Relative or absolute path to the file (including the file name) or to a folder containing
+                python scripts. Please note, all the python scripts in a specified folder will be added to the
+                simulation. path may also be a list of such items, each added independently.
+
+        """
+        def process_valid_python_files(file_path: str):
+            python_file_asset = Asset(file_path, relative_path="python")
+            # if adding python script again, maybe we want to overwrite the other one
+            self.common_assets.add_asset(python_file_asset,
+                                         fail_on_duplicate=False,
+                                         fail_on_deep_comparison=False)
+
+        path = path if isinstance(path, list) else [path]
+        for p in path:
+            self._add_files_from_path(p, ".py", process_valid_python_files)
+        self.use_embedded_python = True
+
+    def add_serialized_population_files_from_path(self, path: str) -> None:
+        """
+        Adds serialized population files from the path to the common assets
+
+        Args:
+            path: Relative or absolute path to the file (including the file name) or to the folder containing
+                the .dtk files. Please note, all the .dtk files in the folder will be added and be used in the
+                simulations.
+        """
+        def process_dtk_file(file_path: str):
+            self.common_assets.add_asset(file_path)
+
+        files_added = self._add_files_from_path(path, ".dtk", process_dtk_file)
+        # Set serialized population path
+        if isinstance(self.config, dict):
+            self.config["Serialized_Population_Filenames"] = files_added
+            self.config["Serialized_Population_Path"] = "Assets"
+        else:
+            self.config.parameters.Serialized_Population_Filenames = files_added
+            self.config.parameters.Serialized_Population_Path = "Assets"
 
     def reload_from_simulation(self, simulation: 'Simulation'):
         pass
 
-    @classmethod
-    def get_file_from_comps(cls, exp_id, filename):
-        """
-        Get file or files from COMPS. Retrieve all files named <filename> in experiment <exp_id>
-        and put them in a local directory called exp_id. On linux, this is under "latest_experiment".
-        This function will eventually be added to pyCOMPS.
-        """
-        os.makedirs(str(exp_id), exist_ok=True)
-        if os.name == "posix":
-            if os.path.islink("latest_experiment"):
-                os.remove("latest_experiment")
-            os.symlink(str(exp_id), "latest_experiment")
-        comps_getter.get_files(exp_id, files_to_get=filename)
-
-    @classmethod
-    def cache_experiment_metadata_in_sql(cls, exp_id, optional_data_files=None):
-        """
-        Create local sqlite database of experiment metadata, plus optional data from post-proc file. Tags
-        will be column names.
-
-        Args:
-            exp_id: ID of experiment.
-            optional_data_files: List of filenames (not path) of downloaded files containing single value post-processed on server.
-
-        Returns:
-            None.
-        """
-
-        db = os.path.join(str(exp_id), "results.db")
-
-        all_results = []
-        exp = Experiment.get(exp_id)
-        sims = exp.get_simulations(QueryCriteria().select_children(['tags']))
-        for sim in sims:
-            poi = {"sim_id": sim.id}
-            for tag in sim.tags:
-                if tag in ["task_type"]:
-                    continue
-                value = sim.tags[tag]
-                poi[tag] = float(value)
-            if optional_data_files:
-                for odf in optional_data_files:
-                    with open(os.path.join(str(exp_id), str(sim.id), odf)) as fp:
-                        output = float(fp.read().strip())
-                        poi[odf] = output
-            all_results.append(poi)
-        if len(all_results) == 0:
-            raise ValueError( f"Failed to find any tag metadata for this experiment ({exp_id})." )
-        try:
-            os.makedirs( str( exp_id ), exist_ok=True )
-            con = sqlite3.connect(db)
-        except Exception as ex:
-            print(f"Exception {ex} while trying to open db file {db}.")
-            return
-
-        cur = con.cursor()
-        tagset = list()
-        for tag in all_results[0].keys():
-            tagset.append(tag.replace(" ", "_"))
-        tagset.remove("sim_id")
-        tag_cols = " DECIMAL, ".join(tagset) + " DECIMAL"
-        create_sql = f"CREATE TABLE results (SIM_ID TEXT,{tag_cols})"
-        cur.execute(create_sql)
-
-        tag_cols = ",".join(tagset)
-        for result in all_results:
-            insert_str = f"INSERT INTO results (SIM_ID, {tag_cols} ) VALUES"
-            sim = result['sim_id']
-            values = []
-            for tag in result:
-                if tag == 'sim_id':
-                    continue
-                values.append(result[tag])
-            tag_vals = ",".join(map(str, values))
-            insert_str += f"( '{sim}', {tag_vals} )"
-            cur.execute(insert_str)
-        con.commit()
-
-    @classmethod
-    def handle_experiment_completion(cls, experiment):
-        """
-        Handle experiment completion in consistent way, pull down stderr on failure.
-
-        Args:
-            parameter: experiment reference
-
-        Returns:
-
-        """
-        exp_dir = str(experiment.uid)
-        if not experiment.succeeded:
-            print(f"Experiment {experiment.uid} failed.\n")
-            cls.get_file_from_comps(experiment.uid, "stderr.txt")
-            sims = os.listdir(exp_dir)
-            for filename in sims:
-                text = open(os.path.join(exp_dir, filename, "stderr.txt")).read()
-                sys.stdout.write(text)
-            exit()
-        else:
-            print(f"Experiment {experiment.uid} succeeded.")
-
-        with open("COMPS_ID", "w") as fd:
-            fd.write(str(experiment.uid))
-        print("\n" + experiment.uid.hex)
-
 
 class EMODTaskSpecification(TaskSpecification):
+    """
+    Idmtools implemented each platform and task as a Plugin and idmtools is able to identify them and use them
+    dynamically. For example, idmtools workflow is able to crete each Platform with Plaform Factory and each Task with
+    Task Factory. The link defined in setup.py entrypoint is the way to allow idmtools workflow to identify them.
+
+    Take EMODTaskSpecification as an example, idmtools uses it internally and indirectly (user usually doesn't create
+    an instance of it, but idmtools work may do in certain case). This EMODTaskSpecification entry in setup.py has been
+    used in idmtools workflow in two places:
+
+    CLI command
+    - check idmtools related packages installed (version including plugins): idmtools version
+    - check available Task: idmtools info plugins task
+    """
 
     def get(self, configuration: dict) -> EMODTask:
         """
@@ -862,18 +960,6 @@ class EMODTaskSpecification(TaskSpecification):
             Plugin description
         """
         return "Defines a EMODTask command"
-
-    def get_example_urls(self) -> List[str]:
-        """
-        Return a list of examples. This is used by the examples cli command to allow users to quickly load examples locally
-
-        Returns:
-            List of urls to examples
-        """
-        # from emodpy import __version__
-        examples = ['examples']  # noqa
-        # TODO Rework this to grab branch of emodpy compatible with this version
-        return [self.get_version_url('dev-1.4.0', x, repo_base_url='https://github.com/InstituteforDiseaseModeling/emodpy/tree/') for x in examples]
 
     def get_type(self) -> Type[EMODTask]:
         """

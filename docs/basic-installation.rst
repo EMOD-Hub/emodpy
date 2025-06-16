@@ -23,7 +23,7 @@ source code changes.
 
 #.  Install |IT_s| packages. ::
 
-        pip install emodpy --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
+        pip install emodpy --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
 
     (It's strongly recommended that you edit your pip.ini or pip.conf so you don't have to specificy --index-url.)
 

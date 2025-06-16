@@ -20,7 +20,7 @@ Include: yum
     yum -y install python3 pip3
     yum install -y wget curl python-devel boost mpich-3.2 boost-mpich boost-mpich-devel gcc-c++ mpich-devel vim snappy openmpi
     pip3 install pip --upgrade
-    echo -e "[global]\nindex-url = https://packages.idmod.org/api/pypi/pypi-production/simple" >> /etc/pip.conf
+    echo -e "[global]\n --extra-index-url = https://packages.idmod.org/api/pypi/pypi-production/simple" >> /etc/pip.conf
     pip3 config -v list
     cat /etc/pip.conf
     pip3 install numpy matplotlib emod-api pipdate

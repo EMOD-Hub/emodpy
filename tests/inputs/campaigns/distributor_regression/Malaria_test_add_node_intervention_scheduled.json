@@ -1,0 +1,44 @@
+{
+    "Events": [
+        {
+            "Event_Coordinator_Config": {
+                "Demographic_Coverage": 1,
+                "Individual_Selection_Type": "DEMOGRAPHIC_COVERAGE",
+                "Intervention_Config": {
+                    "Antigen": 0,
+                    "Genome": 0,
+                    "Import_Age": 365,
+                    "Number_Cases_Per_Node": 10,
+                    "Probability_Of_Infection": 1,
+                    "class": "Outbreak"
+                },
+                "Node_Property_Restrictions": [
+                    {
+                        "Risk": "High"
+                    }
+                ],
+                "Number_Repetitions": 2,
+                "Property_Restrictions": [],
+                "Property_Restrictions_Within_Node": [],
+                "Target_Demographic": "Everyone",
+                "Target_Gender": "All",
+                "Target_Residents_Only": 0,
+                "Targeting_Config": {},
+                "Timesteps_Between_Repetitions": 365,
+                "class": "StandardInterventionDistributionEventCoordinator"
+            },
+            "Event_Name": "test_event",
+            "Nodeset_Config": {
+                "Node_List": [
+                    1,
+                    2,
+                    3
+                ],
+                "class": "NodeSetNodeList"
+            },
+            "Start_Day": 1,
+            "class": "CampaignEvent"
+        }
+    ],
+    "Use_Defaults": 1
+}

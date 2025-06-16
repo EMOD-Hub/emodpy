@@ -1,59 +1,47 @@
 import os
-import shutil
-
-current_directory = os.path.dirname(os.path.realpath(__file__))
-config_folder = os.path.join(current_directory, "inputs", "config")
-if not os.path.isdir(config_folder):
-    os.mkdir(config_folder)
-
-package_folder = os.path.join(current_directory, "inputs", "package")
-
-bin_folder = os.path.join(current_directory, "inputs", "bin")
-if not os.path.isdir(bin_folder):
-    os.mkdir(bin_folder)
-eradication_path_linux = os.path.join(package_folder, "Eradication")
-eradication_path = eradication_path_linux
-
-schema_path_linux = os.path.join(package_folder, "schema.json")
-schema_file = schema_path_linux
-schema_path = schema_file
-
-output_dir = os.path.join(current_directory, "output")
-serialization_files_dir = os.path.join(output_dir, "serialization_files", "output")
-
-sft_id_file = "stage_sif.id"
-
-demographics_folder = os.path.join(current_directory, "inputs", "demographics")
-if not os.path.isdir(demographics_folder):
-    os.mkdir(demographics_folder)
-
-campaign_folder = os.path.join(current_directory, "inputs", "campaigns")
-if not os.path.isdir(campaign_folder):
-    os.mkdir(campaign_folder)
-
-migration_folder = os.path.join(current_directory, "inputs", 'migration')
-if not os.path.isdir(migration_folder):
-    os.mkdir(migration_folder)
-
-output_folder = os.path.join(current_directory, "inputs", "output")
-if not os.path.isdir(output_folder):
-    os.mkdir(output_folder)
-
-ep4_path = os.path.join(current_directory, "inputs", 'ep4')
-INPUT_PATH = os.path.join(current_directory, "inputs", "process")   # don't like this name
-
-requirements = os.path.join(current_directory, './requirements.txt')
-wb = os.path.join(current_directory, "inputs", "birth_rate", "wb_data.csv")
-ten_nodes = os.path.join(current_directory, "inputs", "birth_rate", "ten_nodes.csv")
+import sys
 
 
-def delete_existing_file(file):
-    if os.path.isfile(file):
-        print(f'\tremove existing {file}.')
-        os.remove(file)
+test_directory_absolute_path = os.path.abspath(os.path.dirname(__file__))
+config_folder = os.path.join(test_directory_absolute_path, "inputs", "config")
 
 
-def delete_existing_folder(folder):
-    if os.path.isdir(folder):
-        print(f'\tremove existing path {folder}.')
-        shutil.rmtree(folder)
+package_folder = os.path.join(test_directory_absolute_path, "inputs", "package")
+hiv_package_folder = os.path.join(package_folder, "hiv_package")
+hiv_eradication_path = os.path.join(hiv_package_folder, "Eradication")
+hiv_schema_path = os.path.join(hiv_package_folder, "schema.json")
+
+malaria_package_folder = os.path.join(package_folder, "malaria_package")
+malaria_eradication_path = os.path.join(malaria_package_folder, "Eradication")
+malaria_schema_path = os.path.join(malaria_package_folder, "schema.json")
+
+common_package_folder = os.path.join(package_folder, "common_package")
+common_eradication_path = os.path.join(common_package_folder, "Eradication")
+common_schema_path = os.path.join(common_package_folder, "schema.json")
+
+generic_package_folder = os.path.join(package_folder, "generic_package")
+generic_eradication_path = os.path.join(generic_package_folder, "Eradication")
+generic_schema_path = os.path.join(generic_package_folder, "schema.json")
+
+inputs_folder = os.path.join(test_directory_absolute_path, "inputs")
+output_folder = os.path.join(test_directory_absolute_path, "outputs")
+
+embedded_python_folder = os.path.join(inputs_folder, 'embedded_python')
+sif_path_common = os.path.join(inputs_folder, "input_files_emod_common", "assets.id")
+inputs_common = os.path.join(inputs_folder, "input_files_emod_common")
+
+sif_path_generic = os.path.join(inputs_folder, "input_files_emod_generic", "assets.id")
+inputs_generic = os.path.join(inputs_folder, "input_files_emod_generic")
+
+failed_tests = os.path.join(output_folder, "failed_tests")
+demographics_folder = os.path.join(inputs_folder, "demographics")
+campaign_folder = os.path.join(inputs_folder, "campaigns")
+migration_folder = os.path.join(inputs_folder, 'migration')
+
+wb = os.path.join(inputs_folder, "birth_rate", "wb_data.csv")
+ten_nodes = os.path.join(inputs_folder, "birth_rate", "ten_nodes.csv")
+
+comps_platform_name = "SLURMStage"  # "Calculon" or "SLURMStage"
+comps_node_group = "idm_48cores"  # for Calculon
+comps_priority = "Lowest"  # for Calculon
+

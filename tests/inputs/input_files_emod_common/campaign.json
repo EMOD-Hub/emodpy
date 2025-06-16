@@ -1,0 +1,53 @@
+{
+  "Events": [
+    {
+      "class": "CampaignEvent",
+      "Event_Coordinator_Config": {
+        "class": "StandardInterventionDistributionEventCoordinator",
+        "Demographic_Coverage": 0.97,
+        "Individual_Selection_Type": "DEMOGRAPHIC_COVERAGE",
+        "Intervention_Config": {
+          "class": "SimpleVaccine",
+          "Cost_To_Consumer": 0.5,
+          "Disqualifying_Properties": [
+
+          ],
+          "Dont_Allow_Duplicates": 1,
+          "Efficacy_Is_Multiplicative": 1,
+          "Intervention_Name": "Vaccine",
+          "New_Property_Value": "",
+          "Vaccine_Take": 0.94,
+          "Vaccine_Type": "TransmissionBlocking",
+          "Waning_Config": {
+            "class": "WaningEffectBoxExponential",
+            "Box_Duration": 25,
+            "Decay_Time_Constant": 60,
+            "Initial_Effect": 0.89
+          }
+        },
+        "Node_Property_Restrictions": [
+
+        ],
+        "Number_Repetitions": 3,
+        "Property_Restrictions": [
+
+        ],
+        "Property_Restrictions_Within_Node": [
+
+        ],
+        "Target_Demographic": "Everyone",
+        "Target_Gender": "All",
+        "Target_Residents_Only": 0,
+        "Targeting_Config": {
+
+        },
+        "Timesteps_Between_Repetitions": 1
+      },
+      "Nodeset_Config": {
+        "class": "NodeSetAll"
+      },
+      "Start_Day": 2
+    }
+  ],
+  "Use_Defaults": 1
+}

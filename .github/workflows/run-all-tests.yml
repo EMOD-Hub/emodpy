@@ -39,10 +39,10 @@ jobs:
 
       - name: login to comps2
         run: |
-          python .dev_scripts/create_auth_token_args.py --username ${{ secrets.COMPS_USER }} --password ${{ secrets.COMPS_PASSWORD }}
+          python .dev_scripts/create_auth_token_args.py --username ${{ secrets.MY_USER }} --password ${{ secrets.MY_PASSWORD }}
         env:
-          COMPS_USER: ${{ secrets.COMPS_USER }}
-          COMPS_PASSWORD: ${{ secrets.COMPS_PASSWORD }}
+          COMPS_USER: ${{ secrets.MY_USER }}
+          COMPS_PASSWORD: ${{ secrets.MY_PASSWORD }}
 
       - name: run tests
         run: |

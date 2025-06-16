@@ -2,24 +2,24 @@
 # run all tests
 # trigger test with checkin commit contains "Run all test!"
 
-name: "stage_all_tests"
-on: [push, pull_request]
+name: "run_all_tests"
+on: [push, pull_request, workflow_dispatch]
 jobs:
   run-all-tests:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: [3.9, 3.8, 3.7, 3.6]
+        python-version: [3.9]
     env:
       bamboo_user: ${{ secrets.PYPI_STAGING_USERNAME }}
       bamboo_password: ${{ secrets.PYPI_STAGING_PASSWORD }}
-    if: "contains(github.event.head_commit.message, 'run-all-tests')"
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
       - name: ${{ matrix.os }} Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -27,16 +27,15 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install py-make flake8 black
-      - name: Install dataclass
-        if: ${{ matrix.python-version }} == 3.6
-        run: |
-          pip install dataclasses
+          python -m pip install --upgrade py-make flake8 black
 
-      - name: install idmtools[idm] and idmtools-test and emodpy from staging jfrog
+      - name: Install code
         run: |
-          pip install idmtools[idm] --index-url=https://${{ env.bamboo_user }}:${{ env.bamboo_password }}@packages.idmod.org/api/pypi/pypi-staging/simple --verbose
-          pip install idmtools-test --index-url=https://${{ env.bamboo_user }}:${{ env.bamboo_password }}@packages.idmod.org/api/pypi/pypi-staging/simple --verbose
+          python -m pip install --upgrade -e . --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
+
+      - name: install idmtools-test and emod files from jfrog
+        run: |
+          python -m pip install --upgrade -r tests/requirements.txt 
 
       - name: login to comps2
         run: |
@@ -48,9 +47,11 @@ jobs:
       - name: run tests
         run: |
           cd tests
-          py.test --durations=3 -v --junitxml=test_results.xml
+          pytest -n 0 test_download_from_package.py
+          pytest -n 10 --dist loadfile -v -m emod --junitxml="test_results.xml"
+
       - name: Upload emodpy test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: emodpy_test_results

@@ -25,7 +25,6 @@ class TestSSMTAnalysis(ITestWithPersistence):
     @pytest.mark.skip
     def test_ssmt_analysis_PopulationAnalyzer(self):
         experiment_id = "8bb8ae8f-793c-ea11-a2be-f0921c167861"  # comps2
-        # experiment_id ="a30a21c0-9752-ea11-941d-0050569e0ef3"  # idmtvapp17
         analysis = PlatformAnalysis(platform=self.platform,
                                     experiment_ids=[experiment_id],
                                     analyzers=[PopulationAnalyzer],
@@ -62,7 +61,6 @@ class TestSSMTAnalysis(ITestWithPersistence):
     @pytest.mark.skip
     def test_ssmt_analysis_multiple_analyzers(self):
         experiment_id = "8bb8ae8f-793c-ea11-a2be-f0921c167861"  # comps2
-        # experiment_id ="a30a21c0-9752-ea11-941d-0050569e0ef3"  # idmtvapp17
         analysis = PlatformAnalysis(platform=self.platform,
                                     experiment_ids=[experiment_id],
                                     analyzers=[PopulationAnalyzer, AdultVectorsAnalyzer],
@@ -104,8 +102,6 @@ class TestSSMTAnalysis(ITestWithPersistence):
     def test_ssmt_analysis_multiple_experiments(self):
         exp_id1 = "8bb8ae8f-793c-ea11-a2be-f0921c167861"  # comps2
         exp_id2 = "4ea96af7-1549-ea11-a2be-f0921c167861"  # comps2
-        # exp_id1 = 'a30a21c0-9752-ea11-941d-0050569e0ef3' # idmtvapp17
-        # exp_id2 ='cb87f0e2-9652-ea11-941d-0050569e0ef3' # idmtvapp17
         experiment_id = [exp_id1, exp_id2]
         analysis = PlatformAnalysis(platform=self.platform,
                                     experiment_ids=experiment_id,

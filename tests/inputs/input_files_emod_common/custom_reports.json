@@ -1,0 +1,16 @@
+{
+  "Reports": [
+    {
+      "class": "ReportNodeDemographics",
+      "Age_Bins": [
+        0,
+        10,
+        50,
+        125
+      ],
+      "IP_Key_To_Collect": "",
+      "Stratify_By_Gender": 1
+    }
+  ],
+  "Use_Defaults": 1
+}

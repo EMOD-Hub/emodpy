@@ -1,6 +1,6 @@
-============
-Installation
-============
+=======
+Install
+=======
 
 You can install |EMODPY_s| in two different ways. If you intend to use |EMODPY_s| as
 |IDM_s| builds it, follow the instructions in :doc:`basic-installation`.

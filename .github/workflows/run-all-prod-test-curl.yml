@@ -19,12 +19,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.9]
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
       - name: ${{ matrix.os }} Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -33,14 +34,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install py-make flake8 black
-      - name: Install dataclass
-        if: ${{ matrix.python-version }} == 3.6
-        run: |
-          pip install dataclasses
+
       - name: install idmtools[idm] and idmtools-test from jfrog
         run: |
-          pip install idmtools[idm] --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
-          pip install idmtools-test --index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
+          pip install idmtools[idm] --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
+          pip install idmtools-test --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
 
       - name: login to comps2
         run: |
@@ -53,8 +51,9 @@ jobs:
         run: |
           cd tests
           py.test --durations=3 -v --junitxml=test_results.xml
+
       - name: Upload emodpy test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: emodpy_test_results

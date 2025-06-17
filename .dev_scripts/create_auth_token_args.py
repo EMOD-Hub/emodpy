@@ -15,9 +15,14 @@ class StaticCredentialPrompt(CredentialPrompt):
         self.comps_url = comps_url
         self.username = username
         self.password = password
+        print(self.username)
+        print(self.password)
+
 
     def prompt(self):
         print("logging in with hardcoded user/pw")
+        print(self.username)
+        print(self.password)
         self._times_prompted = self._times_prompted + 1
         if self._times_prompted > 3:
             raise RuntimeError('Failure authenticating')
@@ -36,8 +41,5 @@ if __name__ == '__main__':
 
     compshost = args.comps_url
     
-    print(args.username)
-    print(args.password)
-
     Client.login(compshost, StaticCredentialPrompt(comps_url=args.comps_url, username=args.username,
                                                    password=args.password))

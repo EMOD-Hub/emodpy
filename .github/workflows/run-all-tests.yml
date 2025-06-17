@@ -38,7 +38,7 @@ jobs:
           pip install idmtools[idm] --index-url=https://${{ env.bamboo_user }}:${{ env.bamboo_password }}@packages.idmod.org/api/pypi/pypi-staging/simple --verbose
           pip install idmtools-test --index-url=https://${{ env.bamboo_user }}:${{ env.bamboo_password }}@packages.idmod.org/api/pypi/pypi-staging/simple --verbose
 
-      - name: login to comps2
+      - name: login to comps2 - original
         run: |
           python .dev_scripts/create_auth_token_args.py --username ${{ secrets.COMPS_USER }} --password ${{ secrets.COMPS_PASSWORD }}
         env:

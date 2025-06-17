@@ -14,12 +14,11 @@ jobs:
     env:
       bamboo_user: ${{ secrets.PYPI_STAGING_USERNAME }}
       bamboo_password: ${{ secrets.PYPI_STAGING_PASSWORD }}
-    if: "contains(github.event.head_commit.message, 'run-all-tests')"
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: ${{ matrix.os }} Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -50,7 +49,7 @@ jobs:
           cd tests
           py.test --durations=3 -v --junitxml=test_results.xml
       - name: Upload emodpy test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: emodpy_test_results

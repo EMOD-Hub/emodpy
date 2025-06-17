@@ -31,6 +31,7 @@ DanB's notes: Would be nice to
 
 
 @pytest.mark.emod
+@pytest.mark.skip("Container Platform cant test EMODTask.from_id()")
 class Test139(unittest.TestCase):
     def setUp(self) -> None:
         self.task: EMODTask

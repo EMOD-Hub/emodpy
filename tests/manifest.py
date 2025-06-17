@@ -41,7 +41,7 @@ migration_folder = os.path.join(inputs_folder, 'migration')
 wb = os.path.join(inputs_folder, "birth_rate", "wb_data.csv")
 ten_nodes = os.path.join(inputs_folder, "birth_rate", "ten_nodes.csv")
 
-comps_platform_name = "SLURMStage"  # "Calculon" or "SLURMStage"
+comps_platform_name = "ContainerPlatform"  # "Calculon" or "SLURMStage"
 comps_node_group = "idm_48cores"  # for Calculon
 comps_priority = "Lowest"  # for Calculon
 

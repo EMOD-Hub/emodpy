@@ -14,6 +14,11 @@ sys.path.append(str(parent))
 import manifest
 import helpers
 
+
+def param_update_task(simulation, param, value):
+    return simulation.task.set_parameter(param, value)
+
+
 @pytest.mark.emod
 class TestE2E(unittest.TestCase):
 
@@ -173,7 +178,3 @@ class TestE2EGeneric(TestE2E):
 
 if __name__ == '__main__':
     unittest.main()
-
-
-def param_update_task(simulation, param, value):
-    return simulation.task.set_parameter(param, value)

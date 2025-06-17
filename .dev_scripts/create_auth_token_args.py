@@ -15,14 +15,14 @@ class StaticCredentialPrompt(CredentialPrompt):
         self.comps_url = comps_url
         self.username = username
         self.password = password
-        print(self.username)
-        print(self.password)
+        print("'"+str(self.username)+"'")
+        print("'"+str(self.password)+"'")
 
 
     def prompt(self):
         print("logging in with hardcoded user/pw")
-        print(self.username)
-        print(self.password)
+        print("'"+str(self.username)+"'")
+        print("'"+str(self.password)+"'")
         self._times_prompted = self._times_prompted + 1
         if self._times_prompted > 3:
             raise RuntimeError('Failure authenticating')

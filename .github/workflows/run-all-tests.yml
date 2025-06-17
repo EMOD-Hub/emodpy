@@ -45,8 +45,8 @@ jobs:
       - name: login to comps2
         shell: bash
         env:
-          COMPS_USER: ${{ secrets.COMPS_USER }}
-          COMPS_PASSWORD: ${{ secrets.COMPS_PASSWORD }}
+          COMPS_USER: ${{ secrets.MY_USER }}
+          COMPS_PASSWORD: ${{ secrets.MY_PASSWORD }}
         run: |
           python .dev_scripts/create_auth_token_args.py --username "$COMPS_USER" --password "$COMPS_PASSWORD"
 

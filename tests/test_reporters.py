@@ -1127,7 +1127,7 @@ class TestReportersCommon(unittest.TestCase):
                                                          event_list=self.event_list))
             return reporters
 
-        platform = Platform(manifest.comps_platform_name)
+        platform = Platform(manifest.container_platform_name)
         self.task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                            schema_path=self.builders.schema_path,
                                            campaign_builder=self.builders.campaign_builder,

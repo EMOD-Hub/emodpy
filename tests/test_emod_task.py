@@ -21,7 +21,6 @@ import manifest
 import helpers
 
 
-@pytest.mark.emod
 class TestEMODTask(unittest.TestCase):
     """
         Tests for EMODTask
@@ -36,7 +35,7 @@ class TestEMODTask(unittest.TestCase):
         self.original_working_dir = os.getcwd()
         self.task: EMODTask
         self.experiment: Experiment
-        self.platform = Platform(manifest.comps_platform_name)
+        self.platform = Platform(manifest.container_platform_name)
         self.test_folder = helpers.make_test_directory(self.case_name)
         self.setup_custom_params()
 
@@ -75,6 +74,7 @@ class TestEMODTask(unittest.TestCase):
                 break
 
 
+    @pytest.mark.emod
     def test_from_files(self):
         """
         Test EMODTask.from_files
@@ -145,6 +145,7 @@ class TestEMODTask(unittest.TestCase):
 
         self.assertEqual(self.builders.demographics_file, experiment.assets[4].absolute_path)
 
+    @pytest.mark.emod
     def test_from_files_config_only(self):
         task = EMODTask.from_files(eradication_path=self.builders.eradication_path,
                                    config_path=self.builders.config_file_basic)
@@ -154,6 +155,7 @@ class TestEMODTask(unittest.TestCase):
 
         self.assertDictEqual(config, task.config)
 
+    @pytest.mark.emod
     def test_from_files_valid_custom_report(self):
         """
         Test EMODTask.from_files with valid custom_reports.json
@@ -176,6 +178,7 @@ class TestEMODTask(unittest.TestCase):
         report = file["output/ReportNodeDemographics.csv"].decode("utf-8")
         self.assertIn("NodeID", report)
 
+    @pytest.mark.emod
     def test_from_default(self):
         task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                       campaign_builder=self.builders.campaign_builder,
@@ -196,8 +199,8 @@ class TestEMODTask(unittest.TestCase):
 
         # check experiment common assets are as expected
         self.experiment.pre_creation(self.platform)
-        self.assertEqual(len(self.experiment.assets), 3)
-
+        assets_exp = 2 if manifest.container_platform_name == "ContainerPlatform" else 3
+        self.assertEqual(len(self.experiment.assets), assets_exp)
 
         self.assertEqual(task.eradication_path, self.builders.eradication_path)
         self.assertIn(self.builders.eradication_path, [a.absolute_path for a in task.common_assets.assets])
@@ -228,6 +231,7 @@ class TestEMODTask(unittest.TestCase):
         self.assertEqual(sim.task.config["parameters"]["Enable_Demographics_Builtin"], 0)
 
 
+    @pytest.mark.emod
     def test_from_default_schema_and_eradication_only(self):
         """
         Test EMODTask.from_defaults with schema and eradication only
@@ -263,6 +267,7 @@ class TestEMODTask(unittest.TestCase):
         else:  # Generic-Ongoing has Enable_Demographics_Builtin set to 1 by default
             self.assertEqual(sim.task.config["parameters"]["Enable_Demographics_Builtin"], 1)
 
+    @pytest.mark.emod
     def test_from_default_with_default_builder(self):
         """
         Test EMODTask.from_defaults with "default"/emdpty builder is not valid because EMOD's defaults do not create a
@@ -306,6 +311,7 @@ class TestEMODTask(unittest.TestCase):
         self.assertEqual(config['Enable_Interventions'], 0)
         self.assertEqual(config["Enable_Demographics_Builtin"], 1)
 
+    @pytest.mark.emod
     def test_eradication_file_as_asset(self):
         # testing from file
         task = EMODTask.from_files(
@@ -321,6 +327,7 @@ class TestEMODTask(unittest.TestCase):
         self.platform.wait_till_done(experiment, refresh_interval=1)
         self.assertTrue(experiment.succeeded, msg=f"{self.case_name} failed")
 
+    @pytest.mark.emod
     def test_existing_eradication_default(self):
         task2 = EMODTask.from_defaults(eradication_path=None,
                                        schema_path=self.builders.schema_path,
@@ -334,6 +341,7 @@ class TestEMODTask(unittest.TestCase):
         self.platform.wait_till_done(experiment2, refresh_interval=1)
         assert experiment2.succeeded, "Eradication=None in from_default failed"
 
+    @pytest.mark.emod
     def test_error_builders_dont_return_right_objects(self):
         """
         Test that demographics object is not returned when demographics is not enabled
@@ -446,7 +454,9 @@ class TestEMODTask(unittest.TestCase):
             config_json = json.load(config_file)['parameters']
         self.assertEqual(config, config_json)
 
+    @pytest.mark.comps
     def test_set_sif_function_with_sif_file(self):
+        self.platform = Platform(manifest.comps_platform_name)
         asset_collection_id = "bcf11390-75df-ef11-930c-f0921c167860"  # please update to the latest one
         sif_name = "dtk_run_rocky_py39.sif"
         self.download_singularity_ac(asset_collection_id, sif_name, self.test_folder)
@@ -464,7 +474,9 @@ class TestEMODTask(unittest.TestCase):
         comps_sif_asset = [ac for ac in comps_ac if ac.filename == sif_name]
         self.assertTrue(len(comps_sif_asset), 1)
 
+    @pytest.mark.comps
     def test_set_sif_function_with_sif_id(self):
+        self.platform = Platform(manifest.comps_platform_name)
         task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                       schema_path=self.builders.schema_path,
                                       config_builder=self.builders.config_builder,
@@ -478,13 +490,16 @@ class TestEMODTask(unittest.TestCase):
         comps_sif_asset = [ac for ac in comps_ac if ac.filename == "dtk_run_rocky_py39.sif"]
         self.assertTrue(len(comps_sif_asset), 1)
 
+    @pytest.mark.comps
     def test_set_sif_function_with_comps_with_bad_filename(self):
+        self.platform = Platform(manifest.comps_platform_name)
         task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                       schema_path=self.builders.schema_path,
                                       config_builder=self.builders.config_builder,
                                       demographics_builder=self.builders.demographics_builder)
         self.assertRaises(ValueError, task.set_sif, path_to_sif="my_id.txt", platform=self.platform)
 
+    @pytest.mark.emod
     def test_set_sif_function_with_slurm_file_process_platform(self):
         class FilePlatform:
             pass
@@ -521,6 +536,7 @@ class TestEMODTask(unittest.TestCase):
             fake_platform = Mock(spec=platform)
             self.assertRaises(ValueError, task.set_sif, path_to_sif="my_id.txt", platform=fake_platform)
 
+    @pytest.mark.emod
     def test_set_sif_with_unknown_platforms(self):
         # This is an error! We have no idea how to handle sifs with new platforms without new logic.
         class DoesNotExistPlatform:
@@ -533,6 +549,7 @@ class TestEMODTask(unittest.TestCase):
         fake_platform = Mock(spec=DoesNotExistPlatform)
         self.assertRaises(ValueError, task.set_sif, path_to_sif="my_sif.sif", platform=fake_platform)
 
+    @pytest.mark.emod
     def test_set_sif_with_container_platform(self):
         # Nothing happens in this case, just a warning
         class ContainerPlatform:
@@ -547,6 +564,7 @@ class TestEMODTask(unittest.TestCase):
         self.assertEqual(task.sif_filename, None)
         self.assertEqual(task.sif_path, None)
 
+    @pytest.mark.emod
     def test_add_py_path(self):
         """
         Test add_py_path, verifies that the path is added to the command string.
@@ -568,7 +586,6 @@ class TestEMODTask(unittest.TestCase):
         self.assertIn(f"--python-script-path './Assets/python;{virtual_path}'", str(task.command))
 
 
-@pytest.mark.emod
 class TestEMODTaskGeneric(TestEMODTask):
     """
     Testing using Generic-Ongoing EMOD

@@ -1,9 +1,14 @@
+import sys
+from pathlib import Path
 import unittest
 import pytest
 from emod_api import campaign as api_campaign
 from emodpy.campaign.event import CampaignEventByYear
 from emodpy.campaign.event_coordinator import StandardEventCoordinator
 from emodpy.campaign.individual_intervention import BroadcastEvent
+
+parent = Path(__file__).resolve().parent
+sys.path.append(str(parent))
 
 from base_test import TestHIV, TestMalaria, BaseTestClass
 

@@ -6,6 +6,10 @@ from COMPS.Data import Suite as CompsSuite, Experiment as CompsExperiment, Simul
 from idmtools.builders import SimulationBuilder
 from idmtools.entities import Suite
 from idmtools.entities.templated_simulation import TemplatedSimulations
+from  idmtools_platform_file.platform_operations.utils import FileSuite
+from  idmtools_platform_file.platform_operations.utils import FileExperiment
+from  idmtools_platform_file.platform_operations.utils import FileSimulation
+
 # flake8: noqa W605,F821
 import json
 import os
@@ -27,7 +31,6 @@ import manifest
 import helpers
 
 
-@pytest.mark.emod
 class TestExperimentSimulations(unittest.TestCase):
     """
         Tests for EMODTask
@@ -42,7 +45,7 @@ class TestExperimentSimulations(unittest.TestCase):
         self.original_working_dir = os.getcwd()
         self.task: EMODTask
         self.experiment: Experiment
-        self.platform = Platform(manifest.comps_platform_name)
+        self.platform = Platform(manifest.container_platform_name)
         self.test_folder = helpers.make_test_directory(self.case_name)
         self.setup_custom_params()
 
@@ -129,6 +132,7 @@ class TestExperimentSimulations(unittest.TestCase):
         self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
         print(f"Experiment {experiment.uid} succeeded.")
 
+    @pytest.mark.emod
     def test_create_suite(self):
         from idmtools.entities.suite import Suite
         from COMPS.Data import Suite as CompsSuite
@@ -140,35 +144,39 @@ class TestExperimentSimulations(unittest.TestCase):
         ids = self.platform.create_items([suite])
 
         suite_uid = ids[0][1]
-        comps_suite = self.platform.get_item(item_id=suite_uid, item_type=ItemType.SUITE, raw=True)
-        self.assertTrue(isinstance(comps_suite, CompsSuite))
+        got_suite = self.platform.get_item(item_id=suite_uid, item_type=ItemType.SUITE, raw=True)
+        suite_type_expected = FileSuite if manifest.container_platform_name == "ContainerPlatform" else CompsSuite
+        self.assertTrue(isinstance(got_suite, suite_type_expected))
 
     def run_experiment_and_test_suite(self, platform, suite):
         # Keep suite id
         suite_uid = suite.uid
         # ################## Test raw
         # Test suite retrieval
-        comps_suite = platform.get_item(item_id=suite_uid, item_type=ItemType.SUITE, raw=True)
-        self.assertTrue(isinstance(comps_suite, CompsSuite))
+        got_suite = platform.get_item(item_id=suite_uid, item_type=ItemType.SUITE, raw=True)
+        suite_type_expected = FileSuite if manifest.container_platform_name == "ContainerPlatform" else CompsSuite
+        self.assertTrue(isinstance(got_suite, suite_type_expected))
 
         # Test retrieve experiment from suite
-        exps = platform._get_children_for_platform_item(comps_suite)
+        exps = platform._get_children_for_platform_item(got_suite)
         self.assertEqual(len(exps), 1)
         exp = exps[0]
-        self.assertTrue(isinstance(exp, CompsExperiment))
+        experiment_type_expected = FileExperiment if manifest.container_platform_name == "ContainerPlatform" else CompsExperiment
+        self.assertTrue(isinstance(exp, experiment_type_expected))
         self.assertIsNotNone(exp.suite_id)
 
         # Test get parent from experiment
         comps_exp = platform.get_item(item_id=exp.id, item_type=ItemType.EXPERIMENT, raw=True)
         parent = platform._get_parent_for_platform_item(comps_exp)
-        self.assertTrue(isinstance(parent, CompsSuite))
+        self.assertTrue(isinstance(parent, suite_type_expected))
         self.assertEqual(parent.id, suite_uid)
 
         # Test retrieve simulations from experiment
         sims = platform._get_children_for_platform_item(comps_exp)
         self.assertEqual(len(sims), 3)
         sim = sims[0]
-        self.assertTrue(isinstance(sim, CompsSimulation))
+        simulation_type_expected = FileSimulation if manifest.container_platform_name == "ContainerPlatform" else CompsSimulation
+        self.assertTrue(isinstance(sim, simulation_type_expected))
         self.assertIsNotNone(sim.experiment_id)
 
         # ### Test idmtools objects
@@ -198,7 +206,7 @@ class TestExperimentSimulations(unittest.TestCase):
         self.assertTrue(isinstance(sim, Simulation))
         self.assertIsNotNone(sim.parent)
 
-    @pytest.mark.long
+    @pytest.mark.emod
     def test_suite_experiment(self):
         from idmtools.entities.suite import Suite
 
@@ -215,7 +223,6 @@ class TestExperimentSimulations(unittest.TestCase):
         self.run_experiment_and_test_suite(self.platform, suite)
 
 
-@pytest.mark.emod
 class TestExperimentSimulationsGeneric(TestExperimentSimulations):
     """
         Tests for EMODTask with Generic-Ongoing EMOD

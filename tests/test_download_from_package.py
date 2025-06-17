@@ -18,11 +18,13 @@ class TestDownloadFromPackage(unittest.TestCase):
 
     def setUp(self):
         self.case_name = os.path.basename(__file__) + "_" + self.__class__.__name__ + "_" + self._testMethodName
+        self.original_working_dir = os.getcwd()
         self.test_folder = helpers.make_test_directory(case_name=self.case_name)
 
     def tearDown(self):
         if os.path.exists(self.test_folder):
             helpers.delete_existing_folder(self.test_folder)
+        os.chdir(self.original_working_dir)
 
     def test_eradication_and_schema(self):
         for bootstrap in [common_bootstrap, generic_bootstrap, hiv_bootstrap, malaria_bootstrap]:

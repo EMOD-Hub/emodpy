@@ -14,6 +14,11 @@ sys.path.append(str(parent))
 import manifest
 import helpers
 
+
+def param_update_task(simulation, param, value):
+    return simulation.task.set_parameter(param, value)
+
+
 @pytest.mark.emod
 class TestE2E(unittest.TestCase):
 
@@ -22,7 +27,7 @@ class TestE2E(unittest.TestCase):
         self.experiment: Experiment
         self.custom_setUp()
         self.embedded_python_scripts_path = os.path.join(manifest.embedded_python_folder, "dtk_post_process.py")
-        self.platform = Platform(manifest.comps_platform_name)
+        self.platform = Platform(manifest.container_platform_name)
         self.original_working_dir = os.getcwd()
         self.case_name = os.path.basename(__file__) + "_" + self.__class__.__name__ + "_" + self._testMethodName
         print(f"\n{self.case_name}")
@@ -173,7 +178,3 @@ class TestE2EGeneric(TestE2E):
 
 if __name__ == '__main__':
     unittest.main()
-
-
-def param_update_task(simulation, param, value):
-    return simulation.task.set_parameter(param, value)

@@ -22,7 +22,6 @@ import helpers
 # especially sweeps
 
 
-@pytest.mark.emod
 class TestEMODExperiment(unittest.TestCase):
     """
     This tests GENERIC_SIM from emod-common package
@@ -36,7 +35,7 @@ class TestEMODExperiment(unittest.TestCase):
         self.original_working_dir = os.getcwd()
         self.task: EMODTask
         self.experiment: Experiment
-        self.platform = Platform(manifest.comps_platform_name)
+        self.platform = Platform(manifest.container_platform_name)
         self.test_folder = helpers.make_test_directory(case_name=self.case_name)
 
     def setup_custom_params(self):
@@ -61,7 +60,7 @@ class TestEMODExperiment(unittest.TestCase):
             os.chdir(self.original_working_dir)
             helpers.delete_existing_folder(self.test_folder)
 
-    @pytest.mark.long
+    @pytest.mark.emod
     def test_experiment_from_task_with_task_from_default_simple(self):
         # https://github.com/InstituteforDiseaseModeling/emodpy-old/issues/287
         """
@@ -132,18 +131,19 @@ class TestEMODExperiment(unittest.TestCase):
                 asset.save_as(os.path.join(output_path, out_filename))
                 break
 
-    @pytest.mark.long
+    @pytest.mark.comps
     def test_experiment_from_task_with_singularity_from_local_file(self):
         """
         This checks that if you have a singularity image on your local machine,
         you can use it to run the simulation
         """
+        self.platform = Platform(manifest.comps_platform_name)
         asset_collection_id = "bcf11390-75df-ef11-930c-f0921c167860"  # please update to the latest one
         out_filename = "dtk_run_rocky_py39.sif"
         self.download_singularity_ac(asset_collection_id, out_filename, self.test_folder)
         self.singularity_test(my_sif_path=os.path.join(self.test_folder, out_filename))
 
-    @pytest.mark.long
+    @pytest.mark.comps
     def test_experiment_from_task_with_singularity(self):
         """
         This test checks that you can create a singularity image on Comps and use it to run the simulation
@@ -164,12 +164,13 @@ class TestEMODExperiment(unittest.TestCase):
             # Write asset id to file (needs to be *.id)
             sbi.asset_collection.to_id_file(my_sif_path)
 
+        self.platform = Platform(manifest.comps_platform_name)
         this_sif_path = os.path.join(self.test_folder, "assets.id")
         # use the commented line to create a singularity image on Comps for the first time.
         make_sif(this_sif_path)
         self.singularity_test(this_sif_path)
 
-    @pytest.mark.long
+    @pytest.mark.emod
     def test_experiment_from_task_with_task_from_default_param_custom_cb(self):
         # https://github.com/InstituteforDiseaseModeling/emodpy-old/issues/288
         """
@@ -199,7 +200,7 @@ class TestEMODExperiment(unittest.TestCase):
         config_parameters = json.loads(files["config.json"])['parameters']
         self.assertEqual(config_parameters["Simulation_Duration"], 7)
 
-    @pytest.mark.long
+    @pytest.mark.emod
     def test_experiment_from_builder_with_task_from_default(self):
         """
             Test creating task from defaults and then creating an experiment from a builder
@@ -227,7 +228,7 @@ class TestEMODExperiment(unittest.TestCase):
             config_parameters = json.loads(files["config.json"])['parameters']
             self.assertEqual(config_parameters["Run_Number"], sim.tags["Run_Number"])
 
-    @pytest.mark.long
+    @pytest.mark.emod
     def test_simulations_manual_builder_with_task_from_file(self):
         """
             This test "passes" because I expect it to fail because of a known issue
@@ -265,7 +266,7 @@ class TestEMODExperiment(unittest.TestCase):
         #     config_parameters = json.loads(files["config.json"])['parameters']
         #     self.assertEqual(config_parameters["Run_Number"], i)
 
-    @pytest.mark.long
+    @pytest.mark.emod
     def test_simulations_manual_builder_with_task_from_file_workaround(self):
         """
             Workaround for the issue
@@ -306,7 +307,7 @@ class TestEMODExperiment(unittest.TestCase):
 
         self.assertEqual(set(run_numbers), set(list(range(self.num_sim_long))))
 
-    @pytest.mark.long
+    @pytest.mark.emod
     def test_experiment_from_builder_with_task_from_file(self):
         """
             Test idmtools.entities.experiment.Experiment.from_builder() with EMODTask.from_files()
@@ -332,7 +333,6 @@ class TestEMODExperiment(unittest.TestCase):
             self.assertEqual(config_parameters["Run_Number"], sim.tags["Run_Number"])
 
 
-@pytest.mark.emod
 class TestEMODExperimentGeneric(TestEMODExperiment):
     """
     This tests GENERIC_SIM from emod-generic package

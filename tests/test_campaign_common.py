@@ -1,3 +1,5 @@
+import sys
+from pathlib import Path
 import unittest
 import pytest
 from emod_api import schema_to_class as s2c
@@ -6,6 +8,10 @@ from emod_api import campaign
 from emodpy.campaign.common import (TargetGender, TargetDemographicsConfig, MAX_AGE_YEARS,
                                     RepetitionConfig, PropertyRestrictions, ValueMap,
                                     CommonInterventionParameters)
+
+tests_directory = Path(__file__).resolve().parent
+sys.path.append(str(tests_directory))
+
 from base_test import TestHIV, TestMalaria, BaseTestClass
 
 

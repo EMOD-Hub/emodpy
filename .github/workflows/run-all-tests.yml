@@ -44,7 +44,7 @@ jobs:
           
       - name: login to comps2
         shell: bash
-        with:
+        env:
           COMPS_USER: ${{ secrets.MY_USER }}
           COMPS_PASSWORD: ${{ secrets.MY_PASSWORD }}
         run: |

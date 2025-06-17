@@ -45,15 +45,9 @@ jobs:
       - name: login to comps2
         shell: bash
         env:
-          COMPS_USER: ${{ secrets.MY_USER }}
-          COMPS_PASSWORD: ${{ secrets.MY_PASSWORD }}
+          COMPS_USER: ${{ secrets.COMPS_USER }}
+          COMPS_PASSWORD: ${{ secrets.COMPS_PASSWORD }}
         run: |
-          echo ${{ secrets.MY_USER }}
-          echo ${{ secrets.MY_PASSWORD }}
-          echo $COMPS_USER
-          echo $COMPS_PASSWORD
-          echo "$COMPS_USER"
-          echo "$COMPS_PASSWORD"
           python .dev_scripts/create_auth_token_args.py --username "$COMPS_USER" --password "$COMPS_PASSWORD"
 
       - name: run tests

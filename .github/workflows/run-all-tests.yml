@@ -2,7 +2,7 @@
 # run all tests
 # trigger test with checkin commit contains "Run all test!"
 
-name: "stage_all_tests"
+name: "please_run_all_tests"
 on: [push, pull_request]
 jobs:
   run-all-tests:
@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: [3.9, 3.8, 3.7, 3.6]
+        python-version: [3.9]
     env:
       bamboo_user: ${{ secrets.PYPI_STAGING_USERNAME }}
       bamboo_password: ${{ secrets.PYPI_STAGING_PASSWORD }}

@@ -44,12 +44,12 @@ jobs:
           
       - name: login to comps2
         shell: bash
-        env:
-          COMPS_USER: ${{ secrets.MY_USER}}
+        with:
+          COMPS_USER: ${{ secrets.MY_USER }}
           COMPS_PASSWORD: ${{ secrets.MY_PASSWORD }}
         run: |
-          echo ${{ secrets.MY_USER}}
-          echo ${{ secrets.MY_PASSWORD}}
+          echo ${{ secrets.MY_USER }}
+          echo ${{ secrets.MY_PASSWORD }}
           echo $COMPS_USER
           echo $COMPS_PASSWORD
           echo "$COMPS_USER"

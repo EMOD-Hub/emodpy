@@ -8,7 +8,7 @@
 # -----------------------------------------------------------------------------
 
 
-name: "run_comps_tests"
+name: "run-comps-tests"
 on: [push, pull_request]
 jobs:
   run-comps-tests:

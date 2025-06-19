@@ -14,7 +14,7 @@ on: [push, pull_request]
 jobs:
   run-comps-tests:
     runs-on: ${{ matrix.os }}
-    if: "contains(github.event.pull_request.head.repo.full_name, 'EMOD-Hub/emodpy)'"
+    if: "contains(github.event.pull_request.head.repo.full_name, 'EMOD-Hub/emodpy')"
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]

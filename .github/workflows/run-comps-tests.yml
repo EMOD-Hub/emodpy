@@ -14,7 +14,6 @@ on: [push, pull_request]
 jobs:
   run-pr-tests:
     runs-on: ${{ matrix.os }}
-    echo 
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]

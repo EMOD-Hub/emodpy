@@ -187,8 +187,8 @@ class TestEmodPrePostProcess(unittest.TestCase):
         self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
 
         for sim in experiment.simulations:
-            file = self.platform.get_files(sim, ["stdOut.txt"])
-            stdout = file["stdOut.txt"].decode("utf-8")
+            file = self.platform.get_files(sim, ["stdout.txt"])
+            stdout = file["stdout.txt"].decode("utf-8")
             self.assertIn("dtk_in_process.py called on timestep", stdout)
             self.assertIn("printing from dtk_post_process.py", stdout)
             self.assertIn("printing from dtk_pre_process.py", stdout)

@@ -7,7 +7,7 @@
 # -----------------------------------------------------------------------------
 
 
-name: "run_pr_tests"
+name: "run-pr-tests"
 on: [push, pull_request]
 jobs:
   run-pr-tests:

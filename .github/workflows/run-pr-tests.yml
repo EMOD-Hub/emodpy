@@ -43,7 +43,7 @@ jobs:
         run: |
           cd tests
           pytest test_download_from_package.py
-          pytest --dist loadfile -v -m emod --junitxml="test_results.xml"
+          pytest --dist loadfile -v -m unit --junitxml="test_results.xml"
 
       - name: Upload emodpy test results
         uses: actions/upload-artifact@v4

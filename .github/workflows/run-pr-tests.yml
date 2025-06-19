@@ -11,7 +11,7 @@ name: "run-pr-tests"
 on: [push, pull_request]
 jobs:
   run-pr-tests:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest # ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]

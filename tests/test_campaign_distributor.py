@@ -338,6 +338,7 @@ class BaseScheduledDistributorTest(BaseTestClass):
         return event
 
 
+@pytest.mark.unit
 class TestScheduledDistributorMalariaByDay(BaseScheduledDistributorTest, TestMalaria):
     def setUp(self):
         TestMalaria().setUp()
@@ -350,6 +351,7 @@ class TestScheduledDistributorMalariaByDay(BaseScheduledDistributorTest, TestMal
         compare_to_regression_json(self.campaign, filename=f"Malaria_{self._testMethodName}.json")
 
 
+@pytest.mark.unit
 class TestScheduledDistributorHIVByYear(BaseScheduledDistributorTest, TestHIV):
     def setUp(self):
         TestHIV().setUp()
@@ -809,6 +811,7 @@ class BaseTriggeredDistributorTest(BaseTestClass):
 
 
 
+@pytest.mark.unit
 class TestTriggeredDistributorHIVByYear(BaseTriggeredDistributorTest, TestHIV):
     def setUp(self):
         TestHIV().setUp()
@@ -821,6 +824,7 @@ class TestTriggeredDistributorHIVByYear(BaseTriggeredDistributorTest, TestHIV):
         compare_to_regression_json(self.campaign, filename=f"HIV_{self._testMethodName}.json")
 
 
+@pytest.mark.unit
 class TestTriggeredDistributorMalariaByDay(BaseTriggeredDistributorTest, TestMalaria):
     def setUp(self):
         TestMalaria().setUp()
@@ -833,6 +837,7 @@ class TestTriggeredDistributorMalariaByDay(BaseTriggeredDistributorTest, TestMal
         compare_to_regression_json(self.campaign, filename=f"Malaria_{self._testMethodName}.json")
 
 
+@pytest.mark.unit
 class TestDistributorMalariaByYear(TestMalaria):
     def setUp(self):
         TestMalaria().setUp()

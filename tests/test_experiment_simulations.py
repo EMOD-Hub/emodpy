@@ -91,7 +91,7 @@ class TestExperimentSimulations(unittest.TestCase):
         return experiment
 
 
-    @pytest.mark.emod
+    @pytest.mark.container
     def test_mix_tasks_in_experiment(self):
         task = EMODTask.from_files(config_path=self.builders.config_file_basic,
                                    eradication_path=self.builders.eradication_path,
@@ -132,7 +132,7 @@ class TestExperimentSimulations(unittest.TestCase):
         self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
         print(f"Experiment {experiment.uid} succeeded.")
 
-    @pytest.mark.emod
+    @pytest.mark.container
     def test_create_suite(self):
         from idmtools.entities.suite import Suite
         from COMPS.Data import Suite as CompsSuite
@@ -206,7 +206,7 @@ class TestExperimentSimulations(unittest.TestCase):
         self.assertTrue(isinstance(sim, Simulation))
         self.assertIsNotNone(sim.parent)
 
-    @pytest.mark.emod
+    @pytest.mark.container
     def test_suite_experiment(self):
         from idmtools.entities.suite import Suite
 

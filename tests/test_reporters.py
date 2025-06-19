@@ -38,7 +38,6 @@ from emodpy.reporters.common import (ReportFilter,
                                      PropertyReport)
 
 
-@pytest.mark.emod
 class TestReportersCommon(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -118,6 +117,7 @@ class TestReportersCommon(unittest.TestCase):
     # ------------------------
     # config-defined reporters
     # ------------------------
+    @pytest.mark.unit
     def test_report_event_recorder_no_filter(self):
         def build_reports(reporters):
             reporters.add(ReportEventRecorder(reporters_object=reporters,
@@ -144,6 +144,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Report_Event_Recorder_Min_Age_Years, 0)
         self.assertEqual(task.config.parameters.Report_Event_Recorder_Max_Age_Years, MAX_AGE_YEARS_EMOD)
 
+    @pytest.mark.unit
     def test_report_event_recorder_no_filter_custom(self):
         def build_reports(reporters):
             reporters.add(ReportEventRecorder(reporters_object=reporters,
@@ -159,6 +160,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Report_Event_Recorder_PropertyChange_IP_Key_Of_Interest,
                          "")
 
+    @pytest.mark.unit
     def test_report_event_recorder_filter(self):  # also tests ReportFilter for config-based reports
         def build_reports(reporters):
             reporters.add(ReportEventRecorder(reporters_object=reporters,
@@ -193,6 +195,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Report_Event_Recorder_Min_Age_Years, self.min_age_years)
         self.assertEqual(task.config.parameters.Report_Event_Recorder_Max_Age_Years, self.max_age_years)
 
+    @pytest.mark.unit
     def test_report_event_recorder_filter2(self):  # also tests ReportFilter for config-based reports
         def build_reports(reporters):
             reporters.add(ReportEventRecorder(reporters_object=reporters,
@@ -227,6 +230,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Report_Event_Recorder_Min_Age_Years, self.min_age_years)
         self.assertEqual(task.config.parameters.Report_Event_Recorder_Max_Age_Years, self.max_age_years)
 
+    @pytest.mark.unit
     def test_report_event_recorder_error_checking(self):
         with self.assertRaises(ValueError) as context:
             ReportEventRecorder(self.reporter,
@@ -269,6 +273,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertTrue("filename_suffix is not a valid parameter for Report_Event_Recorder" in str(context.exception),
                         msg=str(context.exception))
 
+    @pytest.mark.unit
     def test_report_filter_error_checking(self):
         with self.assertRaisesRegex(ValueError,
                                     f"start_day = {self.end_day} must less than end_day = {self.start_day}."):
@@ -337,6 +342,7 @@ class TestReportersCommon(unittest.TestCase):
             "max_age_years must be a float less than or equal to 1000, got value = 2039." in str(context.exception),
             msg=str(context.exception))
 
+    @pytest.mark.unit
     def test_multiple_config_reports(self):
         def build_reports(reporters):
             reporters.add(ReportNodeEventRecorder(reporters_object=reporters,
@@ -381,6 +387,7 @@ class TestReportersCommon(unittest.TestCase):
                          [self.random_string1, self.random_string2])
         self.assertEqual(task.config.parameters.Report_Node_Event_Recorder_Stats_By_IPs, self.individual_properties)
 
+    @pytest.mark.unit
     def test_report_node_event_recorder_custom(self):
         def build_reports(reporters):
             reporters.add(ReportNodeEventRecorder(reporters_object=reporters,
@@ -398,6 +405,7 @@ class TestReportersCommon(unittest.TestCase):
                          [self.random_string1, self.random_string2])
         self.assertEqual(task.config.parameters.Report_Node_Event_Recorder_Stats_By_IPs, self.individual_properties)
 
+    @pytest.mark.unit
     def test_report_node_event_recorder_custom2(self):
         def build_reports(reporters):
             reporters.add(ReportNodeEventRecorder(reporters_object=reporters,
@@ -412,6 +420,7 @@ class TestReportersCommon(unittest.TestCase):
                          [])
         self.assertEqual(task.config.parameters.Report_Node_Event_Recorder_Stats_By_IPs, [])
 
+    @pytest.mark.unit
     def test_report_node_event_recorder_default(self):
         def build_reports(reporters):
             reporters.add(ReportNodeEventRecorder(reporters_object=reporters,
@@ -426,6 +435,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Report_Node_Event_Recorder_Node_Properties, [])
         self.assertEqual(task.config.parameters.Report_Node_Event_Recorder_Stats_By_IPs, [])
 
+    @pytest.mark.unit
     def test_report_node_event_recorder_error_checking(self):
         with self.assertRaises(ValueError) as context:
             ReportNodeEventRecorder(reporters_object=self.reporter,
@@ -450,6 +460,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertTrue("stats_by_ips must be a list of non-empty strings" in str(context.exception),
                         msg=str(context.exception))
 
+    @pytest.mark.unit
     def test_report_coordinator_event_recorder_default(self):
         def build_reports(reporters):
             reporters.add(ReportCoordinatorEventRecorder(reporters_object=reporters,
@@ -461,6 +472,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Report_Coordinator_Event_Recorder_Events, self.event_list)
         self.assertEqual(task.config.parameters.Report_Coordinator_Event_Recorder_Ignore_Events_In_List, 0)
 
+    @pytest.mark.unit
     def test_report_coordinator_event_recorder_error_checking(self):
         with self.assertRaises(ValueError) as context:
             ReportCoordinatorEventRecorder(reporters_object=self.reporter,
@@ -473,6 +485,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertTrue("event_list must be a list of non-empty strings" in str(context.exception),
                         msg=str(context.exception))
 
+    @pytest.mark.unit
     def test_report_surveillance_event_recorder_custom(self):
         def build_reports(reporters):
             reporters.add(ReportSurveillanceEventRecorder(reporters_object=reporters,
@@ -486,7 +499,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Report_Surveillance_Event_Recorder_Stats_By_IPs,
                          self.individual_properties)
 
-
+    @pytest.mark.unit
     def test_report_surveillance_event_recorder_default(self):
         def build_reports(reporters):
             reporters.add(ReportSurveillanceEventRecorder(reporters_object=reporters,
@@ -500,6 +513,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Report_Surveillance_Event_Recorder_Ignore_Events_In_List, 0)
         self.assertEqual(task.config.parameters.Report_Surveillance_Event_Recorder_Stats_By_IPs, [])
 
+    @pytest.mark.unit
     def test_report_surveillance_event_recorder_error_checking(self):
         with self.assertRaises(ValueError) as context:
             ReportSurveillanceEventRecorder(self.reporter,
@@ -518,6 +532,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertTrue("stats_by_ips must be a list of non-empty strings" in str(context.exception),
                         msg=str(context.exception))
 
+    @pytest.mark.unit
     def test_spatial_report(self):
         def build_reports(reporters):
             reporters.add(SpatialReport(reporters_object=reporters,
@@ -530,6 +545,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Spatial_Output_Channels, [SpatialReportChannels.Births,
                                                                           SpatialReportChannels.Campaign_Cost])
 
+    @pytest.mark.unit
     def test_spatial_report_error_checking(self):
         with self.assertRaises(ValueError) as context:
             SpatialReport(self.reporter,
@@ -543,6 +559,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertTrue("Please define spatial_output_channels" in str(context.exception),
                         msg=str(context.exception))
 
+    @pytest.mark.unit
     def test_inset_chart_default(self):
         def build_reports(reporters):
             reporters.add(InsetChart(reporters_object=reporters))
@@ -554,6 +571,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Inset_Chart_Has_Interventions, [])
         self.assertEqual(task.config.parameters.Inset_Chart_Include_Pregnancies, 0)
 
+    @pytest.mark.unit
     def test_inset_chart_custom(self):
         def build_reports(reporters):
             reporters.add(InsetChart(reporters_object=reporters,
@@ -568,6 +586,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Inset_Chart_Has_Interventions, self.individual_properties)
         self.assertEqual(task.config.parameters.Inset_Chart_Include_Pregnancies, 1)
 
+    @pytest.mark.unit
     def test_inset_chart_custom2(self):
         def build_reports(reporters):
             reporters.add(InsetChart(reporters_object=reporters,
@@ -582,6 +601,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Inset_Chart_Has_Interventions, [])
         self.assertEqual(task.config.parameters.Inset_Chart_Include_Pregnancies, 1)
 
+    @pytest.mark.unit
     def test_inset_chart_error_checking(self):
         with self.assertRaises(ValueError) as context:
             InsetChart(self.reporter,
@@ -594,6 +614,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertTrue("has_interventions must be a list of non-empty strings" in str(context.exception),
                         msg=str(context.exception))
 
+    @pytest.mark.unit
     def test_demographics_report(self):
         def build_reports(reporters):
             reporters.add(DemographicsReport(reporters_object=reporters))
@@ -602,6 +623,7 @@ class TestReportersCommon(unittest.TestCase):
         task = self.create_final_task(build_reports)
         self.assertEqual(task.config.parameters.Enable_Demographics_Reporting, 1)
 
+    @pytest.mark.unit
     def test_property_report(self):
         def build_reports(reporters):
             reporters.add(PropertyReport(reporters_object=reporters))
@@ -613,6 +635,7 @@ class TestReportersCommon(unittest.TestCase):
     # ------------------------
     # built-in reporters
     # ------------------------
+    @pytest.mark.unit
     def test_both_types_of_reports_present_and_json_is_correct(self):
         def build_reports(reporters):
             reporters.add(ReportEventCounter(reporters_object=reporters, event_list=[self.random_string3],
@@ -637,6 +660,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["Event_Trigger_List"], [self.random_string2])
         self.assertEqual(self.custom_report["Filename_Suffix"], self.random_string2)
 
+    @pytest.mark.unit
     def test_report_event_counter_default(self):
         def build_reports(reporters):
             reporters.add(ReportEventCounter(reporters_object=reporters,
@@ -657,6 +681,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["Must_Have_Intervention"], "")
         self.assertEqual(self.custom_report["Node_IDs_Of_Interest"], [])
 
+    @pytest.mark.unit
     def test_report_event_counter_custom(self):
         def build_reports(reporters):
             reporters.add(ReportEventCounter(reporters_object=reporters,
@@ -685,6 +710,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["Must_Have_Intervention"], self.must_have_intervention)
         self.assertEqual(self.custom_report["Node_IDs_Of_Interest"], self.node_ids)
 
+    @pytest.mark.unit
     def test_report_event_counter_error_checking(self):
         with self.assertRaisesRegex(ValueError, "schema_path is not set."):
             ReportEventCounter(Reporters(),
@@ -712,6 +738,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertTrue("end_year is not a valid parameter for ReportEventCounter" in str(context.exception),
                         msg=str(context.exception))
 
+    @pytest.mark.unit
     def test_report_simulation_stats(self):
         def build_reports(reporters):
             reporters.add(ReportSimulationStats(reporters_object=reporters))
@@ -721,6 +748,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Custom_Reports_Filename, "custom_reports.json")
         self.assertEqual(self.custom_report["class"], 'ReportSimulationStats')
 
+    @pytest.mark.unit
     def test_report_node_demographics_default(self):
         def build_reports(reporters):
             reporters.add(ReportNodeDemographics(reporters_object=reporters))
@@ -733,6 +761,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["IP_Key_To_Collect"], '')
         self.assertEqual(self.custom_report["Stratify_By_Gender"], 1)
 
+    @pytest.mark.unit
     def test_report_node_demographics_custom(self):
         def build_reports(reporters):
             reporters.add(ReportNodeDemographics(reporters_object=reporters,
@@ -747,6 +776,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["IP_Key_To_Collect"], self.random_string1)
         self.assertEqual(self.custom_report["Stratify_By_Gender"], 0)
 
+    @pytest.mark.unit
     def test_report_node_demographics_custom2(self):
         def build_reports(reporters):
             reporters.add(ReportNodeDemographics(reporters_object=reporters,
@@ -761,6 +791,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["IP_Key_To_Collect"], "")
         self.assertEqual(self.custom_report["Stratify_By_Gender"], 0)
 
+    @pytest.mark.unit
     def test_report_node_demographics_error_checking(self):
         with self.assertRaises(ValueError) as context:
             ReportNodeDemographics(self.reporter,
@@ -773,6 +804,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertTrue("Each bin must be either int or float, got str for age_bins index 1" in str(context.exception),
                         msg=str(context.exception))
 
+    @pytest.mark.unit
     def test_report_human_migration_tracking(self):
         def build_reports(reporters):
             reporters.add(ReportHumanMigrationTracking(reporters_object=reporters))
@@ -782,6 +814,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Custom_Reports_Filename, "custom_reports.json")
         self.assertEqual(self.custom_report["class"], 'ReportHumanMigrationTracking')
 
+    @pytest.mark.unit
     def test_report_plugin_age_at_infection_histogram_default(self):
         def build_reports(reporters):
             reporters.add(ReportPluginAgeAtInfectionHistogram(reporters_object=reporters))
@@ -793,6 +826,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["Age_At_Infection_Histogram_Report_Age_Bin_Upper_Edges_In_Years"], [])
         self.assertEqual(self.custom_report["Age_At_Infection_Histogram_Report_Reporting_Interval_In_Years"], 1)
 
+    @pytest.mark.unit
     def test_report_plugin_age_at_infection_histogram_custom(self):
         def build_reports(reporters):
             reporters.add(ReportPluginAgeAtInfectionHistogram(reporters_object=reporters,
@@ -808,6 +842,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["Age_At_Infection_Histogram_Report_Reporting_Interval_In_Years"],
                          self.start_day)
 
+    @pytest.mark.unit
     def test_report_plugin_age_at_infection_histogram_error_checking(self):
         with self.assertRaises(ValueError) as context:
             ReportPluginAgeAtInfectionHistogram(reporters_object=self.reporter,
@@ -826,6 +861,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertTrue("greater than or equal to " in str(context.exception),
                         msg=str(context.exception))
 
+    @pytest.mark.unit
     def test_sql_report_default(self):
         def build_reports(reporters):
             reporters.add(SqlReport(reporters_object=reporters))
@@ -840,6 +876,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["Start_Day"], 0)
         self.assertEqual(self.custom_report["End_Day"], MAX_FLOAT)
 
+    @pytest.mark.unit
     def test_sql_report_custom(self):
         def build_reports(reporters):
             reporters.add(SqlReport(reporters_object=reporters,
@@ -859,6 +896,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["Start_Day"], self.start_day)
         self.assertEqual(self.custom_report["End_Day"], self.end_day)
 
+    @pytest.mark.unit
     def test_sql_report_error_checking(self):
         with self.assertRaises(ValueError) as context:
             SqlReport(reporters_object=self.reporter,
@@ -901,6 +939,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertTrue("must_have_intervention is not a valid parameter for SqlReport" in str(context.exception),
                         msg=str(context.exception))
 
+    @pytest.mark.unit
     def test_report_plugin_age_at_infection(self):
         def build_reports(reporters):
             reporters.add(ReportPluginAgeAtInfection(reporters_object=reporters))
@@ -910,6 +949,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(task.config.parameters.Custom_Reports_Filename, "custom_reports.json")
         self.assertEqual(self.custom_report["class"], 'ReportPluginAgeAtInfection')
 
+    @pytest.mark.unit
     def test_report_drug_status_default(self):
         def build_reports(reporters):
             reporters.add(ReportDrugStatus(reporters_object=reporters))
@@ -921,6 +961,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["Start_Day"], 0)
         self.assertEqual(self.custom_report["End_Day"], MAX_FLOAT)
 
+    @pytest.mark.unit
     def test_report_drug_status_custom(self):
         def build_reports(reporters):
             reporters.add(ReportDrugStatus(reporters_object=reporters,
@@ -934,6 +975,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["Start_Day"], self.start_day)
         self.assertEqual(self.custom_report["End_Day"], self.end_day)
 
+    @pytest.mark.unit
     def test_report_drug_status_error_checking(self):
         with self.assertRaises(ValueError) as context:
             ReportDrugStatus(reporters_object=self.reporter,
@@ -978,6 +1020,7 @@ class TestReportersCommon(unittest.TestCase):
             "must_have_intervention is not a valid parameter for ReportDrugStatus" in str(context.exception),
             msg=str(context.exception))
 
+    @pytest.mark.unit
     def test_report_infection_duration_default(self):
         def build_reports(reporters):
             reporters.add(ReportInfectionDuration(reporters_object=reporters))
@@ -989,6 +1032,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["Start_Day"], 0)
         self.assertEqual(self.custom_report["End_Day"], MAX_FLOAT)
 
+    @pytest.mark.unit
     def test_report_infection_duration_custom(self):
         def build_reports(reporters):
             reporters.add(ReportInfectionDuration(reporters_object=reporters,
@@ -1002,6 +1046,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["Start_Day"], self.start_day)
         self.assertEqual(self.custom_report["End_Day"], self.end_day)
 
+    @pytest.mark.unit
     def test_report_infection_duration_error_checking(self):
         with self.assertRaises(ValueError) as context:
             ReportInfectionDuration(reporters_object=self.reporter,
@@ -1047,6 +1092,7 @@ class TestReportersCommon(unittest.TestCase):
             "must_have_intervention is not a valid parameter for ReportInfectionDuration" in str(context.exception),
             msg=str(context.exception))
 
+    @pytest.mark.unit
     def test_multiple_of_builtin_report(self):
         def build_reports(reporters):
             reporters.add(ReportDrugStatus(reporters_object=reporters,
@@ -1067,6 +1113,7 @@ class TestReportersCommon(unittest.TestCase):
         self.assertEqual(self.custom_report["Start_Day"], 23)
         self.assertEqual(self.custom_report["End_Day"], 77)
 
+    @pytest.mark.unit
     def test_multiple_of_configreport_error_checking(self):
         with self.assertRaises(Exception) as context:
             def build_reports(reporters):
@@ -1081,6 +1128,7 @@ class TestReportersCommon(unittest.TestCase):
                         " InsetChart to the Reporters object." in str(context.exception),
                         msg=str(context.exception))
 
+    @pytest.mark.container
     def test_report_run_it_all_on_comps_are_files_generated(self):
         def build_reports(reporters):
             report_filter = ReportFilter(start_day=2, end_day=6)
@@ -1127,7 +1175,9 @@ class TestReportersCommon(unittest.TestCase):
                                                          event_list=self.event_list))
             return reporters
 
+        os.chdir(self.original_working_dir)
         platform = Platform(manifest.container_platform_name)
+        os.chdir(self.test_folder)
         self.task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                            schema_path=self.builders.schema_path,
                                            campaign_builder=self.builders.campaign_builder,
@@ -1171,7 +1221,6 @@ class TestReportersCommon(unittest.TestCase):
         self.assertTrue(all_good, f"Error: {exception}")
 
 
-@pytest.mark.emod
 @pytest.mark.skip(reason="Skipping because reports in Generic-Ongoing EMOD meaningfully different and"
                          " are not implemented in emodpy yet.")
 class TestReportersGeneric(TestReportersCommon):

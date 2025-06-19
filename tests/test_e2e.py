@@ -19,7 +19,7 @@ def param_update_task(simulation, param, value):
     return simulation.task.set_parameter(param, value)
 
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestE2E(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -130,7 +130,7 @@ class TestE2E(unittest.TestCase):
         self.assertTrue(self.experiment.succeeded)
 
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestE2EGeneric(TestE2E):
     def custom_setUp(self):
         self.builders = helpers.BuildersGeneric

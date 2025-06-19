@@ -20,7 +20,7 @@ class BaseEventTest(BaseTestClass):
         self.assertEqual(event.is_year_supported(self.campaign), self.is_year_supported)
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestScheduledDistributorMalaria(BaseEventTest, TestMalaria):
     def setUp(self):
         TestMalaria().setUp()
@@ -30,7 +30,7 @@ class TestScheduledDistributorMalaria(BaseEventTest, TestMalaria):
         self.is_year_supported = False
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestScheduledDistributorHIV(BaseEventTest, TestHIV):
     def setUp(self):
         TestHIV().setUp()

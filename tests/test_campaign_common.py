@@ -72,11 +72,13 @@ class BaseDemographicsConfigTest(BaseTestClass):
 
 
 
+@pytest.mark.unit
 class TestDemographicsConfigHIV(TestHIV, BaseDemographicsConfigTest):
     pass
 
 
 
+@pytest.mark.unit
 class TestDemographicsConfigMalaria(TestMalaria, BaseDemographicsConfigTest):
     pass
 
@@ -125,11 +127,13 @@ class BaseTestRepetitionConfigTest(BaseTestClass):
 
 
 
+@pytest.mark.unit
 class TestRepetitionConfigHIV(TestHIV, BaseTestRepetitionConfigTest):
     pass
 
 
 
+@pytest.mark.unit
 class TestRepetitionConfigMalaria(TestMalaria, BaseTestRepetitionConfigTest):
     pass
 
@@ -203,10 +207,12 @@ class BasePropertyRestrictionsTest(BaseTestClass):
         self.assertTrue("The individual_property_restrictions should be a 2D list" in str(context.exception))
 
 
+@pytest.mark.unit
 class TestPropertyRestrictionsHIV(TestHIV, BasePropertyRestrictionsTest):
     pass
 
 
+@pytest.mark.unit
 class TestPropertyRestrictionsMalaria(TestMalaria, BasePropertyRestrictionsTest):
     pass
 
@@ -218,6 +224,7 @@ class BaseValueMapTest(BaseTestClass):
         self.assertEqual(value_map.to_schema_dict(self.campaign_obj).Values, [10, 20])
 
 
+@pytest.mark.unit
 class TestValueMapHIV(TestHIV, BaseValueMapTest):
     def setUp(self):
         TestHIV().setUp()
@@ -226,6 +233,7 @@ class TestValueMapHIV(TestHIV, BaseValueMapTest):
     pass
 
 
+@pytest.mark.unit
 class TestValueMapMalaria(TestMalaria, BaseValueMapTest):
     def setUp(self):
         TestMalaria().setUp()
@@ -255,6 +263,7 @@ class BaseCommonInterventionParametersTest(BaseTestClass):
         self.assertEqual(common_intervention_parameters.dont_allow_duplicates, True)
 
 
+@pytest.mark.unit
 class TestCommonInterventionParametersHIV(TestHIV, BaseCommonInterventionParametersTest):
     def setUp(self):
         TestHIV().setUp()
@@ -263,6 +272,7 @@ class TestCommonInterventionParametersHIV(TestHIV, BaseCommonInterventionParamet
     pass
 
 
+@pytest.mark.unit
 class TestCommonInterventionParametersMalaria(TestMalaria, BaseCommonInterventionParametersTest):
     def setUp(self):
         TestMalaria().setUp()

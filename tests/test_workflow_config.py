@@ -26,7 +26,7 @@ I think this could use more tests. I would add a test for the following:
 - verify that when get_config_from_default_and_params gets parameters not in schema, it raises a nice error
 """
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestWorkflowConfig(unittest.TestCase):
     """
         Tests for EMODTask
@@ -118,7 +118,7 @@ class TestWorkflowConfig(unittest.TestCase):
                                       config_builder=self.config_builder_builtin_demographics)
         self.run_experiment(task)
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestWorkflowConfigGeneric(TestWorkflowConfig):
     """
         Tests for EMODTask with Generic-Ongoing EMOD

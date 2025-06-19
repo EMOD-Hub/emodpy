@@ -13,7 +13,8 @@ import emod_hiv.bootstrap as hiv_bootstrap
 import emod_malaria.bootstrap as malaria_bootstrap
 
 
-@pytest.mark.emod
+@pytest.mark.container
+@pytest.mark.unit
 class TestDownloadFromPackage(unittest.TestCase):
 
     def setUp(self):

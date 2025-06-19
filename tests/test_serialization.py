@@ -22,7 +22,7 @@ def param_update(simulation, param, value):
     return simulation.set_parameter(param, value)
 
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestSerialization(unittest.TestCase):
     """
         To test dtk_pre_process and dtk_pre_process through EMODTask
@@ -140,7 +140,7 @@ class TestSerialization(unittest.TestCase):
         self.assertEqual(experiment1_inset, experiment2_inset, msg="Inset charts are not equal.")
 
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestSerializationGeneric(TestSerialization):
     """
     Testing using Generic-Ongoing EMOD

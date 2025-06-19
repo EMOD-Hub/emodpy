@@ -24,7 +24,7 @@ def param_update(simulation, param, value):
     return simulation.set_parameter(param, value)
 
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestEmodPrePostProcess(unittest.TestCase):
     """
         To test dtk_pre_process and dtk_pre_process through EMODTask
@@ -194,7 +194,7 @@ class TestEmodPrePostProcess(unittest.TestCase):
             self.assertIn("printing from dtk_pre_process.py", stdout)
 
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestEmodPrePostProcessGeneric(TestEmodPrePostProcess):
     """
         Testing with Generic-Ongoing EMOD

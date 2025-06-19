@@ -34,7 +34,7 @@ def set_param_fn(config, implicit_config_set_fns=None):
     return config
 
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestWorkflowDemographics(unittest.TestCase):
     """
         Tests for EMODTask
@@ -492,7 +492,7 @@ class TestWorkflowDemographics(unittest.TestCase):
                              ["SusceptibilityDistribution"]["ResultScaleFactor"], 1)
 
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestWorkflowDemographicsGeneric(TestWorkflowDemographics):
     """
         Testing with Generic-Ongoing

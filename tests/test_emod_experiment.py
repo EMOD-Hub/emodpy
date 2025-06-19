@@ -60,7 +60,7 @@ class TestEMODExperiment(unittest.TestCase):
             os.chdir(self.original_working_dir)
             helpers.delete_existing_folder(self.test_folder)
 
-    @pytest.mark.emod
+    @pytest.mark.container
     def test_experiment_from_task_with_task_from_default_simple(self):
         # https://github.com/InstituteforDiseaseModeling/emodpy-old/issues/287
         """
@@ -170,7 +170,7 @@ class TestEMODExperiment(unittest.TestCase):
         make_sif(this_sif_path)
         self.singularity_test(this_sif_path)
 
-    @pytest.mark.emod
+    @pytest.mark.container
     def test_experiment_from_task_with_task_from_default_param_custom_cb(self):
         # https://github.com/InstituteforDiseaseModeling/emodpy-old/issues/288
         """
@@ -200,7 +200,7 @@ class TestEMODExperiment(unittest.TestCase):
         config_parameters = json.loads(files["config.json"])['parameters']
         self.assertEqual(config_parameters["Simulation_Duration"], 7)
 
-    @pytest.mark.emod
+    @pytest.mark.container
     def test_experiment_from_builder_with_task_from_default(self):
         """
             Test creating task from defaults and then creating an experiment from a builder
@@ -228,7 +228,7 @@ class TestEMODExperiment(unittest.TestCase):
             config_parameters = json.loads(files["config.json"])['parameters']
             self.assertEqual(config_parameters["Run_Number"], sim.tags["Run_Number"])
 
-    @pytest.mark.emod
+    @pytest.mark.container
     def test_simulations_manual_builder_with_task_from_file(self):
         """
             This test "passes" because I expect it to fail because of a known issue
@@ -266,7 +266,7 @@ class TestEMODExperiment(unittest.TestCase):
         #     config_parameters = json.loads(files["config.json"])['parameters']
         #     self.assertEqual(config_parameters["Run_Number"], i)
 
-    @pytest.mark.emod
+    @pytest.mark.container
     def test_simulations_manual_builder_with_task_from_file_workaround(self):
         """
             Workaround for the issue
@@ -307,7 +307,7 @@ class TestEMODExperiment(unittest.TestCase):
 
         self.assertEqual(set(run_numbers), set(list(range(self.num_sim_long))))
 
-    @pytest.mark.emod
+    @pytest.mark.container
     def test_experiment_from_builder_with_task_from_file(self):
         """
             Test idmtools.entities.experiment.Experiment.from_builder() with EMODTask.from_files()

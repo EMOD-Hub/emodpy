@@ -48,6 +48,7 @@ jobs:
       - name: run container tests
         if: runner.os == 'Linux'
         run: |
+          cd tests
           pytest test_download_from_package.py
           pytest --dist loadfile -v -m container --junitxml="test_results.xml"
 

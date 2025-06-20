@@ -11,7 +11,7 @@ from emod_api.demographics.susceptibility_distribution import SusceptibilityDist
 from emodpy.demographics.demographics import Demographics
 from emodpy.utils.distributions import *
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestDemographics(unittest.TestCase):
     def setUp(self) -> None:
         self.default_node = Node(lat=0, lon=1, pop=100, name='The default node', forced_id=0)

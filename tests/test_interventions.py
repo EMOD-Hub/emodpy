@@ -29,7 +29,7 @@ import helpers
 import pytest
 
 
-@ pytest.mark.emod
+@ pytest.mark.unit
 class TestIndividualIntervention(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -195,7 +195,7 @@ class TestIndividualIntervention(unittest.TestCase):
         self.assertTrue('not a valid parameter' in str(context.exception))
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestBroadcastEvent(TestIndividualIntervention):
     def setUp(self):
         self.intervention_name = 'BroadcastEvent'
@@ -227,7 +227,7 @@ class TestBroadcastEvent(TestIndividualIntervention):
         self.assert_set_cost()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestBroadcastEventToOtherNodes(TestIndividualIntervention):
     def setUp(self):
         self.intervention_name = 'BroadcastEventToOtherNodes'
@@ -267,7 +267,7 @@ class TestBroadcastEventToOtherNodes(TestIndividualIntervention):
         self.assert_set_cost()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestControlledVaccine(TestIndividualIntervention):
     def setUp(self):
         self.intervention_class_name = 'ControlledVaccine'
@@ -298,7 +298,7 @@ class TestControlledVaccine(TestIndividualIntervention):
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestDelayedIntervention(TestIndividualIntervention):
     def setUp(self):
         self.intervention_class_name = 'DelayedIntervention'
@@ -427,7 +427,7 @@ class TestDelayedIntervention(TestIndividualIntervention):
         self.assert_set_cost()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestIVCalendar(TestIndividualIntervention):
     def setUp(self):
         self.intervention_class_name = 'IVCalendar'
@@ -469,7 +469,7 @@ class TestIVCalendar(TestIndividualIntervention):
         self.assert_set_cost()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestIndividualImmunityChanger(TestIndividualIntervention):
     def setUp(self):
         self.intervention_class_name = 'IndividualImmunityChanger'
@@ -518,7 +518,7 @@ class TestIndividualImmunityChanger(TestIndividualIntervention):
         self.assert_set_new_property_value()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestIndividualNonDiseaseDeathRateModifier(TestIndividualIntervention):
     def setUp(self):
         self.intervention_class_name = 'IndividualNonDiseaseDeathRateModifier'
@@ -542,7 +542,7 @@ class TestIndividualNonDiseaseDeathRateModifier(TestIndividualIntervention):
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestMigrateIndividuals(TestIndividualIntervention):
     def setUp(self):
         self.intervention_class_name = 'MigrateIndividuals'
@@ -576,7 +576,7 @@ class TestMigrateIndividuals(TestIndividualIntervention):
         self.assert_set_cost()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 # todo: update when WaningEffect is ready
 class TestMultiEffectBoosterVaccine(TestIndividualIntervention):
     def setUp(self):
@@ -631,7 +631,7 @@ class TestMultiEffectBoosterVaccine(TestIndividualIntervention):
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 # todo: update when WaningEffect is ready
 class TestMultiEffectVaccine(TestIndividualIntervention):
     def setUp(self):
@@ -667,7 +667,7 @@ class TestMultiEffectVaccine(TestIndividualIntervention):
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestMultiInterventionDistributor(TestIndividualIntervention):
     def setUp(self):
         self.intervention_class_name = 'MultiInterventionDistributor'
@@ -694,7 +694,7 @@ class TestMultiInterventionDistributor(TestIndividualIntervention):
         self.assert_set_cost()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestOutbreakIndividual(TestIndividualIntervention):
     def setUp(self):
         self.intervention_class_name = 'OutbreakIndividual'
@@ -733,7 +733,7 @@ class TestOutbreakIndividual(TestIndividualIntervention):
         self.assert_get_intervention_name()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestPropertyValueChanger(TestIndividualIntervention):
     def setUp(self):
         self.intervention_class_name = 'PropertyValueChanger'
@@ -766,7 +766,7 @@ class TestPropertyValueChanger(TestIndividualIntervention):
         self.assert_set_cost()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 # todo: update when WaningEffect is ready
 class TestSimpleBoosterVaccine(TestIndividualIntervention):
     def setUp(self):
@@ -804,7 +804,7 @@ class TestSimpleBoosterVaccine(TestIndividualIntervention):
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestSimpleDiagnostic(TestIndividualIntervention):
     def setUp(self):
         self.intervention_class_name = 'SimpleDiagnostic'
@@ -868,7 +868,7 @@ class TestSimpleDiagnostic(TestIndividualIntervention):
         self.assertEqual(intervention_dict.New_Property_Value, '')
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestSimpleHealthSeekingBehavior(TestIndividualIntervention):
     def setUp(self):
         self.intervention_class_name = 'SimpleHealthSeekingBehavior'
@@ -914,7 +914,7 @@ class TestSimpleHealthSeekingBehavior(TestIndividualIntervention):
         self.assert_set_cost()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestSimpleVaccine(TestIndividualIntervention):
     def setUp(self):
         self.intervention_class_name = 'SimpleVaccine'
@@ -944,7 +944,7 @@ class TestSimpleVaccine(TestIndividualIntervention):
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestStandardDiagnostic(TestIndividualIntervention):
     def setUp(self):
         self.intervention_class_name = 'StandardDiagnostic'
@@ -1035,7 +1035,7 @@ class TestStandardDiagnostic(TestIndividualIntervention):
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestNodeIntervention(TestIndividualIntervention):
     def setUp(self):
         """
@@ -1049,7 +1049,7 @@ class TestNodeIntervention(TestIndividualIntervention):
         print(f"running test: {self.__class__}.{self._testMethodName}")
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestMultiNodeInterventionDistributor(TestNodeIntervention):
     def setUp(self):
         self.intervention_class_name = 'MultiNodeInterventionDistributor'
@@ -1078,7 +1078,7 @@ class TestMultiNodeInterventionDistributor(TestNodeIntervention):
         self.assert_set_cost()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestNodeLevelHealthTriggeredIV(TestNodeIntervention):
     def setUp(self):
         self.intervention_class_name = 'NodeLevelHealthTriggeredIV'
@@ -1182,7 +1182,7 @@ class TestNodeLevelHealthTriggeredIV(TestNodeIntervention):
         self.assertTrue('is a node-level intervention, so it will be distributed to nodes.' in str(context.exception))
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestBirthTriggeredIV(TestNodeIntervention):
     def setUp(self):
         self.intervention_class_name = 'BirthTriggeredIV'
@@ -1213,7 +1213,7 @@ class TestBirthTriggeredIV(TestNodeIntervention):
         self.assert_set_cost()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestBroadcastCoordinatorEventFromNode(TestNodeIntervention):
     def setUp(self):
         self.intervention_class_name = 'BroadcastCoordinatorEventFromNode'
@@ -1236,7 +1236,7 @@ class TestBroadcastCoordinatorEventFromNode(TestNodeIntervention):
         self.assert_set_cost()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestBroadcastNodeEvent(TestNodeIntervention):
     def setUp(self):
         self.intervention_class_name = 'BroadcastNodeEvent'
@@ -1252,7 +1252,7 @@ class TestBroadcastNodeEvent(TestNodeIntervention):
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestImportPressure(TestNodeIntervention):
     def setUp(self):
         self.intervention_class_name = 'ImportPressure'
@@ -1288,7 +1288,7 @@ class TestImportPressure(TestNodeIntervention):
         self.assert_get_intervention_name()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestMigrateFamily(TestNodeIntervention):
     def setUp(self):
         self.intervention_class_name = 'MigrateFamily'
@@ -1319,7 +1319,7 @@ class TestMigrateFamily(TestNodeIntervention):
         self.assert_set_cost()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestNodePropertyValueChanger(TestNodeIntervention):
     def setUp(self):
         self.intervention_class_name = 'NodePropertyValueChanger'
@@ -1345,7 +1345,7 @@ class TestNodePropertyValueChanger(TestNodeIntervention):
         self.assert_set_cost()
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestOutbreak(TestNodeIntervention):
     def setUp(self):
         self.intervention_class_name = 'Outbreak'

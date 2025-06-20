@@ -1,5 +1,8 @@
-import unittest
 import os
+import sys
+import json
+from pathlib import Path
+import unittest
 import pytest
 from emod_api import campaign as api_campaign
 from emodpy.campaign.individual_intervention import BroadcastEvent, SimpleVaccine
@@ -11,15 +14,12 @@ from emodpy.utils.distributions import UniformDistribution, ExponentialDistribut
 from emodpy.utils.targeting_config import IsPregnant
 from emodpy.campaign.waning_config import MapLinear
 
-from base_test import TestHIV, TestMalaria, BaseTestClass
 
-from pathlib import Path
-import sys
 parent = Path(__file__).resolve().parent
 sys.path.append(str(parent))
+from base_test import TestHIV, TestMalaria, BaseTestClass
 import manifest
-import json
-
+import helpers
 
 regression_folder = os.path.join(manifest.inputs_folder, 'campaigns', 'distributor_regression')
 output_folder = os.path.join(manifest.output_folder, 'campaign_distributor')
@@ -29,7 +29,8 @@ if not os.path.exists(output_folder):
 
 def compare_to_regression_json(campaign, filename):
     regression_file = os.path.join(regression_folder, filename)
-    campaign.save(os.path.join(output_folder, filename))
+    tmp_filename = os.path.join(output_folder, filename)
+    campaign.save(tmp_filename)
     # Make sure the campaign file match regression file.
     # Load the json files into dictionaries and compare them.
     with open(os.path.join(output_folder, filename), 'r') as f:
@@ -37,6 +38,7 @@ def compare_to_regression_json(campaign, filename):
     with open(regression_file, 'r') as f:
         regression = json.load(f)
     assert output == regression
+    helpers.delete_existing_file(tmp_filename)
 
 
 class BaseScheduledDistributorTest(BaseTestClass):
@@ -336,6 +338,7 @@ class BaseScheduledDistributorTest(BaseTestClass):
         return event
 
 
+@pytest.mark.unit
 class TestScheduledDistributorMalariaByDay(BaseScheduledDistributorTest, TestMalaria):
     def setUp(self):
         TestMalaria().setUp()
@@ -348,6 +351,7 @@ class TestScheduledDistributorMalariaByDay(BaseScheduledDistributorTest, TestMal
         compare_to_regression_json(self.campaign, filename=f"Malaria_{self._testMethodName}.json")
 
 
+@pytest.mark.unit
 class TestScheduledDistributorHIVByYear(BaseScheduledDistributorTest, TestHIV):
     def setUp(self):
         TestHIV().setUp()
@@ -807,6 +811,7 @@ class BaseTriggeredDistributorTest(BaseTestClass):
 
 
 
+@pytest.mark.unit
 class TestTriggeredDistributorHIVByYear(BaseTriggeredDistributorTest, TestHIV):
     def setUp(self):
         TestHIV().setUp()
@@ -819,6 +824,7 @@ class TestTriggeredDistributorHIVByYear(BaseTriggeredDistributorTest, TestHIV):
         compare_to_regression_json(self.campaign, filename=f"HIV_{self._testMethodName}.json")
 
 
+@pytest.mark.unit
 class TestTriggeredDistributorMalariaByDay(BaseTriggeredDistributorTest, TestMalaria):
     def setUp(self):
         TestMalaria().setUp()
@@ -831,6 +837,7 @@ class TestTriggeredDistributorMalariaByDay(BaseTriggeredDistributorTest, TestMal
         compare_to_regression_json(self.campaign, filename=f"Malaria_{self._testMethodName}.json")
 
 
+@pytest.mark.unit
 class TestDistributorMalariaByYear(TestMalaria):
     def setUp(self):
         TestMalaria().setUp()

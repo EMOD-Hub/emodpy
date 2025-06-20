@@ -34,7 +34,7 @@ def set_param_fn(config, implicit_config_set_fns=None):
     return config
 
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestWorkflowDemographics(unittest.TestCase):
     """
         Tests for EMODTask
@@ -46,7 +46,7 @@ class TestWorkflowDemographics(unittest.TestCase):
         self.case_name = os.path.basename(__file__) + "_" + self._testMethodName
         print(f"\n{self.case_name}")
         self.original_working_dir = os.getcwd()
-        self.platform = Platform(manifest.comps_platform_name)
+        self.platform = Platform(manifest.container_platform_name)
         self.builders = helpers.BuildersCommon
         self.test_folder = helpers.make_test_directory(self.case_name)
 
@@ -492,7 +492,7 @@ class TestWorkflowDemographics(unittest.TestCase):
                              ["SusceptibilityDistribution"]["ResultScaleFactor"], 1)
 
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestWorkflowDemographicsGeneric(TestWorkflowDemographics):
     """
         Testing with Generic-Ongoing
@@ -504,7 +504,7 @@ class TestWorkflowDemographicsGeneric(TestWorkflowDemographics):
         self.case_name = os.path.basename(__file__) + "_" + self._testMethodName
         print(f"\n{self.case_name}")
         self.original_working_dir = os.getcwd()
-        self.platform = Platform(manifest.comps_platform_name)
+        self.platform = Platform(manifest.container_platform_name)
         self.builders = helpers.BuildersGeneric
         self.test_folder = helpers.make_test_directory(self.case_name)
 

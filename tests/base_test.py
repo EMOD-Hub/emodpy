@@ -9,7 +9,6 @@ import manifest
 
 
 @pytest.mark.hiv
-@pytest.mark.emod
 class TestHIV(unittest.TestCase):
     is_base_class = False
     @classmethod
@@ -26,7 +25,6 @@ class TestHIV(unittest.TestCase):
 
 
 @pytest.mark.malaria
-@pytest.mark.emod
 class TestMalaria(unittest.TestCase):
     is_base_class = False
     @classmethod

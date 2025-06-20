@@ -32,7 +32,7 @@ sys.path.append(str(parent))
 import manifest
 import helpers
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestWorkflowCampaign(unittest.TestCase):
     """
         Tests for EMODTask
@@ -46,7 +46,7 @@ class TestWorkflowCampaign(unittest.TestCase):
         self.original_working_dir = os.getcwd()
         self.task: EMODTask
         self.experiment: Experiment
-        self.platform = Platform(manifest.comps_platform_name)
+        self.platform = Platform(manifest.container_platform_name)
         self.test_folder = helpers.make_test_directory(self.case_name)
         self.setup_custom_params()
 
@@ -530,7 +530,7 @@ class TestWorkflowCampaign(unittest.TestCase):
         self.assertEqual(expected_combos, actual_combos)
 
 
-@pytest.mark.emod
+@pytest.mark.container
 @pytest.mark.skip(reason="Interventions are meaningfully different in Generic-Ongoing and emodpy not "
                          "support Generic-Ongoing interventions yet.")
 class TestWorkflowCampaignGeneric(TestWorkflowCampaign):

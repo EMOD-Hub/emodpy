@@ -147,7 +147,7 @@ class BaseWaningConfigTest(BaseTestClass):
         self.assertEqual(schema_dict['class'], "WaningEffectRandomBox")
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestWaningConfigHIV(TestHIV, BaseWaningConfigTest):
 
     def setUp(self):
@@ -156,7 +156,7 @@ class TestWaningConfigHIV(TestHIV, BaseWaningConfigTest):
         self.campaign_obj.set_schema(self.schema_path)
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestWaningConfigMalaria(TestMalaria, BaseWaningConfigTest):
     def setUp(self):
         TestHIV().setUp()

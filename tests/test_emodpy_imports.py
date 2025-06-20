@@ -2,7 +2,7 @@ import json
 import pytest
 import unittest
 
-@pytest.mark.emod
+@pytest.mark.unit
 class EmodpyImportTest(unittest.TestCase):
     def setUp(self) -> None:
         self.expected_items = None

@@ -21,7 +21,7 @@ demographics_distribution_flag_map = {
 Distributions are tested against the schema in test_interventions.py
 """
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestDistributions(unittest.TestCase):
     def is_constant_distribution(self, cd, value):
         self.assertTrue(isinstance(cd, ConstantDistribution))

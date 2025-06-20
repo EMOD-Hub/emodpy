@@ -1,9 +1,14 @@
+import sys
+from pathlib import Path
 import unittest
 import pytest
 from emod_api import campaign as api_campaign
 from emodpy.campaign.event import CampaignEventByYear
 from emodpy.campaign.event_coordinator import StandardEventCoordinator
 from emodpy.campaign.individual_intervention import BroadcastEvent
+
+parent = Path(__file__).resolve().parent
+sys.path.append(str(parent))
 
 from base_test import TestHIV, TestMalaria, BaseTestClass
 
@@ -15,7 +20,7 @@ class BaseEventTest(BaseTestClass):
         self.assertEqual(event.is_year_supported(self.campaign), self.is_year_supported)
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestScheduledDistributorMalaria(BaseEventTest, TestMalaria):
     def setUp(self):
         TestMalaria().setUp()
@@ -25,7 +30,7 @@ class TestScheduledDistributorMalaria(BaseEventTest, TestMalaria):
         self.is_year_supported = False
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestScheduledDistributorHIV(BaseEventTest, TestHIV):
     def setUp(self):
         TestHIV().setUp()

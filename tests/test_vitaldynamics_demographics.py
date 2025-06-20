@@ -25,7 +25,7 @@ import manifest
 import helpers
 import time
 
-@pytest.mark.emod
+@pytest.mark.comps
 class VitalDynamicDemographicsTests(unittest.TestCase):
 
     def setUp(self):
@@ -203,7 +203,7 @@ class VitalDynamicDemographicsTests(unittest.TestCase):
                                            real_age_distribition_cum_percent_values[age_bucket], delta=0.02)
 
 
-@pytest.mark.emod
+@pytest.mark.comps
 class VitalDynamicDemographicsTestsGeneric(VitalDynamicDemographicsTests):
     """
     Tests using Generic-Ongoing EMOD

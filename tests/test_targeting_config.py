@@ -12,7 +12,7 @@ sys.path.append(str(parent))
 import helpers
 
 
-@pytest.mark.emod
+@pytest.mark.unit
 class TestTargetingConfig(unittest.TestCase):
 
     def setUp(self) -> None:

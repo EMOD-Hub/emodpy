@@ -24,7 +24,7 @@ def param_update(simulation, param, value):
     return simulation.set_parameter(param, value)
 
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestEmodPrePostProcess(unittest.TestCase):
     """
         To test dtk_pre_process and dtk_pre_process through EMODTask
@@ -38,7 +38,7 @@ class TestEmodPrePostProcess(unittest.TestCase):
         self.original_working_dir = os.getcwd()
         self.task: EMODTask
         self.experiment: Experiment
-        self.platform = Platform(manifest.comps_platform_name)
+        self.platform = Platform(manifest.container_platform_name)
         self.test_folder = helpers.make_test_directory(self.case_name)
         self.setup_custom_params()
 
@@ -114,9 +114,10 @@ class TestEmodPrePostProcess(unittest.TestCase):
         self.assertIn(self.builders.eradication_path, [a.absolute_path for a in task.common_assets.assets])
         self.assertTrue(task.use_embedded_python)
 
-        # check experiment common assets are as expected
+        # check experiment common assets are as expected - ContainerPlatform doesn't have a SIF
         experiment.pre_creation(self.platform)
-        self.assertEqual(len(experiment.assets), 5)
+        assets_exp = 4 if manifest.container_platform_name == "ContainerPlatform" else 5
+        self.assertEqual(len(experiment.assets), assets_exp)
         self.assertIn(self.builders.eradication_path, [a.absolute_path for a in experiment.assets])
         self.assertIn(os.path.join(self.embedded_python_folder, 'dtk_pre_process.py'), [a.absolute_path for a in experiment.assets])
         self.assertIn(os.path.join(self.embedded_python_folder, 'dtk_in_process.py'), [a.absolute_path for a in experiment.assets])
@@ -140,9 +141,10 @@ class TestEmodPrePostProcess(unittest.TestCase):
         self.assertIn(self.builders.eradication_path, [a.absolute_path for a in task.common_assets.assets])
         self.assertTrue(task.use_embedded_python)
 
-        # check experiment common assets are as expected
+        # check experiment common assets are as expected - ContainerPlatform doesn't have a SIF
         experiment.pre_creation(self.platform)
-        self.assertEqual(len(experiment.assets), 4)
+        assets_exp = 3 if manifest.container_platform_name == "ContainerPlatform" else 4
+        self.assertEqual(len(experiment.assets), assets_exp)
         self.assertIn(self.builders.eradication_path, [a.absolute_path for a in experiment.assets])
         self.assertIn(os.path.join(self.embedded_python_folder, 'dtk_post_process.py'), [a.absolute_path for a in experiment.assets])
 
@@ -161,9 +163,10 @@ class TestEmodPrePostProcess(unittest.TestCase):
         self.assertIn(self.builders.eradication_path, [a.absolute_path for a in task.common_assets.assets])
         self.assertEqual(task.use_embedded_python, False)
 
-        # check experiment common assets are as expected
+        # check experiment common assets are as expected - ContainerPlatform doesn't have a SIF
         experiment.pre_creation(self.platform)
-        self.assertEqual(len(experiment.assets), 2)
+        assets_exp = 1 if manifest.container_platform_name == "ContainerPlatform" else 2
+        self.assertEqual(len(experiment.assets), assets_exp)
 
     def test_emod_process_from_file(self):
         """
@@ -184,14 +187,14 @@ class TestEmodPrePostProcess(unittest.TestCase):
         self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
 
         for sim in experiment.simulations:
-            file = self.platform.get_files(sim, ["stdOut.txt"])
-            stdout = file["stdOut.txt"].decode("utf-8")
+            file = self.platform.get_files(sim, ["stdout.txt"])
+            stdout = file["stdout.txt"].decode("utf-8")
             self.assertIn("dtk_in_process.py called on timestep", stdout)
             self.assertIn("printing from dtk_post_process.py", stdout)
             self.assertIn("printing from dtk_pre_process.py", stdout)
 
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestEmodPrePostProcessGeneric(TestEmodPrePostProcess):
     """
         Testing with Generic-Ongoing EMOD

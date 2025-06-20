@@ -22,7 +22,7 @@ def param_update(simulation, param, value):
     return simulation.set_parameter(param, value)
 
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestSerialization(unittest.TestCase):
     """
         To test dtk_pre_process and dtk_pre_process through EMODTask
@@ -35,7 +35,7 @@ class TestSerialization(unittest.TestCase):
         self.original_working_dir = os.getcwd()
         self.task: EMODTask
         self.experiment: Experiment
-        self.platform = Platform(manifest.comps_platform_name)
+        self.platform = Platform(manifest.container_platform_name)
         self.test_folder = helpers.make_test_directory(self.case_name)
         self.setup_custom_params()
     def setup_custom_params(self):
@@ -60,7 +60,6 @@ class TestSerialization(unittest.TestCase):
             os.chdir(self.original_working_dir)
             helpers.delete_existing_folder(self.test_folder)
 
-    @pytest.mark.long
     def test_serialization(self):
         """
         1) Run simulation, save serialized population           
@@ -141,7 +140,7 @@ class TestSerialization(unittest.TestCase):
         self.assertEqual(experiment1_inset, experiment2_inset, msg="Inset charts are not equal.")
 
 
-@pytest.mark.emod
+@pytest.mark.container
 class TestSerializationGeneric(TestSerialization):
     """
     Testing using Generic-Ongoing EMOD

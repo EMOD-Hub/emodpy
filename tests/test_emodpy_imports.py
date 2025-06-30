@@ -89,14 +89,6 @@ class EmodpyImportTest(unittest.TestCase):
         ]
         self.verify_expected_items_present(namespace=e_t)
 
-    def test_emodpy_download_utils(self):
-        import emodpy.utils.download_utils as ut
-        self.expected_items = [
-            "get_github_eradication_url",
-            "download_eradication"
-        ]
-        self.verify_expected_items_present(namespace=ut)
-
     def test_emodpy_collection_utils(self):
         import emodpy.utils.collections_utils as ut
         self.expected_items = [

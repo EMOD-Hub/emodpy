@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from functools import partial
 from logging import getLogger, DEBUG
 from typing import Union, Optional, Any, Dict, List, Type, Callable
-from urllib.parse import urlparse
 import pathlib
 from pathlib import Path
 import warnings

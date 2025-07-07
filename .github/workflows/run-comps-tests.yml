@@ -44,8 +44,8 @@ jobs:
         run: |
           pip install build
           python -m build --wheel
-          ls -l dist  # Check if wheel exists
-          python -m pip install --upgrade dist/*.whl --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
+          python -c "import glob, sys; files = glob.glob('dist/*.whl'); sys.exit('No wheel file found' if not files else 0)"
+          python -m pip install --upgrade $(python -c "import glob; files = glob.glob('dist/*.whl'); print(files[0])") --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
 
       - name: install test packages
         run: |

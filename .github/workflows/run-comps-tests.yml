@@ -44,6 +44,7 @@ jobs:
         run: |
           pip install build
           python -m build --wheel
+          ls -l dist  # Check if wheel exists
           python -m pip install --upgrade dist/*.whl --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
 
       - name: install test packages

@@ -1,5 +1,8 @@
 name: Test and publish to staging
 
+permissions:
+  contents: write # Allow writing to the repository (e.g., commits, pushes)
+
 on:
   push:
     branches:

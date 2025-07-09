@@ -36,6 +36,7 @@ classifiers = [
     "Framework:: IDM-Tools :: models",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"]
+    
 [project.urls]
 Repository="https://github.com/EMOD-Hub/emodpy"
 Issues="https://github.com/EMOD-Hub/emodpy/issues"

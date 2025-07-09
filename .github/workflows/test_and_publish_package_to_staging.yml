@@ -1,4 +1,4 @@
-name: test_and_publish_package_to_staging.yml
+name: Test and publish to staging
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
     uses: ./.github/workflows/run-pr-tests.yml
 
   run-comps-tests:
-    uses: ./.github/workflows/run-pr-tests.yml
+    uses: ./.github/workflows/run-comps-tests.yml
     secrets:
       COMPS_USER: ${{ secrets.COMPS_USER }}
       COMPS_PASSWORD: ${{ secrets.COMPS_PASSWORD }}

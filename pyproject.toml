@@ -64,7 +64,6 @@ packaging = [
     "bump2version",
     "twine"]
 
-
 [project.entry-points.idmtools_task]
 idmtools_task_emod = "emodpy.emod_task:EMODTaskSpecification"
 

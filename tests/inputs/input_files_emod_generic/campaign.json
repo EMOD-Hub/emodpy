@@ -1,0 +1,40 @@
+{
+    "Events": [
+        {
+            "class": "CampaignEvent",
+            "Event_Coordinator_Config": {
+                "class": "StandardInterventionDistributionEventCoordinator",
+                "Demographic_Coverage": 0.97,
+                "Individual_Selection_Type": "DEMOGRAPHIC_COVERAGE",
+                "Intervention_Config": {
+                    "Clade": 0,
+                    "Cost_To_Consumer": 1.0,
+                    "Disqualifying_Properties": [],
+                    "Dont_Allow_Duplicates": 0,
+                    "Event_Trigger_Distributed": "NoTrigger",
+                    "Event_Trigger_Expired": "NoTrigger",
+                    "Genome": 2,
+                    "Ignore_Immunity": 0,
+                    "Incubation_Period_Override": -1,
+                    "Intervention_Name": "OutbreakIndividual",
+                    "New_Property_Value": "",
+                    "class": "OutbreakIndividual"
+                },
+                "Node_Property_Restrictions": [],
+                "Number_Repetitions": 3,
+                "Property_Restrictions": [],
+                "Property_Restrictions_Within_Node": [],
+                "Target_Demographic": "Everyone",
+                "Target_Gender": "All",
+                "Target_Residents_Only": 0,
+                "Targeting_Config": {},
+                "Timesteps_Between_Repetitions": 1
+            },
+            "Nodeset_Config": {
+                "class": "NodeSetAll"
+            },
+            "Start_Day": 2
+        }
+    ],
+    "Use_Defaults": 1
+}

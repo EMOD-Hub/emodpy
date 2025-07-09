@@ -16,7 +16,8 @@ def enable_serialization(task: 'EMODTask', use_absolute_times: bool = False):
     if use_absolute_times:
         task.set_parameter("Serialization_Type", "TIME")
     else:
-        task.set_parameter("Serialization_Type", "TIMESTEP")  # Note: This should work in both 2.18 and 2.20
+        # Note: This should work in both 2.18 and 2.20
+        task.set_parameter("Serialization_Type", "TIMESTEP")
 
 
 def add_serialization_timesteps(task: EMODTask, timesteps: List[int], end_at_final: bool = False, use_absolute_times: bool = False):

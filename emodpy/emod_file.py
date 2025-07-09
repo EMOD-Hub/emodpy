@@ -3,7 +3,7 @@ import os
 import typing
 from abc import ABCMeta, abstractmethod
 from enum import Enum
-from typing import Dict, List, NoReturn, Optional
+from typing import Dict, List, Optional
 
 from idmtools.assets import Asset, AssetCollection, json_handler
 
@@ -72,7 +72,7 @@ class MigrationFiles(InputFilesList):
         if not self.migration_other_params:
             self.migration_other_params["Enable_Migration_Heterogeneity"] = 0
 
-    def update_migration_pattern(self, migration_pattern: MigrationPattern, **kwargs) -> NoReturn:
+    def update_migration_pattern(self, migration_pattern: MigrationPattern, **kwargs) -> None:
         """
         Update migration pattern
 
@@ -81,7 +81,7 @@ class MigrationFiles(InputFilesList):
             **kwargs:
 
         Returns:
-            NoReturn
+            None
         """
         self.enable_migration()
         self.migration_pattern = migration_pattern
@@ -126,7 +126,8 @@ class MigrationFiles(InputFilesList):
             task.set_parameter("Migration_Pattern", self.migration_pattern.value)
 
         # Set the extra parameters
-        task.update_parameters(self.migration_other_params)
+        for parameter in self.migration_other_params:
+            task.set_parameter(parameter, self.migration_other_params[parameter])
 
         # Enable or disable migrations depending on the available files
         for migration_type in MigrationTypes:
@@ -172,7 +173,7 @@ class MigrationFiles(InputFilesList):
             asset.persisted = True
         super().set_all_persisted()
 
-    def merge_with(self, mf: 'MigrationFiles', left_precedence: bool = True) -> NoReturn:
+    def merge_with(self, mf: 'MigrationFiles', left_precedence: bool = True) -> None:
         """
         Merge migration file with other Migration file
 
@@ -181,7 +182,7 @@ class MigrationFiles(InputFilesList):
             left_precedence: Does the current object have precedence or the other object?
 
         Returns:
-
+            None
         """
         if not left_precedence:
             self.migration_files.update(mf.migration_files)
@@ -236,7 +237,7 @@ class DemographicsFiles(InputFilesList):
             extend:
 
         Returns:
-
+            None
         """
         dfiles = [os.path.join(df.relative_path, df.filename) for df in self.assets]
         if dfiles:
@@ -248,25 +249,42 @@ class DemographicsFiles(InputFilesList):
                 task.config["Demographics_Filenames"] = demo_list
             else:
                 task.config["Demographics_Filenames"] = dfiles
+            task.config["Enable_Demographics_Builtin"] = 0
 
-    def add_demographics_from_file(self, absolute_path: str, filename: Optional[str] = None):
+    def add_demographics_from_files(self, absolute_path: str, filename: Optional[str] = None):
         """
-        Add demographics from a file
+        Add demographics files into the demographics.assets from a file or from a directory
 
         Args:
-            absolute_path: Path to file
+            absolute_path: Path to file, including the filename or folder. All .json files in the folder
+                will be added as demographics files and used in the experiment.
             filename: Optional filename. If not provided, the file name of source file will be used
-
-        Returns:
 
         """
         filename = filename or os.path.basename(absolute_path)
-        asset = Asset(filename=filename, relative_path=self.relative_path, absolute_path=absolute_path)
 
-        if asset in self.assets:
-            raise Exception("Duplicated demographics file")
+        def add_asset(file_name, abs_path):
+            asset = Asset(filename=file_name, relative_path=self.relative_path, absolute_path=abs_path)
+            if asset in self.assets:
+                raise Exception("Duplicated demographics file")
+            self.assets.append(asset)
 
-        self.assets.append(asset)
+        if os.path.isfile(absolute_path):
+            if absolute_path.endswith(".json"):
+                add_asset(file_name=filename, abs_path=absolute_path)
+            else:
+                raise ValueError(f" {absolute_path} is not a *.json file")
+        elif os.listdir(absolute_path):  # it's a directory
+            files_added = 0
+            for entry_name in os.listdir(absolute_path):
+                full_path = os.path.join(absolute_path, entry_name)
+                if full_path.endswith(".json"):
+                    add_asset(file_name=filename, abs_path=absolute_path)
+                    files_added += 1
+            if not files_added:
+                raise ValueError(f"No *.json demographics files found in {absolute_path}")
+        else:
+            raise ValueError(f"{absolute_path} is not a file or a directory")
 
     def add_demographics_from_dict(self, content: Dict, filename: str):
         """

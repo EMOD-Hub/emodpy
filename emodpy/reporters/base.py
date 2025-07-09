@@ -1,258 +1,409 @@
-import dataclasses
 import json
 from abc import ABCMeta, abstractmethod
-from dataclasses import dataclass, field
-from functools import partial
-from importlib import import_module
-from logging import getLogger
+from emod_api import schema_to_class as s2c
+from emodpy.emod_file import InputFilesList
+from emodpy.utils import (validate_key_value_pair, validate_value_range, validate_node_ids, validate_intervention_name)
+from emodpy.utils.emod_constants import MAX_FLOAT, MAX_AGE_YEARS
 
 import typing
-from idmtools.assets import Asset
-from idmtools.utils.filters.asset_filters import file_extension_is
-
-from emodpy.emod_file import InputFilesList
-
-logger = getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from emodpy.emod_task import EMODTask
 
 
-@dataclass
-class BaseReporter(metaclass=ABCMeta):
+class ReportFilter:
+    """
+    This class is designed to configure common filter parameters for generating simulation reports. It provides a range
+    of options to specify the time period, nodes, and individual criteria for data collection.
+
+    Args:
+        start_day (float, optional):
+            - The day of the simulation to start collecting data.
+            - Minimum value: 0
+            - Maximum value: 3.40282e+38
+            - Default value: 0
+        end_day (float, optional):
+            - The day of simulation to stop collecting data.
+            - Minimum value: 0
+            - Maximum value: 3.40282e+38
+            - Default value: 3.40282e+38
+        start_year (float, optional):
+            - This only applies to HIV_SIM
+            - The simulation time in years to start collecting data. Use decimals to start collecting data not
+              at the beginning of the year.
+            - Minimum value: 1900
+            - Maximum value: 2200
+            - Default value: 1900
+        end_year (float, optional):
+            - This only applies to HIV_SIM
+            - The simulation time in years to stop collecting data. Use decimals to start collecting data not
+              at the beginning of the year.
+            - Minimum value: 1900
+            - Maximum value: 2200
+            - Default value: 2200
+        filename_suffix (str, optional):
+            - Augments the filename of the report. This allows you to generate multiple reports for
+              distinguishing among them.
+            - Default value: ""
+        node_ids (list[int], optional):
+            - A list of nodes ids from which to collect data for the report. Use empty array or None to collect data
+              from all nodes. Node ids must be integers.
+            - Minimum value: 0
+            - Maximum value: 3.40282e+38
+            - Default value: None
+        min_age_years (float, optional):
+            - Minimum age, in years, that a person can be to be included in the report.
+            - Minimum value: 0
+            - Maximum value: 1000
+            - Default value: 0
+        max_age_years (float, optional):
+            - Maximum age, in years, that a person can be to be included in the report.
+            - Minimum value: 0
+            - Maximum value: 1000
+            - Default value: 1000
+        must_have_ip_key_value (str, optional):
+            - A string formatted as "Key:Value", representing a specific IndividualProperty key-value pair required
+              for an individual to be included in the report. For HIV_SIM, when reporting on relationships, at least
+              one partner must have this property for the relationship to be included in the report. If set to an empty
+              string or None, no filtering is applied, and all individuals are included. For malaria, see
+              :doc:`emod-malaria:emod/model-properties` and for HIV, see :doc:`emod-hiv:emod/model-properties`.
+            - Default value: ""
+        must_have_intervention (str, optional):
+            - The intervention_name parameter in the campaigns are the available values for this parameter.
+              that an individual must have to be included in the report. For HIV_SIM, at least one partner must have
+              this intervention for inclusion when reporting on relationships. If set to an empty string or None, no
+              filtering is applied, and all individuals are included.
+            - Default value: ""
+
+    """
+
+    def __init__(self,
+                 start_day: float = None,
+                 end_day: float = None,
+                 start_year: float = None,
+                 end_year: float = None,
+                 filename_suffix: str = "",
+                 node_ids: list[int] = None,
+                 min_age_years: float = None,
+                 max_age_years: float = None,
+                 must_have_ip_key_value: str = "",
+                 must_have_intervention: str = ""):
+
+        self.start_day = None
+        self.end_day = None
+        self.start_year = None
+        self.end_year = None
+        self.filename_suffix = None
+        self.node_ids = None
+        self.min_age_years = None
+        self.max_age_years = None
+        self.must_have_ip_key_value = None
+        self.must_have_intervention = None
+
+        if start_day and end_day:
+            if start_day >= end_day:
+                raise ValueError(f"start_day = {start_day} must less than end_day = {end_day}.")
+        if start_year and end_year:
+            if start_year >= end_year:
+                raise ValueError(f"start_year = {start_year} must less than end_year = {end_year}.")
+        if min_age_years and max_age_years:
+            if min_age_years >= max_age_years:
+                raise ValueError(f"min_age_years = {min_age_years} must less than max_age_years = {max_age_years}.")
+
+        # Set the validated parameters to the class attributes
+        if start_day:
+            self.start_day = validate_value_range(param=start_day,
+                                                  param_name="start_day",
+                                                  min_value=0,
+                                                  max_value=MAX_FLOAT,
+                                                  param_type=float)
+        if end_day:
+            self.end_day = validate_value_range(param=end_day,
+                                                param_name="end_day",
+                                                min_value=0,
+                                                max_value=MAX_FLOAT,
+                                                param_type=float)
+        if start_year:
+            self.start_year = validate_value_range(param=start_year,
+                                                   param_name="start_year",
+                                                   min_value=1900,
+                                                   max_value=2200,
+                                                   param_type=float)
+        if end_year:
+            self.end_year = validate_value_range(param=end_year,
+                                                 param_name="end_year",
+                                                 min_value=1900,
+                                                 max_value=2200,
+                                                 param_type=float)
+        if filename_suffix:
+            self.filename_suffix = filename_suffix
+
+        if node_ids:
+            self.node_ids = validate_node_ids(node_ids)
+
+        if min_age_years:
+            self.min_age_years = validate_value_range(param=min_age_years,
+                                                      param_name="min_age_years",
+                                                      min_value=0,
+                                                      max_value=MAX_AGE_YEARS,
+                                                      param_type=float)
+        if max_age_years:
+            self.max_age_years = validate_value_range(param=max_age_years,
+                                                      param_name="max_age_years",
+                                                      min_value=0,
+                                                      max_value=MAX_AGE_YEARS,
+                                                      param_type=float)
+        if must_have_ip_key_value:
+            self.must_have_ip_key_value = validate_key_value_pair(s=must_have_ip_key_value)
+        if must_have_intervention:
+            self.must_have_intervention = validate_intervention_name(intervention_name=must_have_intervention)
+
+
+class AbstractBaseReporter(metaclass=ABCMeta):
+    """
+
+    """
+
+    def __init__(self):
+        self.parameters = None
+
+    def _set_report_filter_parameters(self, report_filter: ReportFilter, reporter_class_name: str) -> None:
+        """
+        Set the common parameters of the intervention.
+        Args:
+            report_filter (ReportFilter): Class that contains common report filter parameters
+            reporter_class_name (str): Name of the reporter class. Used by the reporters configured via config.json
+
+        Returns:
+            None, modifies the reporter parameters in place.
+
+        """
+        if not isinstance(report_filter, ReportFilter):
+            raise ValueError(f'report_filter must be an instance of ReportFilter, not '
+                             f'{type(report_filter)}')
+
+        if report_filter.start_day is not None:
+            self._set_start_day(start_day=report_filter.start_day, reporter_class_name=reporter_class_name)
+        if report_filter.end_day is not None:
+            self._set_end_day(end_day=report_filter.end_day, reporter_class_name=reporter_class_name)
+        if report_filter.start_year is not None:
+            self._set_start_year(start_year=report_filter.start_year, reporter_class_name=reporter_class_name)
+        if report_filter.end_year is not None:
+            self._set_end_year(end_year=report_filter.end_year, reporter_class_name=reporter_class_name)
+        if report_filter.node_ids is not None:
+            self._set_node_ids(node_ids=report_filter.node_ids, reporter_class_name=reporter_class_name)
+        if report_filter.must_have_ip_key_value:
+            self._set_must_have_ip_key_value(must_have_ip_key_value=report_filter.must_have_ip_key_value,
+                                             reporter_class_name=reporter_class_name)
+        if report_filter.must_have_intervention:
+            self._set_must_have_intervention(must_have_intervention=report_filter.must_have_intervention,
+                                             reporter_class_name=reporter_class_name)
+        if report_filter.filename_suffix:
+            self._set_filename_suffix(filename_suffix=report_filter.filename_suffix,
+                                      reporter_class_name=reporter_class_name)
+        if report_filter.min_age_years is not None:
+            self._set_min_age_years(min_age_years=report_filter.min_age_years, reporter_class_name=reporter_class_name)
+        if report_filter.max_age_years is not None:
+            self._set_max_age_years(max_age_years=report_filter.max_age_years, reporter_class_name=reporter_class_name)
+
     @abstractmethod
-    def to_dict(self):
+    def _set_start_day(self, start_day: float, reporter_class_name: str) -> None:
         pass
 
-    def from_dict(self, data):
-        """
-        Function allowing to initialize a Reporter instance with data.
-        This function is called when reading a `custom_reports.json` file.
-        """
-        for k, v in data.items():
-            setattr(self, k, v)
+    @abstractmethod
+    def _set_end_day(self, end_day: float, reporter_class_name: str) -> None:
+        pass
+
+    @abstractmethod
+    def _set_start_year(self, start_year: float, reporter_class_name: str) -> None:
+        pass
+
+    @abstractmethod
+    def _set_end_year(self, end_year: float, reporter_class_name: str) -> None:
+        pass
+
+    @abstractmethod
+    def _set_node_ids(self, node_ids: list[int], reporter_class_name: str) -> None:
+        pass
+
+    @abstractmethod
+    def _set_must_have_ip_key_value(self, must_have_ip_key_value: str, reporter_class_name: str) -> None:
+        pass
+
+    @abstractmethod
+    def _set_must_have_intervention(self, must_have_intervention: str, reporter_class_name: str) -> None:
+        pass
+
+    @abstractmethod
+    def _set_filename_suffix(self, filename_suffix: str, reporter_class_name: str) -> None:
+        pass
+
+    @abstractmethod
+    def _set_min_age_years(self, min_age_years: float, reporter_class_name: str) -> None:
+        pass
+
+    @abstractmethod
+    def _set_max_age_years(self, max_age_years: float, reporter_class_name: str) -> None:
+        pass
+
+    @abstractmethod
+    def to_dict(self) -> dict:
+        pass
 
 
-@dataclass
-class CustomReporter(BaseReporter):
+class BuiltInReporter(AbstractBaseReporter):
     """
-    This class represents a custom reporter.
-    - name: Name that will be added to the custom_reports.json file and should match the DLL's class name
-    - Enabled: True/False to enable/disable the reporter
-    - Reports: Default section present in the custom_reports.json file allowing to configure the reporter
-    - dll_file: Filename of the dll containing the reporter. This file will be searched in the dll folder specified
-    by the user on the `EMODTask.reporters`.
+    BuiltInReporter class, not intended to be used directly
+
+    This class supports the reporters whose parameters are configured in "custom_reporters.json" file
+
     """
-    name: str = field(default=None)
-    Enabled: bool = field(default=True)
-    Reports: list = field(default_factory=lambda: list())
-    dll_file: str = field(default=None)
 
-    def to_dict(self) -> typing.Dict:
-        """
-        Export the reporter to a dictionary.
-        This function is called when serializing the reporter before writing the custom_reports.json file.
-        """
-        return {
-            "name": self.name,
-            "Enabled": 1 if self.Enabled else 0,
-            "Reports": self.Reports
-        }
+    def __init__(self,
+                 reporters_object: 'Reporters',
+                 reporter_class_name: str,
+                 report_filter: ReportFilter = None):
+        super().__init__()
+        self.parameters: s2c.ReadOnlyDict = s2c.get_class_with_defaults(reporter_class_name,
+                                                                        reporters_object.get_schema_path())
+        if report_filter is not None:
+            self._set_report_filter_parameters(report_filter=report_filter, reporter_class_name=reporter_class_name)
 
-    def enable(self):
-        self.Enabled = True
+    def _set_start_day(self, start_day: float, reporter_class_name: str) -> None:
+        self.parameters.Start_Day = start_day
 
-    def disable(self):
-        self.Enabled = False
+    def _set_end_day(self, end_day: float, reporter_class_name: str) -> None:
+        self.parameters.End_Day = end_day
 
-    def _add_report(self, report):
-        self.Reports.append(report)
+    def _set_start_year(self, start_year: float, reporter_class_name: str) -> None:
+        self.parameters.Start_Year = start_year
+
+    def _set_end_year(self, end_year: float, reporter_class_name: str) -> None:
+        self.parameters.End_Year = end_year
+
+    def _set_node_ids(self, node_ids: list[int], reporter_class_name: str) -> None:
+        self.parameters.Node_IDs_Of_Interest = node_ids
+
+    def _set_min_age_years(self, min_age_years: float, reporter_class_name: str) -> None:
+        self.parameters.Min_Age_Years = min_age_years
+
+    def _set_max_age_years(self, max_age_years: float, reporter_class_name: str) -> None:
+        self.parameters.Max_Age_Years = max_age_years
+
+    def _set_must_have_ip_key_value(self, must_have_ip_key_value: str, reporter_class_name: str) -> None:
+        self.parameters.Must_Have_IP_Key_Value = must_have_ip_key_value
+
+    def _set_must_have_intervention(self, must_have_intervention: str, reporter_class_name: str) -> None:
+        self.parameters.Must_Have_Intervention = must_have_intervention
+
+    def _set_filename_suffix(self, filename_suffix: str, reporter_class_name: str) -> None:
+        self.parameters.Filename_Suffix = filename_suffix
+
+    def to_dict(self) -> dict:
+        # Transform into a dict by massaging the ReadOnlyDict and typing as dictionary
+        self.parameters.finalize()
+        self.parameters.pop("Sim_Types")
+        return dict(self.parameters)
 
 
-@dataclass
-class BuiltInReporter(BaseReporter):
-    class_name: str = field(default=None)
-    parameters: dict = field(default_factory=lambda: dict())
-    Enabled: bool = field(default=True)
-    Pretty_Format: bool = field(default=True)
+class ConfigReporter(AbstractBaseReporter):
+    """
+    ConfigReporter class, not intended to be used directly
 
-    def to_dict(self):
+    This class supports the reporters whose parameters are configured in config.json
+
+    """
+
+    def __init__(self,
+                 reporter_parameter_prefix: str,
+                 report_filter: ReportFilter = None):
+        super().__init__()
+        self.parameters = dict()
+        self.parameters[f"{reporter_parameter_prefix}"] = 1  # enables the report
+        if report_filter is not None:
+            self._set_report_filter_parameters(report_filter=report_filter,
+                                               reporter_class_name=reporter_parameter_prefix)
+
+    def _set_start_day(self, start_day: float, reporter_class_name: str) -> None:
+        self.parameters[f"{reporter_class_name}_Start_Day"] = start_day
+
+    def _set_end_day(self, end_day: float, reporter_class_name: str) -> None:
+        self.parameters[f"{reporter_class_name}_End_Day"] = end_day
+
+    def _set_start_year(self, start_year: float, reporter_class_name: str) -> None:
+        self.parameters[f"{reporter_class_name}_Start_Year"] = start_year
+
+    def _set_end_year(self, end_year: float, reporter_class_name: str) -> None:
+        self.parameters[f"{reporter_class_name}_End_Year"] = end_year
+
+    def _set_node_ids(self, node_ids: list[int], reporter_class_name: str) -> None:
+        self.parameters[f"{reporter_class_name}_Node_IDs_Of_Interest"] = node_ids
+
+    def _set_must_have_ip_key_value(self, must_have_ip_key_value: str, reporter_class_name: str) -> None:
+        self.parameters[f"{reporter_class_name}_Must_Have_IP_Key_Value"] = must_have_ip_key_value
+
+    def _set_must_have_intervention(self, must_have_intervention: str, reporter_class_name: str) -> None:
+        self.parameters[f"{reporter_class_name}_Must_Have_Intervention"] = must_have_intervention
+
+    def _set_filename_suffix(self, filename_suffix: str, reporter_class_name: str) -> None:
+        self.parameters[f"{reporter_class_name}_Filename_Suffix"] = filename_suffix
+
+    def _set_min_age_years(self, min_age_years: float, reporter_class_name: str) -> None:
+        self.parameters[f"{reporter_class_name}_Min_Age_Years"] = min_age_years
+
+    def _set_max_age_years(self, max_age_years: float, reporter_class_name: str) -> None:
+        self.parameters[f"{reporter_class_name}_Max_Age_Years"] = max_age_years
+
+    def to_dict(self) -> dict:
         # Transform into a dict
-        out = dataclasses.asdict(self)
-
-        # Retrieve the extra parameters
-        parameters = out.pop("parameters")
-
-        # Apply them
-        out.update(parameters)
-
-        # Rename class_name into class
-        out["class"] = out.pop("class_name")
-        out["Enabled"] = 1 if out.pop("Enabled") else 0
-        out["Pretty_Format"] = 1 if out.pop("Pretty_Format") else 0
-
-        return out
-
-    def from_dict(self, data):
-        """
-        Function allowing to initialize a Reporter instance with data.
-        This function is called when reading a `custom_reports.json` file.
-        """
-        for k, v in data.items():
-            if hasattr(self, k):
-                setattr(self, k, v)
-            else:
-                self.parameters[k] = v
+        return self.parameters
 
 
 class Reporters(InputFilesList):
-    def __init__(self, relative_path="reporter_plugins"):
-        super().__init__(relative_path)
-        self.custom_reporters = []
-        self.built_in_reporters = []
-        self.Use_Explicit_Dlls = True
+    def __init__(self, schema_path: str = None):
+        super().__init__(relative_path=None)
+        self.builtin_reporters = []
+        self.config_reporters = []
+        self.schema_path = schema_path
 
-    def add_reporter(self, reporter):
+    def __len__(self):
+        return len(self.builtin_reporters) + len(self.config_reporters)
+
+    def get_schema_path(self) -> str:
+        if not self.schema_path:
+            raise ValueError("schema_path is not set.")
+        return self.schema_path
+
+    def add(self, reporter: AbstractBaseReporter) -> None:
         if isinstance(reporter, BuiltInReporter):
-            self.built_in_reporters.append(reporter)
-        elif isinstance(reporter, CustomReporter):
-            self.custom_reporters.append(reporter)
+            self.builtin_reporters.append(reporter)
+        elif isinstance(reporter, ConfigReporter):
+            for config_reporter in self.config_reporters:
+                if config_reporter.__class__.__name__ == reporter.__class__.__name__:
+                    raise Exception(f"Reporter {reporter.__class__.__name__} is a ConfigReporter type and "
+                                    f"cannot be added more than once and there is already one of these in the list."
+                                    f"Please update to add only one"
+                                    f" {reporter.__class__.__name__} to the Reporters object.")
+            self.config_reporters.append(reporter)
         else:
-            raise Exception("Reporters added needs to be either BuiltInReporter or CustomReporter instance!")
+            raise Exception(f"Your report is not of BuiltInReporter or ConfigReporter instance, type: {type(reporter)}!")
 
     @property
     def json(self):
-        out = {"Reports": [r.to_dict() for r in self.built_in_reporters],
-               "Custom_Reports": {"Use_Explicit_Dlls": 1 if self.Use_Explicit_Dlls else 0}}
-
-        for custom in self.custom_reporters:
-            custom_dict = custom.to_dict()
-            name = custom_dict.pop("name")
-            out["Custom_Reports"][name] = custom_dict
-
+        out = {"Reports": [r.to_dict() for r in self.builtin_reporters], "Use_Defaults": 1}
         return json.dumps(out, indent=2)
 
-    @property
-    def empty(self):
-        return not self.custom_reporters and not self.built_in_reporters
-
-    def add_dll(self, dll_path: str):
+    def set_task_config(self, task: 'EMODTask') -> None:
         """
-        Add a dll file from a path
+        Note: not using this method in the current implementation
+        because: task has Reporters object, but we have to give task to Reporters object so
+        that Reporters object can configure stuff in task. It makes more sense for Task to take Reporters object
+        and configure itself.
 
-        Args:
-            dll_path: Path to file
-
-        Returns:
-
-        """
-        self.add_asset(Asset(absolute_path=dll_path, relative_path=self.relative_path), fail_on_duplicate=False)
-
-    def add_dll_folder(self, dll_folder: str):
-        """
-        Add all the dll files from a folder
-
-        Args:
-            dll_folder: Folder to add the dll file from
-
-        Returns:
-
-        """
-        filter_extensions = partial(file_extension_is, extensions=['dll', 'so'])
-        self.add_directory(dll_folder, recursive=True, flatten=True, relative_path=self.relative_path,
-                           filters=[filter_extensions])
-
-    def read_custom_reports_file(self, custom_reports_path, extra_classes=[]) -> typing.NoReturn:
-        """
-        Read from a custom reporter file
-
-        Args:
-            custom_reports_path: The custom reports file to add(single file).
-        """
-        custom_reports_file = json.load(open(custom_reports_path))
-        custom_reporters = custom_reports_file.get("Custom_Reports", {})
-        built_in_reporters = custom_reports_file.get("Reports", [])
-
-        self.Use_Explicit_Dlls = custom_reporters.pop(
-            "Use_Explicit_Dlls") if "Use_Explicit_Dlls" in custom_reporters else True
-
-        def get_reporter_class(reporter_class, builtin):
-            import inspect
-
-            # First check the extra_classes
-            for extra_class in extra_classes:
-                base_class = inspect.getmro(extra_class)[1]
-                if extra_class.name == reporter_class and base_class == (BuiltInReporter if builtin else CustomReporter):
-                    return extra_class
-
-            # Then try to find the class in emodpy reporters
-            try:
-                if builtin:
-                    return getattr(import_module('emodpy.reporters.builtin'), reporter_class)
-                else:
-                    return getattr(import_module('emodpy.reporters.custom'), reporter_class)
-            except AttributeError:
-                pass
-
-            # To finish check the globals
-            try:
-                return globals()[reporter_class]
-            except Exception:
-                raise Exception(f"Could not find the reporter class {reporter_class}. Make sure the class "
-                                f"is defined either in your run file or part of the Custom/BuiltIn reporters")
-
-        for report_name, report in custom_reporters.items():
-            instance = get_reporter_class(report_name, builtin=False)()
-            instance.from_dict(report)
-            instance.Enabled = report.get("Enabled", True)
-            self.add_reporter(instance)
-
-        for report in built_in_reporters:
-            instance = get_reporter_class(report["class"], builtin=True)()
-            instance.from_dict(report)
-            instance.Enabled = report.get("Enabled", True)
-            self.add_reporter(instance)
-
-    def set_task_config(self, task: 'EMODTask') -> typing.NoReturn:
-        """
-        Set task config
+        Configures reporter settings for config.json in the simulation
 
         Args:
             task: Task to configure
 
-        Returns:
-
         """
-        if not self.empty:
-            if type(task.config) is dict:
-                task.config["Custom_Reports_Filename"] = "custom_reports.json"
-            else:
-                task.config.parameters.Custom_Reports_Filename = "custom_reports.json"
-
-    def gather_assets(self, **kwargs) -> typing.List[Asset]:
-        # Remove the unused dlls from the folder
-        needed_dlls = set()
-        for custom in self.custom_reporters:
-            dll_file = custom.dll_file
-            is_linux = kwargs.get('is_linux', None)
-            if is_linux:
-                from pathlib import Path
-                dll_file = Path(dll_file).with_suffix(".so")
-            needed_dlls.add(str(dll_file))
-
-        # Let's make a copy so we can iterate and delete...
-        import copy
-        iterator_copy = copy.deepcopy(self.assets)
-        for asset in iterator_copy:
-            if asset.filename not in needed_dlls:
-                print(f"Removing unneeded asset: {asset}.")
-                self.assets.remove(asset)
-
-        if len(needed_dlls) != len(self):
-            from click import secho
-            secho(f"Some DLLs may be missing.\n"
-                  f"Please ensure you set the task.reporters.add_dll_folder with the folder containing the DLLs!\n"
-                  f"Found DLLs: {[a.filename for a in self]}\n"
-                  f"Needed DLLs: {needed_dlls}\n", fg="bright_red")
-
-        return super().gather_assets()
+        pass

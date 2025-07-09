@@ -1,10 +1,9 @@
 import json
 import pytest
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
+import unittest
 
-
-@pytest.mark.emod
-class EmodpyImportTest(ITestWithPersistence):
+@pytest.mark.unit
+class EmodpyImportTest(unittest.TestCase):
     def setUp(self) -> None:
         self.expected_items = None
         self.found_items = None
@@ -24,13 +23,13 @@ class EmodpyImportTest(ITestWithPersistence):
     def test_package_emodpy(self):
         import emodpy
         self.expected_items = [
-            "bamboo_api_utils",
-            "emod_campaign"
+            "emod_file",
+            "emod_task"
         ]
         self.verify_expected_items_present(namespace=emodpy)
 
     def test_module_emod_campaign(self):
-        import emodpy.emod_campaign as e_c
+        import emodpy.campaign.emod_campaign as e_c
         self.expected_items = [
             "EMODCampaign"
         ]
@@ -47,26 +46,18 @@ class EmodpyImportTest(ITestWithPersistence):
         self.assertTrue(observed_use_defaults)
 
         test_campaign_specified = e_c.EMODCampaign(
-            name=specified_campaign_name,
-            use_defaults=False
+            name=specified_campaign_name
         )
         self.assertIsNotNone(test_campaign_specified)
         test_campaign_specified_string = test_campaign_specified.json
         test_campaign_specified_dict = json.loads(test_campaign_specified_string)
 
         self.assertEqual(specified_campaign_name, test_campaign_specified_dict["Campaign_Name"])
-        self.assertFalse(test_campaign_specified_dict["Use_Defaults"])
+        self.assertTrue(test_campaign_specified_dict["Use_Defaults"])
         pass
 
-    def test_module_emod_bamboo(self):
-        import emodpy.bamboo as e_b
-        self.expected_items = [
-            "get_model_files"
-        ]
-        self.verify_expected_items_present(namespace=e_b)
-
     def test_collections_utils(self):
-        import emodpy.collections_utils as c_u
+        import emodpy.utils.collections_utils as c_u
         self.expected_items = [
             "cut_iterable_to",
             "deep_get",
@@ -93,24 +84,33 @@ class EmodpyImportTest(ITestWithPersistence):
     def test_emod_task(self):
         import emodpy.emod_task as e_t
         self.expected_items = [
-            "add_ep4_from_path",
-            "default_ep4_fn",
             "EMODTask",
             "EMODTaskSpecification"
         ]
         self.verify_expected_items_present(namespace=e_t)
 
-    def test_emod_utils(self):
-        import emodpy.utils as ut
+    def test_emodpy_collection_utils(self):
+        import emodpy.utils.collections_utils as ut
         self.expected_items = [
-            "get_github_eradication_url",
-            "save_bamboo_credentials",
-            "bamboo_api_login",
-            "download_bamboo_artifacts",
-            "download_latest_bamboo",
-            "download_latest_eradication",
-            "download_latest_reporters",
-            "download_latest_schema",
-            "download_from_url"
+            "cut_iterable_to",
+            "deep_get",
+            "deep_set",
+            "deep_del"
         ]
         self.verify_expected_items_present(namespace=ut)
+
+    def test_distributions_import(self):
+        import emodpy.utils.distributions as dist
+        self.expected_items = [
+            "BaseDistribution",
+            "ConstantDistribution",
+            "UniformDistribution",
+            "GaussianDistribution",
+            "ExponentialDistribution",
+            "PoissonDistribution",
+            "LogNormalDistribution",
+            "DualConstantDistribution",
+            "WeibullDistribution",
+            "DualExponentialDistribution"
+        ]
+        self.verify_expected_items_present(namespace=dist)

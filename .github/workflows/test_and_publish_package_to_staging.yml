@@ -1,0 +1,27 @@
+name: test_and_publish_package_to_staging.yml
+
+on:
+  push:
+    branches:
+      # only run this on
+      - 'main'
+    paths:
+      - 'emodpy/**'
+      - "pyproject.toml"
+
+jobs:
+  run-pr-tests:
+    uses: ./.github/workflows/run-pr-tests.yml
+
+  run-comps-tests:
+    uses: ./.github/workflows/run-pr-tests.yml
+    secrets:
+      COMPS_USER: ${{ secrets.COMPS_USER }}
+      COMPS_PASSWORD: ${{ secrets.COMPS_PASSWORD }}
+
+  staging-build-package:
+    needs: [run-pr-tests, run-comps-tests]
+    uses: ./.github/workflows/staging-build-package.yml
+    secrets:
+      STAGING_ARTIFACTORY_USERNAME: ${{ secrets.STAGING_ARTIFACTORY_USERNAME }}
+      STAGING_ARTIFACTORY_PASSWORD: ${{ secrets.STAGING_ARTIFACTORY_PASSWORD }}

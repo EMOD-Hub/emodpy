@@ -1,0 +1,87 @@
+{
+    "Events": [
+        {
+            "Event_Coordinator_Config": {
+                "Demographic_Coverage": 0.7,
+                "Individual_Selection_Type": "DEMOGRAPHIC_COVERAGE",
+                "Intervention_Config": {
+                    "Actual_IndividualIntervention_Configs": [
+                        {
+                            "Broadcast_Event": "Test_Event",
+                            "Disqualifying_Properties": [],
+                            "Dont_Allow_Duplicates": 0,
+                            "Intervention_Name": "BroadcastEvent",
+                            "New_Property_Value": "",
+                            "class": "BroadcastEvent"
+                        },
+                        {
+                            "Cost_To_Consumer": 10,
+                            "Disqualifying_Properties": [],
+                            "Dont_Allow_Duplicates": 0,
+                            "Efficacy_Is_Multiplicative": 1,
+                            "Intervention_Name": "SimpleVaccine",
+                            "New_Property_Value": "",
+                            "Vaccine_Take": 1,
+                            "Vaccine_Type": "Generic",
+                            "Waning_Config": {
+                                "Durability_Map": {
+                                    "Times": [
+                                        2010,
+                                        2020
+                                    ],
+                                    "Values": [
+                                        0.9,
+                                        0.95
+                                    ]
+                                },
+                                "Expire_At_Durability_Map_End": 0,
+                                "Initial_Effect": 1,
+                                "Reference_Timer": 0,
+                                "class": "WaningEffectMapLinear"
+                            },
+                            "class": "SimpleVaccine"
+                        }
+                    ],
+                    "Coverage": 1,
+                    "Delay_Period_Distribution": "UNIFORM_DISTRIBUTION",
+                    "Delay_Period_Max": 365,
+                    "Delay_Period_Min": 0,
+                    "Disqualifying_Properties": [],
+                    "Dont_Allow_Duplicates": 0,
+                    "Intervention_Name": "DelayedIntervention",
+                    "New_Property_Value": "",
+                    "class": "DelayedIntervention"
+                },
+                "Node_Property_Restrictions": [],
+                "Number_Repetitions": 2,
+                "Property_Restrictions": [],
+                "Property_Restrictions_Within_Node": [
+                    {
+                        "Risk": "High"
+                    }
+                ],
+                "Target_Demographic": "ExplicitGender",
+                "Target_Gender": "Female",
+                "Target_Residents_Only": 0,
+                "Targeting_Config": {
+                    "Is_Equal_To": 0,
+                    "class": "IsPregnant"
+                },
+                "Timesteps_Between_Repetitions": 365,
+                "class": "StandardInterventionDistributionEventCoordinator"
+            },
+            "Event_Name": "test_event",
+            "Nodeset_Config": {
+                "Node_List": [
+                    1,
+                    2,
+                    3
+                ],
+                "class": "NodeSetNodeList"
+            },
+            "Start_Year": 1990,
+            "class": "CampaignEventByYear"
+        }
+    ],
+    "Use_Defaults": 1
+}

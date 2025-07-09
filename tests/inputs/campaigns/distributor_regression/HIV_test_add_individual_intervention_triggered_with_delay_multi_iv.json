@@ -1,0 +1,112 @@
+{
+    "Events": [
+        {
+            "Event_Coordinator_Config": {
+                "Demographic_Coverage": 1,
+                "Individual_Selection_Type": "DEMOGRAPHIC_COVERAGE",
+                "Intervention_Config": {
+                    "Actual_IndividualIntervention_Config": {
+                        "Actual_IndividualIntervention_Configs": [
+                            {
+                                "Broadcast_Event": "Test_BroadcastEvent",
+                                "Disqualifying_Properties": [],
+                                "Dont_Allow_Duplicates": 0,
+                                "Intervention_Name": "BroadcastEvent",
+                                "New_Property_Value": "",
+                                "class": "BroadcastEvent"
+                            },
+                            {
+                                "Cost_To_Consumer": 10,
+                                "Disqualifying_Properties": [],
+                                "Dont_Allow_Duplicates": 0,
+                                "Efficacy_Is_Multiplicative": 1,
+                                "Intervention_Name": "SimpleVaccine",
+                                "New_Property_Value": "",
+                                "Vaccine_Take": 1,
+                                "Vaccine_Type": "Generic",
+                                "Waning_Config": {
+                                    "Durability_Map": {
+                                        "Times": [
+                                            2010,
+                                            2020
+                                        ],
+                                        "Values": [
+                                            0.9,
+                                            0.95
+                                        ]
+                                    },
+                                    "Expire_At_Durability_Map_End": 0,
+                                    "Initial_Effect": 1,
+                                    "Reference_Timer": 0,
+                                    "class": "WaningEffectMapLinear"
+                                },
+                                "class": "SimpleVaccine"
+                            }
+                        ],
+                        "Coverage": 1,
+                        "Delay_Period_Distribution": "EXPONENTIAL_DISTRIBUTION",
+                        "Delay_Period_Exponential": 10,
+                        "Disqualifying_Properties": [],
+                        "Dont_Allow_Duplicates": 0,
+                        "Intervention_Name": "DelayedIntervention",
+                        "New_Property_Value": "",
+                        "class": "DelayedIntervention"
+                    },
+                    "Blackout_Event_Trigger": "",
+                    "Blackout_On_First_Occurrence": 0,
+                    "Blackout_Period": 0,
+                    "Demographic_Coverage": 0.7,
+                    "Disqualifying_Properties": [],
+                    "Distribute_On_Return_Home": 0,
+                    "Dont_Allow_Duplicates": 0,
+                    "Duration": 365,
+                    "Intervention_Name": "NodeLevelHealthTriggeredIV",
+                    "New_Property_Value": "",
+                    "Node_Property_Restrictions": [],
+                    "Property_Restrictions": [],
+                    "Property_Restrictions_Within_Node": [
+                        {
+                            "Risk": "High"
+                        }
+                    ],
+                    "Target_Age_Max": 20,
+                    "Target_Age_Min": 10,
+                    "Target_Demographic": "ExplicitAgeRangesAndGender",
+                    "Target_Gender": "Male",
+                    "Target_Residents_Only": 0,
+                    "Targeting_Config": {
+                        "Is_Equal_To": 0,
+                        "class": "IsPregnant"
+                    },
+                    "Trigger_Condition_List": [
+                        "Trigger1",
+                        "Trigger2"
+                    ],
+                    "class": "NodeLevelHealthTriggeredIV"
+                },
+                "Node_Property_Restrictions": [],
+                "Number_Repetitions": 1,
+                "Property_Restrictions": [],
+                "Property_Restrictions_Within_Node": [],
+                "Target_Demographic": "Everyone",
+                "Target_Gender": "All",
+                "Target_Residents_Only": 0,
+                "Targeting_Config": {},
+                "Timesteps_Between_Repetitions": -1,
+                "class": "StandardInterventionDistributionEventCoordinator"
+            },
+            "Event_Name": "test_event",
+            "Nodeset_Config": {
+                "Node_List": [
+                    1,
+                    2,
+                    3
+                ],
+                "class": "NodeSetNodeList"
+            },
+            "Start_Year": 1990,
+            "class": "CampaignEventByYear"
+        }
+    ],
+    "Use_Defaults": 1
+}

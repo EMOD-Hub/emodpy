@@ -17,17 +17,17 @@ Creating a simulation generally consists of 4 parts:
 Model Configuration
 ===================
 
-Model configuration starts with the schema which is provided along with the model binary in a emod-disease module, e.g., emod-measles. The emod-api module, a dependency of emodpy, provides the functionality to go from schema to configuration. You will pass a config builder function to the emod_task.from_default2 function here in emodpy.
+Model configuration starts with the schema which is provided along with the model binary in a emod-disease module, e.g., emod-measles. The emod-api module, a dependency of emodpy, provides the functionality to go from schema to configuration. You will pass a config builder function to the emod_task.from_default function here in emodpy.
 
 Demographics 
 ============
 
-Model configuration almost always includes some kind of specification of the demographics you want to model, even if it's just the number of people in your sim. You will do this in a demographics builder function which also gets passed to emod_task.from_default2. A working demographics configuration can be created from emod-api.demographics functionality, but most emodpy-disease modules have a demographics submodule with disease-specific capabilities. 
+Model configuration almost always includes some kind of specification of the demographics you want to model, even if it's just the number of people in your sim. You will do this in a demographics builder function which also gets passed to emod_task.from_default. A working demographics configuration can be created from emod-api.demographics functionality, but most emodpy-disease modules have a demographics submodule with disease-specific capabilities.
 
 Campaign
 ========
 
-After specifying the details of your disease and the people in your simulation, you'll soon want to start adding interventions. This is done in a campaign builder function, often called build_camp, but can be named what you want. You will also pass this function to emod_task.from_default2(). Your campaign will be built up from calls to intervention-specific functions in your emodpy-disease.interventions submodule. Though emod-api.interventions has some very simple starter functionality, like the ability to seed an outbreak which is important.
+After specifying the details of your disease and the people in your simulation, you'll soon want to start adding interventions. This is done in a campaign builder function, often called build_camp, but can be named what you want. You will also pass this function to emod_task.from_default(). Your campaign will be built up from calls to intervention-specific functions in your emodpy-disease.interventions submodule. Though emod-api.interventions has some very simple starter functionality, like the ability to seed an outbreak which is important.
 
 A campaign will consist of scheduled campaign events and/or triggered campaign events.
 

@@ -1,6 +1,6 @@
-==========================
-Frequently asked questions
-==========================
+===
+FAQ
+===
 
 As you get started with |EMODPY_s|, you may have questions. The most common
 questions are answered below. If you are using a disease-specific |EMODPY_s|
@@ -91,8 +91,8 @@ How do I make my sim run inside a custom environment (on COMPS) for the first ti
 There are 3 small steps for this:
 
 #. Add a line of code::
-
-       task.set_sif( manifest.sif )
+       platform = Platform("Calculon")
+       task.set_sif( manifest.sif, platform=platform )
 
    to your main Python script, after the task variable has been created.
 
@@ -107,8 +107,8 @@ There are 3 small steps for this:
  You can find a quasi-catalog of available SIF ids here: https://github.com/InstituteforDiseaseModeling/singularity_image_files/tree/master/emod.
 
  Note that you can of course just do this in one step, and add a line of code to your script like::
-
-    task.set_sif( "f1e6b032-47b7-ec11-a9f6-9440c9be2c51" )
+    platform = Platform("Calculon")
+    task.set_sif( "f1e6b032-47b7-ec11-a9f6-9440c9be2c51", platform=platform )
 
 But it's much preferred to follow the above pattern so that future changes to use another SIF can be isolated to the resource file.
 

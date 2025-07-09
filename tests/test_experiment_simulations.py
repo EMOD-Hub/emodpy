@@ -1,43 +1,83 @@
 import os
 import unittest
-
 import pytest
 from COMPS.Data import Suite as CompsSuite, Experiment as CompsExperiment, Simulation as CompsSimulation
 
 from idmtools.builders import SimulationBuilder
-from idmtools.core import ItemType
-from idmtools.core.platform_factory import Platform
 from idmtools.entities import Suite
+from idmtools.entities.templated_simulation import TemplatedSimulations
+from  idmtools_platform_file.platform_operations.utils import FileSuite
+from  idmtools_platform_file.platform_operations.utils import FileExperiment
+from  idmtools_platform_file.platform_operations.utils import FileSimulation
+
+# flake8: noqa W605,F821
+import json
+import os
+import time
+import pytest
+import unittest
+from idmtools.core import ItemType
+from emodpy.emod_task import EMODTask, logger
 from idmtools.entities.experiment import Experiment
 from idmtools.entities.simulation import Simulation
-from idmtools.entities.templated_simulation import TemplatedSimulations
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
-from emodpy.emod_task import EMODTask
-from emod_api.config import from_schema as fs
-from tests import manifest
+from idmtools.core.platform_factory import Platform
 
-# current_directory = os.path.dirname(os.path.realpath(__file__))
-# BIN_PATH = os.path.join(current_directory, "..", "examples", "inputs", "bin")
-# INPUT_PATH = os.path.join(current_directory, "..", "examples", "serialization", "inputs")
-sif_path = manifest.sft_id_file
+from pathlib import Path
+import sys
+
+parent = Path(__file__).resolve().parent
+sys.path.append(str(parent))
+import manifest
+import helpers
 
 
-@pytest.mark.comps
-class TestExperimentSimulations(ITestWithPersistence):
+class TestExperimentSimulations(unittest.TestCase):
+    """
+        Tests for EMODTask
+    """
+
+    def setUp(self) -> None:
+        self.num_sim = 2
+        self.num_sim_long = 20
+        self.case_name = os.path.basename(__file__) + "_" + self._testMethodName
+        print(f"\n{self.case_name}")
+        self.embedded_python_folder = manifest.embedded_python_folder
+        self.original_working_dir = os.getcwd()
+        self.task: EMODTask
+        self.experiment: Experiment
+        self.platform = Platform(manifest.container_platform_name)
+        self.test_folder = helpers.make_test_directory(self.case_name)
+        self.setup_custom_params()
+
+    def setup_custom_params(self):
+        self.builders = helpers.BuildersCommon
+
+    def tearDown(self) -> None:
+        # Check if the test failed and leave the data in the folder if it did
+        if any(error[1] for error in self._outcome.errors):
+            with open("experiment_location.txt", "w") as f:
+                if hasattr(self, "experiment") and hasattr(self.experiment, "uid"):
+                    f.write(f"The failed experiment can be viewed at {self.platform.endpoint}/#explore/"
+                            f"Simulations?filters=ExperimentId={self.experiment.uid}")
+                else:
+                    f.write("The experiment was not created.")
+            os.chdir(self.original_working_dir)
+            helpers.close_logger(logger.parent)
+        else:
+            helpers.close_logger(logger.parent)
+            if os.name == "nt":
+                time.sleep(1)  # only needed for windows
+            os.chdir(self.original_working_dir)
+            helpers.delete_existing_folder(self.test_folder)
 
     def get_sir_experiment(self, case_name) -> Experiment:
-        eradication_path = manifest.eradication_path_linux
-        schema_path = manifest.schema_path_linux
-        config_file = os.path.join(manifest.config_folder, 'test_suite_experiment.json')
-        manifest.delete_existing_file(config_file)
-        builder = fs.SchemaConfigBuilder(schema_name=schema_path, config_out=config_file)
-
-        base_task = EMODTask.from_files(config_path=config_file,
-                                        campaign_path=None,
-                                        demographics_paths=None,
-                                        eradication_path=eradication_path,
-                                        ep4_path=manifest.ep4_path)
+        base_task = EMODTask.from_files(config_path=self.builders.config_file,
+                                        campaign_path=self.builders.campaign_file,
+                                        demographics_paths=self.builders.demographics_file,
+                                        eradication_path=self.builders.eradication_path,
+                                        embedded_python_scripts_path=self.embedded_python_folder)
         base_task.set_parameter("Enable_Immunity", 0)
+        base_task.set_sif(self.builders.sif_path, platform=self.platform)
         # User builder to create simulations
         num_sims = 3
         builder = SimulationBuilder()
@@ -45,38 +85,20 @@ class TestExperimentSimulations(ITestWithPersistence):
         experiment = Experiment.from_builder(
             builder,
             base_task,
-            name=case_name,
+            name=self.case_name,
             tags={"idmtools": "idmtools-automation", "string_tag": "test", "number_tag": 123}
         )
         return experiment
 
-    def setUp(self):
-        super().setUp()
-        self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
-        print(self.case_name)
-        self.platform = Platform('SLURM')
 
-    def tearDown(self):
-        super().tearDown()
-
-    @pytest.mark.emod
+    @pytest.mark.container
     def test_mix_tasks_in_experiment(self):
-
-        # Create TemplatedSimulations with 3 sims
-        eradication_path = manifest.eradication_path_linux
-        schema_path = manifest.schema_path_linux
-        config_file = os.path.join(manifest.config_folder, 'config_mix_task_1.json')
-        manifest.delete_existing_file(config_file)
-        builder = fs.SchemaConfigBuilder(schema_name=schema_path, config_out=config_file)
-
-        task = EMODTask.from_files(config_path=config_file,
-                                   campaign_path=None,
-                                   demographics_paths=None,
-                                   eradication_path=eradication_path,
-                                   ep4_path=manifest.ep4_path)
+        task = EMODTask.from_files(config_path=self.builders.config_file_basic,
+                                   eradication_path=self.builders.eradication_path,
+                                   embedded_python_scripts_path=self.embedded_python_folder)
         task.tags = {"idmtools": "idmtools-automation", "string_tag": "test", "number_tag": 123}
         task.set_parameter("Enable_Immunity", 0)
-        task.set_sif(sif_path)
+        task.set_sif(self.builders.sif_path, platform=self.platform)
 
         # User builder to create simulations
         num_sims = 3
@@ -89,12 +111,10 @@ class TestExperimentSimulations(ITestWithPersistence):
         ts.add_simulation(sim)
 
         # Create another 3 simulations from different task
-        task1 = EMODTask.from_files(config_path=config_file,
-                                    campaign_path=None,
-                                    demographics_paths=None,
-                                    eradication_path=eradication_path,
-                                    ep4_path=manifest.ep4_path)
-        task1.set_sif(sif_path)
+        task1 = EMODTask.from_files(config_path=self.builders.config_file_basic,
+                                    eradication_path=self.builders.eradication_path,
+                                    embedded_python_scripts_path=self.embedded_python_folder)
+        task1.set_sif(self.builders.sif_path, platform=self.platform)
         # create another TemplatedSimulations with this task1
         ts1 = TemplatedSimulations([builder], base_task=task1)
 
@@ -112,6 +132,7 @@ class TestExperimentSimulations(ITestWithPersistence):
         self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
         print(f"Experiment {experiment.uid} succeeded.")
 
+    @pytest.mark.container
     def test_create_suite(self):
         from idmtools.entities.suite import Suite
         from COMPS.Data import Suite as CompsSuite
@@ -123,35 +144,39 @@ class TestExperimentSimulations(ITestWithPersistence):
         ids = self.platform.create_items([suite])
 
         suite_uid = ids[0][1]
-        comps_suite = self.platform.get_item(item_id=suite_uid, item_type=ItemType.SUITE, raw=True)
-        self.assertTrue(isinstance(comps_suite, CompsSuite))
+        got_suite = self.platform.get_item(item_id=suite_uid, item_type=ItemType.SUITE, raw=True)
+        suite_type_expected = FileSuite if manifest.container_platform_name == "ContainerPlatform" else CompsSuite
+        self.assertTrue(isinstance(got_suite, suite_type_expected))
 
     def run_experiment_and_test_suite(self, platform, suite):
         # Keep suite id
         suite_uid = suite.uid
         # ################## Test raw
         # Test suite retrieval
-        comps_suite = platform.get_item(item_id=suite_uid, item_type=ItemType.SUITE, raw=True)
-        self.assertTrue(isinstance(comps_suite, CompsSuite))
+        got_suite = platform.get_item(item_id=suite_uid, item_type=ItemType.SUITE, raw=True)
+        suite_type_expected = FileSuite if manifest.container_platform_name == "ContainerPlatform" else CompsSuite
+        self.assertTrue(isinstance(got_suite, suite_type_expected))
 
         # Test retrieve experiment from suite
-        exps = platform._get_children_for_platform_item(comps_suite)
+        exps = platform._get_children_for_platform_item(got_suite)
         self.assertEqual(len(exps), 1)
         exp = exps[0]
-        self.assertTrue(isinstance(exp, CompsExperiment))
+        experiment_type_expected = FileExperiment if manifest.container_platform_name == "ContainerPlatform" else CompsExperiment
+        self.assertTrue(isinstance(exp, experiment_type_expected))
         self.assertIsNotNone(exp.suite_id)
 
         # Test get parent from experiment
         comps_exp = platform.get_item(item_id=exp.id, item_type=ItemType.EXPERIMENT, raw=True)
         parent = platform._get_parent_for_platform_item(comps_exp)
-        self.assertTrue(isinstance(parent, CompsSuite))
+        self.assertTrue(isinstance(parent, suite_type_expected))
         self.assertEqual(parent.id, suite_uid)
 
         # Test retrieve simulations from experiment
         sims = platform._get_children_for_platform_item(comps_exp)
         self.assertEqual(len(sims), 3)
         sim = sims[0]
-        self.assertTrue(isinstance(sim, CompsSimulation))
+        simulation_type_expected = FileSimulation if manifest.container_platform_name == "ContainerPlatform" else CompsSimulation
+        self.assertTrue(isinstance(sim, simulation_type_expected))
         self.assertIsNotNone(sim.experiment_id)
 
         # ### Test idmtools objects
@@ -181,7 +206,7 @@ class TestExperimentSimulations(ITestWithPersistence):
         self.assertTrue(isinstance(sim, Simulation))
         self.assertIsNotNone(sim.parent)
 
-    @pytest.mark.long
+    @pytest.mark.container
     def test_suite_experiment(self):
         from idmtools.entities.suite import Suite
 
@@ -196,6 +221,15 @@ class TestExperimentSimulations(ITestWithPersistence):
         suite.run(True, platform=self.platform)
 
         self.run_experiment_and_test_suite(self.platform, suite)
+
+
+class TestExperimentSimulationsGeneric(TestExperimentSimulations):
+    """
+        Tests for EMODTask with Generic-Ongoing EMOD
+    """
+
+    def setup_custom_params(self):
+        self.builders = helpers.BuildersGeneric
 
 
 if __name__ == '__main__':

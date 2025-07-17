@@ -37,21 +37,6 @@ Repository="https://github.com/EMOD-Hub/emodpy"
 Issues="https://github.com/EMOD-Hub/emodpy/issues"
 
 [project.optional-dependencies]
-test = [
-    "emod-hiv",
-    "emod-malaria",
-    "emod-common",
-    "emod-generic",
-    "idmtools-test",
-    "pytest~=8.1",
-    "unittest-xml-reporting~=3.2",
-    "pytest-xdist",
-    "pytest-runner",
-    "pytest-timeout",
-    "pytest-cache",
-    "flake8",
-    "coverage",
-    "py-make"]
 packaging = [
     "build",
     "flake8",

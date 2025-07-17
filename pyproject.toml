@@ -17,7 +17,6 @@ authors = [
     {name = "Ye Chen", email = "ye.chen@gatesfoundation.org"}]
 keywords = ['modeling', 'IDM']
 dependencies = [
-    "click~=7.1",
     "idmtools~=2.0",
     "idmtools-platform-general~=2.0",
     "idmtools-platform-comps~=2.0",
@@ -25,12 +24,7 @@ dependencies = [
     "idmtools-platform-container~=2.0",
     "idmtools-models~=2.0",
     "emod-api~=2.0",
-    "matplotlib",
-    "astor",
-    "astunparse",
-    "bs4",
-    "keyring",
-    "requests~=2.29"]
+    "matplotlib"]
 license = {text = "MIT"}
 classifiers = [
     "Programming Language :: Python :: 3.9",
@@ -77,4 +71,3 @@ find = {include = ["emodpy*"]}
 
 [tool.pip]
 extra-index-url = "https://packages.idmod.org/api/pypi/pypi-production/simple"
-

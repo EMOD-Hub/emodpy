@@ -17,46 +17,21 @@ authors = [
     {name = "Ye Chen", email = "ye.chen@gatesfoundation.org"}]
 keywords = ['modeling', 'IDM']
 dependencies = [
-    "click~=7.1",
-    "idmtools~=2.0",
-    "idmtools-platform-comps~=2.0",
-    "idmtools-platform-slurm~=2.0",
-    "idmtools-platform-container~=2.0",
-    "idmtools-models~=2.0",
+    "idmtools[full]~=2.2",
     "emod-api~=2.0",
-    "matplotlib",
-    "astor",
-    "astunparse",
-    "bs4",
-    "keyring",
-    "requests~=2.29"]
+    "matplotlib"]
 license = {text = "MIT"}
 classifiers = [
     "Programming Language :: Python :: 3.9",
     "Framework:: IDM-Tools :: models",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"]
-    
+
 [project.urls]
 Repository="https://github.com/EMOD-Hub/emodpy"
 Issues="https://github.com/EMOD-Hub/emodpy/issues"
 
 [project.optional-dependencies]
-test = [
-    "emod-hiv",
-    "emod-malaria",
-    "emod-common",
-    "emod-generic",
-    "idmtools-test",
-    "pytest~=8.1",
-    "unittest-xml-reporting~=3.2",
-    "pytest-xdist",
-    "pytest-runner",
-    "pytest-timeout",
-    "pytest-cache",
-    "flake8",
-    "coverage",
-    "py-make"]
 packaging = [
     "build",
     "flake8",
@@ -76,4 +51,3 @@ find = {include = ["emodpy*"]}
 
 [tool.pip]
 extra-index-url = "https://packages.idmod.org/api/pypi/pypi-production/simple"
-

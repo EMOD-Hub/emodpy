@@ -18,11 +18,11 @@ authors = [
 keywords = ['modeling', 'IDM']
 dependencies = [
     "idmtools~=2.0",
+    "idmtools-models~=2.0",
     "idmtools-platform-general~=2.0",
     "idmtools-platform-comps~=2.0",
     "idmtools-platform-slurm~=2.0",
     "idmtools-platform-container~=2.0",
-    "idmtools-models~=2.0",
     "emod-api~=2.0",
     "matplotlib"]
 license = {text = "MIT"}

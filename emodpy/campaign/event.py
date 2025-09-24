@@ -3,7 +3,6 @@ from typing import Optional, List
 from emod_api import campaign as api_campaign, schema_to_class as s2c
 
 from emodpy.campaign.event_coordinator import BaseEventCoordinator
-from emodpy.campaign.utils import do_nodes
 from emodpy.utils import validate_value_range
 
 
@@ -56,9 +55,17 @@ class BaseEvent:
         """
         self._event = s2c.get_class_with_defaults(self.event_class_name, campaign.schema_path)
         self._event.Event_Coordinator_Config = self.coordinator.to_schema_dict()
-        self._event.Nodeset_Config = do_nodes(campaign.schema_path, self.node_ids)
+
+        if self.node_ids:
+            node_conf = s2c.get_class_with_defaults("NodeSetNodeList", campaign.schema_path)
+            node_conf.Node_List = node_ids
+        else:
+            node_conf = s2c.get_class_with_defaults("NodeSetAll", campaign.schema_path)
+        self._event.Nodeset_Config = node_conf
+
         if self.event_name:
             self._event['Event_Name'] = self.event_name  # Event_Name is not in Schema
+
         return self._event
 
 

@@ -1,6 +1,4 @@
 from emod_api import campaign as api_campaign
-from emod_api import schema_to_class as s2c
-import copy
 
 
 def set_event(broadcast_event: str, event_argument_name: str, campaign: api_campaign, optional: bool = True) -> str:

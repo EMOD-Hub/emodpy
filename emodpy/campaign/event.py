@@ -58,7 +58,7 @@ class BaseEvent:
 
         if self.node_ids:
             node_conf = s2c.get_class_with_defaults("NodeSetNodeList", campaign.schema_path)
-            node_conf.Node_List = node_ids
+            node_conf.Node_List = self.node_ids
         else:
             node_conf = s2c.get_class_with_defaults("NodeSetAll", campaign.schema_path)
         self._event.Nodeset_Config = node_conf

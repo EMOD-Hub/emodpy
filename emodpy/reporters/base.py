@@ -360,18 +360,23 @@ class ConfigReporter(AbstractBaseReporter):
 
 
 class Reporters(InputFilesList):
-    def __init__(self, schema_json: dict = None):
+    def __init__(self, schema_path: str = None):
         super().__init__(relative_path=None)
         self.builtin_reporters = []
         self.config_reporters = []
-        self.schema_json = schema_json
+        self.schema_path = schema_path
+        self.schema_json = None
+
+        if self.schema_path:
+            with open(self.schema_path) as schema_file:
+                self.schema_json = json.load(schema_file)
 
     def __len__(self):
         return len(self.builtin_reporters) + len(self.config_reporters)
 
     def get_schema_json(self) -> dict:
         if not self.schema_json:
-            raise ValueError("schema_json is not set.")
+            raise ValueError("schema_path is not set.")
         return self.schema_json
 
     def add(self, reporter: AbstractBaseReporter) -> None:

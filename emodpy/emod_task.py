@@ -406,10 +406,7 @@ class EMODTask(ITask):
             task.add_embedded_python_scripts_from_path(path=embedded_python_scripts_path)
 
         if report_builder:
-            with open(task.schema_path) as schema_file:
-                schema_json = json.load(schema_file)
-
-            task.reporters = Reporters(schema_json=schema_json)
+            task.reporters = Reporters(schema_path=task.schema_path)
             returned = report_builder(task.reporters)
             if not returned or not isinstance(returned, Reporters):
                 raise ValueError("Something went wrong with report_builder, please make sure "

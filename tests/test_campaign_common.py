@@ -139,6 +139,8 @@ class TestRepetitionConfigMalaria(TestMalaria, BaseTestRepetitionConfigTest):
 
 
 class BasePropertyRestrictionsTest(BaseTestClass):
+    EC_name = 'StandardEventCoordinator'
+
     def test_init(self):
         with self.assertWarns(Warning) as context:
             property_restrictions = PropertyRestrictions()
@@ -147,7 +149,7 @@ class BasePropertyRestrictionsTest(BaseTestClass):
         self.assertTrue("No property restrictions are provided." in str(context.warning))
 
     def test_individual_space(self):
-        campaign_object = s2c.get_class_with_defaults('ReferenceTrackingEventCoordinator', schema_json=self.schema_json)
+        campaign_object = s2c.get_class_with_defaults(self.EC_name, schema_json=self.schema_json)
         property_restrictions = PropertyRestrictions(
             individual_property_restrictions=[[" Risk : High ", " InterventionStatus : ARTStaging "]])
         property_restrictions._set_property_restrictions(campaign_object)
@@ -157,7 +159,7 @@ class BasePropertyRestrictionsTest(BaseTestClass):
         self.assertEqual(campaign_object["Node_Property_Restrictions"], [])
 
     def test_individual_and_logic(self):
-        campaign_object = s2c.get_class_with_defaults('ReferenceTrackingEventCoordinator', schema_json=self.schema_json)
+        campaign_object = s2c.get_class_with_defaults(self.EC_name, schema_json=self.schema_json)
         property_restrictions = PropertyRestrictions(
             individual_property_restrictions=[["Risk:HIGH", "InterventionStatus:ARTStaging"]])
         property_restrictions._set_property_restrictions(campaign_object)
@@ -167,7 +169,7 @@ class BasePropertyRestrictionsTest(BaseTestClass):
         self.assertEqual(campaign_object["Node_Property_Restrictions"], [])
 
     def test_individual_and_or_logic(self):
-        campaign_object = s2c.get_class_with_defaults('ReferenceTrackingEventCoordinator', schema_json=self.schema_json)
+        campaign_object = s2c.get_class_with_defaults(self.EC_name, schema_json=self.schema_json)
         property_restrictions = PropertyRestrictions(
             individual_property_restrictions=[["Risk:HIGH", "InterventionStatus:ARTStaging"],
                                               ["Risk:MEDIUM", "InterventionStatus:ARTStaging"]])
@@ -179,7 +181,7 @@ class BasePropertyRestrictionsTest(BaseTestClass):
         self.assertEqual(campaign_object["Node_Property_Restrictions"], [])
 
     def test_node(self):
-        campaign_object = s2c.get_class_with_defaults('ReferenceTrackingEventCoordinator', schema_json=self.schema_json)
+        campaign_object = s2c.get_class_with_defaults(self.EC_name, schema_json=self.schema_json)
         property_restrictions = PropertyRestrictions(
             node_property_restrictions=[["Risk:MEDIUM", "Place:URBAN"], ["Risk:LOW", "Place:RURAL"]])
         property_restrictions._set_property_restrictions(campaign_object)

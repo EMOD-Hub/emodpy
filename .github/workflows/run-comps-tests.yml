@@ -10,15 +10,20 @@
 
 name: "run-comps-tests"
 on:
+  workflow_dispatch:
+
   workflow_call:
     secrets:
       COMPS_USER:
         required: true
       COMPS_PASSWORD:
         required: true
+
   pull_request:
+
 jobs:
   run-comps-tests:
+    name: Run COMPS tests
     runs-on: ${{ matrix.os }}
     if: >
       (github.event_name == 'pull_request' && contains(github.event.pull_request.head.repo.full_name, 'EMOD-Hub/emodpy'))

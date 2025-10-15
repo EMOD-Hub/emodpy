@@ -10,7 +10,7 @@ documentation:
 
 * :doc:`emod-generic:faq` for |EMOD_s|
 * :doc:`idmtools:faq` for |IT_s|
-* :doc:`emod_api:faq` for |emod_api|
+* `FAQ <https://docs.idmod.org/projects/emod-api/en/latest/faq/>`__ for |emod_api|
 
 .. contents:: Contents
    :local:

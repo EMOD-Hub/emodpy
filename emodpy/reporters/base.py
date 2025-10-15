@@ -365,19 +365,19 @@ class Reporters(InputFilesList):
         self.builtin_reporters = []
         self.config_reporters = []
         self.schema_path = schema_path
-        self.schema_json = None
+        self._schema_json = None
 
         if self.schema_path:
             with open(self.schema_path) as schema_file:
-                self.schema_json = json.load(schema_file)
+                self._schema_json = json.load(schema_file)
 
     def __len__(self):
         return len(self.builtin_reporters) + len(self.config_reporters)
 
     def get_schema_json(self) -> dict:
-        if not self.schema_json:
+        if not self._schema_json:
             raise ValueError("schema_path is not set.")
-        return self.schema_json
+        return self._schema_json
 
     def add(self, reporter: AbstractBaseReporter) -> None:
         if isinstance(reporter, BuiltInReporter):

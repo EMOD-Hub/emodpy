@@ -30,8 +30,6 @@ classifiers = [
     "Framework:: IDM-Tools :: models",
 ]
 
-
-
 [project.optional-dependencies]
 lint = [
     "flake8",

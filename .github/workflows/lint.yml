@@ -22,7 +22,7 @@ jobs:
           python-version: 3.9
       - name: Install Python dependencies
         run: |
-          pip install -r .dev_scripts/lint-requirements.txt
+          python -m pip install .[lint]
       - name: Lint
         run: |
           flake8 --ignore=E501,E261,W503 --exclude="emodpy/tests/**" emodpy

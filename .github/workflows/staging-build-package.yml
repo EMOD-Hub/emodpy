@@ -1,6 +1,7 @@
 name: Deploy to Artifactory staging
 
 on:
+  # Only called by other workflows
   workflow_call:
     secrets:
       STAGING_ARTIFACTORY_USERNAME:

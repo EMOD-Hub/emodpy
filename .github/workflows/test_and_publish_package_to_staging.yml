@@ -1,4 +1,4 @@
-name: Test and publish to staging
+name: Test and deploy to staging
 
 permissions:
   contents: write # Allow writing to the repository (e.g., commits, pushes)

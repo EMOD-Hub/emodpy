@@ -3,7 +3,7 @@
 emod-hiv
 emod-malaria
 emod-common
-emod-generic<2.22
+emod-generic>=2.22
 idmtools-test
 pytest~=8.1
 unittest-xml-reporting~=3.2

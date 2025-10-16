@@ -45,7 +45,7 @@ class TestExperimentSimulations(unittest.TestCase):
         self.original_working_dir = os.getcwd()
         self.task: EMODTask
         self.experiment: Experiment
-        self.platform = Platform(manifest.container_platform_name)
+        self.platform = Platform(manifest.container_platform_name, num_retries=0)
         self.test_folder = helpers.make_test_directory(self.case_name)
         self.setup_custom_params()
 
@@ -54,7 +54,8 @@ class TestExperimentSimulations(unittest.TestCase):
 
     def tearDown(self) -> None:
         # Check if the test failed and leave the data in the folder if it did
-        if any(error[1] for error in self._outcome.errors):
+        test_result = self.defaultTestResult()
+        if test_result.errors:
             with open("experiment_location.txt", "w") as f:
                 if hasattr(self, "experiment") and hasattr(self.experiment, "uid"):
                     f.write(f"The failed experiment can be viewed at {self.platform.endpoint}/#explore/"
@@ -74,10 +75,10 @@ class TestExperimentSimulations(unittest.TestCase):
         base_task = EMODTask.from_files(config_path=self.builders.config_file,
                                         campaign_path=self.builders.campaign_file,
                                         demographics_paths=self.builders.demographics_file,
+                                        custom_reports_path=self.builders.custom_reports_file,
                                         eradication_path=self.builders.eradication_path,
                                         embedded_python_scripts_path=self.embedded_python_folder)
         base_task.set_parameter("Enable_Immunity", 0)
-        base_task.set_sif(self.builders.sif_path, platform=self.platform)
         # User builder to create simulations
         num_sims = 3
         builder = SimulationBuilder()
@@ -98,7 +99,6 @@ class TestExperimentSimulations(unittest.TestCase):
                                    embedded_python_scripts_path=self.embedded_python_folder)
         task.tags = {"idmtools": "idmtools-automation", "string_tag": "test", "number_tag": 123}
         task.set_parameter("Enable_Immunity", 0)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
 
         # User builder to create simulations
         num_sims = 3
@@ -114,7 +114,6 @@ class TestExperimentSimulations(unittest.TestCase):
         task1 = EMODTask.from_files(config_path=self.builders.config_file_basic,
                                     eradication_path=self.builders.eradication_path,
                                     embedded_python_scripts_path=self.embedded_python_folder)
-        task1.set_sif(self.builders.sif_path, platform=self.platform)
         # create another TemplatedSimulations with this task1
         ts1 = TemplatedSimulations([builder], base_task=task1)
 
@@ -123,7 +122,7 @@ class TestExperimentSimulations(unittest.TestCase):
         # create mixed experiment from two templates
         experiment.simulations = list(ts) + list(ts1)
         self.platform.run_items(experiment)
-        self.platform.wait_till_done(experiment)
+        self.platform.wait_till_done(experiment, refresh_interval=1)
 
         # Check total simulations 3+1+3
         sims = experiment.simulations
@@ -134,10 +133,6 @@ class TestExperimentSimulations(unittest.TestCase):
 
     @pytest.mark.container
     def test_create_suite(self):
-        from idmtools.entities.suite import Suite
-        from COMPS.Data import Suite as CompsSuite
-        from idmtools.core import ItemType
-
         suite = Suite(name='Idm Suite')
         suite.update_tags({'name': 'test', 'fetch': 123})
 
@@ -208,8 +203,6 @@ class TestExperimentSimulations(unittest.TestCase):
 
     @pytest.mark.container
     def test_suite_experiment(self):
-        from idmtools.entities.suite import Suite
-
         # Create an idm experiment
         exp = self.get_sir_experiment(self.case_name)
 
@@ -221,6 +214,8 @@ class TestExperimentSimulations(unittest.TestCase):
         suite.run(True, platform=self.platform)
 
         self.run_experiment_and_test_suite(self.platform, suite)
+
+        self.assertTrue(suite.succeeded, msg=f"Suite {suite.uid} failed.\n")
 
 
 class TestExperimentSimulationsGeneric(TestExperimentSimulations):

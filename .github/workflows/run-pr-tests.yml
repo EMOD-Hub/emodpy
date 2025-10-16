@@ -1,60 +1,42 @@
-# run-pr-tests.yml
-# -----------------------------------------------------------------------------
-# Run the unit/sim tests when a person is making a pull-request or pushing
-# directly to the repository.  These "sim" tests that actually run EMOD will
-# use the Container Platform so that they do not need to access Foundation
-# assets (i.e. COMPS).
-# -----------------------------------------------------------------------------
+name: Run tests
 
+on:
+  pull_request:
+    branches: main
 
-name: "run-pr-tests"
-on: [workflow_call, pull_request]
+  # Allows manual run from the Actions tab
+  workflow_dispatch:
+
 jobs:
-  run-pr-tests:
+  run-tests:
+    name: Run tests
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
         python-version: [3.9]
     steps:
-      - name: Check out Git repository
+      - name: Checkout repo
         uses: actions/checkout@v4
-
-      - name: ${{ matrix.os }} Python ${{ matrix.python-version }}
+      - name: Setup python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          architecture: x64
-
-      - name: Install Python dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install --upgrade py-make flake8 black
-
-      - name: Build and Install emodpy package
-        run: |
-          pip install build
-          python -m build --wheel
-          python -c "import glob, sys; files = glob.glob('dist/*.whl'); sys.exit('No wheel file found' if not files else 0)"
-          python -m pip install --upgrade $(python -c "import glob; files = glob.glob('dist/*.whl'); print(files[0])") --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
-
-      - name: install test packages
-        run: |
-          python -m pip install --upgrade -r tests/requirements.txt 
-
-      - name: run unit tests
+          python -m pip install .[test] --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
+      - name: Run unit tests
         run: |
           cd tests
           pytest test_download_from_package.py
           pytest --dist loadfile -v -m unit --junitxml="test_results.xml"
-
-      - name: run container tests
+      - name: Run container tests
         if: runner.os == 'Linux'
         run: |
           cd tests
           pytest test_download_from_package.py
           pytest --dist loadfile -v -m container --junitxml="test_results.xml"
-
       - name: Upload emodpy test results
         uses: actions/upload-artifact@v4
         if: failure()

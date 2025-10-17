@@ -1,4 +1,4 @@
-name: Rebuild emodpy Docs
+name: Build docs
 
 on:
   push:

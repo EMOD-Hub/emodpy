@@ -27,7 +27,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3.9",
     "Operating System :: OS Independent",
-    "Framework:: IDM-Tools :: models",
+    "Framework :: IDM-Tools :: models",
 ]
 
 [project.optional-dependencies]

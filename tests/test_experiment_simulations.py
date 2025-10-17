@@ -64,7 +64,7 @@ class TestExperimentSimulations:
         print(f"\n{self.case_name}")
         os.chdir(self.original_working_dir)
         self.platform = Platform(manifest.container_platform_name, num_retries=0)
-        self.test_folder = helpers.make_test_directory(self.case_name)  # Moves to failled test directory
+        self.test_folder = helpers.make_test_directory(self.case_name)  # Moves to failed test directory
         self.setup_custom_params()
         self.succeeded = False
 

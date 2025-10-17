@@ -59,7 +59,7 @@ class TestExperimentSimulations:
         return experiment
 
     @pytest.fixture(autouse=True)
-    def run_every_test(self, request, capsys) -> None:
+    def run_every_test(self, request) -> None:
         # Pre-test
         self.case_name = os.path.basename(__file__) + "_" + request.node.name
         print(f"\n{self.case_name}")
@@ -117,7 +117,6 @@ class TestExperimentSimulations:
         print(f"Experiment {experiment.uid} succeeded.")
 
         self.succeeded = True
-        return None
 
     @pytest.mark.container
     def test_create_suite(self):
@@ -132,7 +131,6 @@ class TestExperimentSimulations:
         assert isinstance(got_suite, suite_type_expected)
 
         self.succeeded = True
-        return None
 
     @pytest.mark.container
     def test_suite_experiment(self):
@@ -203,7 +201,6 @@ class TestExperimentSimulations:
         assert suite.succeeded, f"Suite {suite.uid} failed.\n"
 
         self.succeeded = True
-        return None
 
 
 class TestExperimentSimulationsGeneric(TestExperimentSimulations):

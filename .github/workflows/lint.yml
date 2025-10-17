@@ -1,36 +1,28 @@
 name: Lint
+
 on:
   push:
     paths:
       - '**.py'
+
   pull_request:
     paths:
       - '**.py'
+
 jobs:
   run-linters:
     name: Run linters
     runs-on: ubuntu-latest
-
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: 3.9
-
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('.dev_scripts/lint-requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
       - name: Install Python dependencies
         run: |
-          pip install -r .dev_scripts/lint-requirements.txt
-
-      - name: Run Lint
+          python -m pip install .[lint] --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
+      - name: Lint
         run: |
-          make lint
+          flake8 --ignore=E501,E261,W503 --exclude="emodpy/tests/**" emodpy

@@ -26,16 +26,8 @@ formats:
 
 # Optionally set the version of Python and requirements required to build your docs
 python:
-   install:
-      - method: pip
-        path: .
-      - requirements: docs/requirements.txt
-      - method: pip
-        path: .
-        
-# Optionally rank topics in search results, between -10 (lower) and 10 (higher).
-# 0 is normal rank, not no rank
-
-# search:
-#   ranking:
-
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs

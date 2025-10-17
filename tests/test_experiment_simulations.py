@@ -104,23 +104,25 @@ class TestExperimentSimulations(unittest.TestCase):
         num_sims = 3
         builder = SimulationBuilder()
         builder.add_sweep_definition(EMODTask.set_parameter_partial("Run_Number"), range(0, num_sims))
-        ts = TemplatedSimulations([builder], base_task=task)
+        ts_obj = TemplatedSimulations([builder], base_task=task)
 
         # Add another new simulation to TemplatedSimulations(TemplatedSimulations should have 4 sims now)
-        sim = ts.new_simulation()
-        ts.add_simulation(sim)
+        sim = ts_obj.new_simulation()
+        ts_obj.add_simulation(sim)
 
         # Create another 3 simulations from different task
-        task1 = EMODTask.from_files(config_path=self.builders.config_file_basic,
-                                    eradication_path=self.builders.eradication_path,
-                                    embedded_python_scripts_path=self.embedded_python_folder)
-        # create another TemplatedSimulations with this task1
-        ts1 = TemplatedSimulations([builder], base_task=task1)
+        task_addl = EMODTask.from_files(config_path=self.builders.config_file_basic,
+                                        eradication_path=self.builders.eradication_path,
+                                        embedded_python_scripts_path=self.embedded_python_folder)
+        builder_addl = SimulationBuilder()
+        builder_addl.add_sweep_definition(EMODTask.set_parameter_partial("Run_Number"), range(0, num_sims))
 
-        # create experiment
-        experiment = Experiment(name=self.case_name)
-        # create mixed experiment from two templates
-        experiment.simulations = list(ts) + list(ts1)
+        # Create another TemplatedSimulations with this task
+        ts_addl = TemplatedSimulations([builder_addl], base_task=task_addl)
+        ts_obj.add_simulations(ts_addl.simulations())
+
+        # Create experiment
+        experiment = Experiment.from_template(name=self.case_name, template=ts_obj)
         self.platform.run_items(experiment)
         self.platform.wait_till_done(experiment, refresh_interval=1)
 

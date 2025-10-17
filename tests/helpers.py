@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import emod_common.bootstrap as emod_common
@@ -10,6 +11,7 @@ from emodpy.campaign.distributor import add_intervention_scheduled
 from emodpy.reporters.common import ReportEventCounter, ReportFilter, ReportEventRecorder
 import emodpy.campaign.waning_config as waning_config
 from emodpy.utils import emod_enum
+from emod_api.config import default_from_schema_no_validation as dfs
 from pathlib import Path
 import sys
 parent = Path(__file__).resolve().parent
@@ -188,6 +190,17 @@ class BuildersGeneric(BuildersCommon):
     def __init__(self):
         super().__init__()
 
+    @staticmethod
+    def write_files():
+        # Generate default config from schema
+        default_conf = dfs.get_default_config_from_schema(BuildersGeneric.schema_path, as_rod=True)
+
+        # Write config files
+        default_conf.parameters.finalize()
+        with open(BuildersGeneric.config_file, 'w') as fid01:
+            json.dump(default_conf, fid01, sort_keys=True, indent=4)
+        with open(BuildersGeneric.config_file_basic, 'w') as fid01:
+            json.dump(default_conf, fid01, sort_keys=True, indent=4)
 
     @staticmethod
     def config_builder(config):
@@ -205,3 +218,6 @@ class BuildersGeneric(BuildersCommon):
     def campaign_builder(campaign, demographic_coverage=0.97, vaccine_take=0.94, vaccine_box_duration=25):
         return campaign
 
+
+# Generate files for Generic on import
+BuildersGeneric.write_files()

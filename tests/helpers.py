@@ -175,10 +175,12 @@ class BuildersGeneric(BuildersCommon):
     schema_path = manifest.generic_schema_path
     eradication_path = manifest.generic_eradication_path
     input_folder = manifest.inputs_generic
+
     config_file = os.path.join(input_folder, "config.json")
     campaign_file = os.path.join(input_folder, "campaign.json")
     demographics_file = os.path.join(input_folder, "demographics.json")
     config_file_basic = os.path.join(input_folder, "config_basic.json")
+
     sif_path = manifest.sif_path_generic
     custom_reports_file = None
     reports_builder = None

@@ -54,7 +54,7 @@ class TestExperimentSimulations:
         num_sims = 3
         builder = SimulationBuilder()
         builder.add_sweep_definition(EMODTask.set_parameter_partial("Run_Number"), range(0, num_sims))
-        experiment = Experiment.from_builder(builder, base_task, name=self.case_name,
+        experiment = Experiment.from_builder(builder, base_task, name=case_name,
             tags={"idmtools": "idmtools-automation", "string_tag": "test", "number_tag": 123})
 
         return experiment

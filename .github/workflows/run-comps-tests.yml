@@ -20,7 +20,7 @@ jobs:
     name: Run tests
     runs-on: ${{ matrix.os }}
     # Run only if PR from branch in EMOD-Hub or after push to main
-    if: |
+    if: >
       (github.event_name == 'pull_request' && contains(github.event.pull_request.head.repo.full_name, 'EMOD-Hub/emodpy')) ||
       (github.event_name == 'push' && github.repository == 'EMOD-Hub/emodpy')
     strategy:

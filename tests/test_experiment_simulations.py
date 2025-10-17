@@ -34,8 +34,7 @@ class TestExperimentSimulations:
         Tests for EMODTask
     """
     embedded_python_folder = manifest.embedded_python_folder
-    original_working_dir = os.getcwd()
-    platform = Platform(manifest.container_platform_name, num_retries=0)
+    original_working_dir = manifest.test_directory_absolute_path
     tags = {"idmtools": "idmtools-automation", "string_tag": "test", "number_tag": 123}
 
     def setup_custom_params(self):
@@ -61,9 +60,11 @@ class TestExperimentSimulations:
     @pytest.fixture(autouse=True)
     def run_every_test(self, request) -> None:
         # Pre-test
-        self.case_name = os.path.basename(__file__) + "_" + request.node.name
+        self.case_name = request.node.name
         print(f"\n{self.case_name}")
-        self.test_folder = helpers.make_test_directory(self.case_name)
+        os.chdir(self.original_working_dir)
+        self.platform = Platform(manifest.container_platform_name, num_retries=0)
+        self.test_folder = helpers.make_test_directory(self.case_name)  # Moves to failled test directory
         self.setup_custom_params()
         self.succeeded = False
 

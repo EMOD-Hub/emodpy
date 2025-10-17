@@ -34,19 +34,20 @@ if not os.path.isdir(manifest.campaign_folder):
 if not os.path.isdir(manifest.migration_folder):
     os.mkdir(manifest.migration_folder)
 
-
 if not os.path.isdir(manifest.config_folder):
     os.mkdir(manifest.config_folder)
 
 # create the package folders if they don't exist, extract the binaries and schema files
 if not os.path.isdir(manifest.package_folder):
     os.mkdir(manifest.package_folder)
+
 for specific_package_folder in [manifest.hiv_package_folder,
                                 manifest.malaria_package_folder,
                                 manifest.common_package_folder,
                                 manifest.generic_package_folder]:
     if not os.path.isdir(specific_package_folder):
         os.mkdir(specific_package_folder)
+
 # get all the Eradication binaries and schema files
 if not os.path.isfile(manifest.common_eradication_path):
     emod_common.setup(manifest.common_package_folder)

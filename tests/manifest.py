@@ -1,11 +1,13 @@
 import os
-import sys
-
 
 test_directory_absolute_path = os.path.abspath(os.path.dirname(__file__))
-config_folder = os.path.join(test_directory_absolute_path, "inputs", "config")
 
-package_folder = os.path.join(test_directory_absolute_path, "inputs", "package")
+inputs_folder = os.path.join(test_directory_absolute_path, "inputs")
+output_folder = os.path.join(test_directory_absolute_path, "outputs")
+
+failed_tests = os.path.join(output_folder, "failed_tests")
+
+package_folder = os.path.join(inputs_folder, "package")
 
 hiv_package_folder = os.path.join(package_folder, "hiv_package")
 hiv_eradication_path = os.path.join(hiv_package_folder, "Eradication")
@@ -23,21 +25,17 @@ generic_package_folder = os.path.join(package_folder, "generic_package")
 generic_eradication_path = os.path.join(generic_package_folder, "Eradication")
 generic_schema_path = os.path.join(generic_package_folder, "schema.json")
 
-inputs_folder = os.path.join(test_directory_absolute_path, "inputs")
-output_folder = os.path.join(test_directory_absolute_path, "outputs")
-
-embedded_python_folder = os.path.join(inputs_folder, 'embedded_python')
-
 sif_path_common = os.path.join(inputs_folder, "input_files_emod_common", "assets.id")
 inputs_common = os.path.join(inputs_folder, "input_files_emod_common")
 
 sif_path_generic = os.path.join(inputs_folder, "input_files_emod_generic", "assets.id")
 inputs_generic = os.path.join(inputs_folder, "input_files_emod_generic")
 
-failed_tests = os.path.join(output_folder, "failed_tests")
+config_folder = os.path.join(inputs_folder, "config")
 demographics_folder = os.path.join(inputs_folder, "demographics")
 campaign_folder = os.path.join(inputs_folder, "campaigns")
 migration_folder = os.path.join(inputs_folder, 'migration')
+embedded_python_folder = os.path.join(inputs_folder, 'embedded_python')
 
 wb = os.path.join(inputs_folder, "birth_rate", "wb_data.csv")
 ten_nodes = os.path.join(inputs_folder, "birth_rate", "ten_nodes.csv")

@@ -5,8 +5,8 @@ import sys
 test_directory_absolute_path = os.path.abspath(os.path.dirname(__file__))
 config_folder = os.path.join(test_directory_absolute_path, "inputs", "config")
 
-
 package_folder = os.path.join(test_directory_absolute_path, "inputs", "package")
+
 hiv_package_folder = os.path.join(package_folder, "hiv_package")
 hiv_eradication_path = os.path.join(hiv_package_folder, "Eradication")
 hiv_schema_path = os.path.join(hiv_package_folder, "schema.json")
@@ -27,6 +27,7 @@ inputs_folder = os.path.join(test_directory_absolute_path, "inputs")
 output_folder = os.path.join(test_directory_absolute_path, "outputs")
 
 embedded_python_folder = os.path.join(inputs_folder, 'embedded_python')
+
 sif_path_common = os.path.join(inputs_folder, "input_files_emod_common", "assets.id")
 inputs_common = os.path.join(inputs_folder, "input_files_emod_common")
 

@@ -31,11 +31,6 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-build = [
-    "build",
-    "twine",
-    "bump2version",
-]
 docs = [
     "sphinxext.remoteliteralinclude~=0.4",
     "sphinxext-rediraffe",
@@ -55,6 +50,11 @@ docs = [
 ]
 lint = [
     "flake8",
+]
+packaging = [
+    "build",
+    "twine",
+    "bump2version",
 ]
 
 [project.urls]

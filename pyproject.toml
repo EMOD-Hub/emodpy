@@ -31,13 +31,11 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-packaging = [
+build = [
     "build",
-    "flake8",
-    "coverage",
-    "py-make",
+    "twine",
     "bump2version",
-    "twine"]
+]
 docs = [
     "sphinxext.remoteliteralinclude~=0.4",
     "sphinxext-rediraffe",

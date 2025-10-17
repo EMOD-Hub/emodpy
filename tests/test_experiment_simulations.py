@@ -54,7 +54,8 @@ class TestExperimentSimulations(unittest.TestCase):
 
     def tearDown(self) -> None:
         # Check if the test failed and leave the data in the folder if it did
-        if any(error[1] for error in self._outcome.errors):
+        test_result = self.defaultTestResult()
+        if test_result.errors:
             with open("experiment_location.txt", "w") as f:
                 if hasattr(self, "experiment") and hasattr(self.experiment, "uid"):
                     f.write(f"The failed experiment can be viewed at {self.platform.endpoint}/#explore/"

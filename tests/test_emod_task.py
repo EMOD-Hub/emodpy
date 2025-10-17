@@ -35,7 +35,7 @@ class TestEMODTask(unittest.TestCase):
         self.original_working_dir = os.getcwd()
         self.task: EMODTask
         self.experiment: Experiment
-        self.platform = Platform(manifest.container_platform_name)
+        self.platform = Platform(manifest.container_platform_name, num_retries=0)
         self.test_folder = helpers.make_test_directory(self.case_name)
         self.setup_custom_params()
 

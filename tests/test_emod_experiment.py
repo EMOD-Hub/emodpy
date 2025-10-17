@@ -73,8 +73,6 @@ class TestEMODExperiment(unittest.TestCase):
                                            campaign_builder=self.builders.campaign_builder,
                                            report_builder=self.builders.reports_builder,
                                            demographics_builder=self.builders.demographics_builder)
-        # base_task.config.parameters.Enable_Demographics_Builtin = 1
-        # base_task.config.parameters.Enable_Immunity = 0
         base_task.set_sif(self.builders.sif_path, platform=self.platform)
 
         self.experiment = Experiment.from_task(task=base_task,
@@ -87,8 +85,6 @@ class TestEMODExperiment(unittest.TestCase):
         sim = self.experiment.simulations[0]
         files = self.platform.get_files(sim, ["config.json"])
         config_parameters = json.loads(files["config.json"])['parameters']
-        # self.assertEqual(config_parameters["Enable_Immunity"], 0)
-        # self.assertEqual(config_parameters["Enable_Demographics_Builtin"], 1)
 
     def singularity_test(self, my_sif_path, embedded_python_scripts_path=None):
         """

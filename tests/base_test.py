@@ -3,6 +3,7 @@ import unittest
 import pytest
 from pathlib import Path
 import sys
+import json
 parent = Path(__file__).resolve().parent
 sys.path.append(str(parent))
 import manifest
@@ -19,6 +20,8 @@ class TestHIV(unittest.TestCase):
             dtk.setup(manifest.hiv_package_folder)
         cls.schema_path = manifest.hiv_schema_path
         print(f"HIV schema_path: {cls.schema_path}.")
+        with open(cls.schema_path) as schema_file:
+            cls.schema_json = json.load(schema_file)
 
     def setUp(self):
         print(f"running test: {self.__class__.__name__}.{self._testMethodName}:")
@@ -35,6 +38,8 @@ class TestMalaria(unittest.TestCase):
             dtk.setup(manifest.malaria_package_folder)
         cls.schema_path = manifest.malaria_schema_path
         print(f"Malaria schema_path: {cls.schema_path}.")
+        with open(cls.schema_path) as schema_file:
+            cls.schema_json = json.load(schema_file)
 
     def setUp(self):
         print(f"running test: {self.__class__.__name__}.{self._testMethodName}:")

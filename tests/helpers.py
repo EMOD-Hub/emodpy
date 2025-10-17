@@ -34,19 +34,20 @@ if not os.path.isdir(manifest.campaign_folder):
 if not os.path.isdir(manifest.migration_folder):
     os.mkdir(manifest.migration_folder)
 
-
 if not os.path.isdir(manifest.config_folder):
     os.mkdir(manifest.config_folder)
 
 # create the package folders if they don't exist, extract the binaries and schema files
 if not os.path.isdir(manifest.package_folder):
     os.mkdir(manifest.package_folder)
+
 for specific_package_folder in [manifest.hiv_package_folder,
                                 manifest.malaria_package_folder,
                                 manifest.common_package_folder,
                                 manifest.generic_package_folder]:
     if not os.path.isdir(specific_package_folder):
         os.mkdir(specific_package_folder)
+
 # get all the Eradication binaries and schema files
 if not os.path.isfile(manifest.common_eradication_path):
     emod_common.setup(manifest.common_package_folder)
@@ -175,10 +176,12 @@ class BuildersGeneric(BuildersCommon):
     schema_path = manifest.generic_schema_path
     eradication_path = manifest.generic_eradication_path
     input_folder = manifest.inputs_generic
+
     config_file = os.path.join(input_folder, "config.json")
     campaign_file = os.path.join(input_folder, "campaign.json")
     demographics_file = os.path.join(input_folder, "demographics.json")
     config_file_basic = os.path.join(input_folder, "config_basic.json")
+
     sif_path = manifest.sif_path_generic
     custom_reports_file = None
     reports_builder = None

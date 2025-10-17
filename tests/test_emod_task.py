@@ -170,7 +170,6 @@ class TestEMODTask(unittest.TestCase):
                                    custom_reports_path=self.builders.custom_reports_file)
 
         self.experiment = Experiment.from_task(task, name=self.case_name)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         self.experiment.run(wait_until_done=True)
         self.assertTrue(self.experiment.succeeded)
         sim = self.experiment.simulations[0]
@@ -188,7 +187,6 @@ class TestEMODTask(unittest.TestCase):
                                       report_builder=self.builders.reports_builder)
         self.experiment = Experiment.from_task(task, name=self.case_name)
 
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         # Open all the files for comparison
         with open(self.builders.config_file, 'r') as fp:
             config = json.load(fp)
@@ -314,12 +312,9 @@ class TestEMODTask(unittest.TestCase):
     @pytest.mark.container
     def test_eradication_file_as_asset(self):
         # testing from file
-        task = EMODTask.from_files(
-            eradication_path=None,
-            config_path=self.builders.config_file_basic
-        )
+        task = EMODTask.from_files(eradication_path=None,
+                                   config_path=self.builders.config_file_basic)
         task.common_assets.add_asset(self.builders.eradication_path)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         experiment = Experiment.from_task(task, name=self.case_name)
 
         # Run experiment
@@ -334,7 +329,6 @@ class TestEMODTask(unittest.TestCase):
                                        config_builder=self.builders.config_builder,
                                        demographics_builder=self.builders.demographics_builder)
         task2.common_assets.add_asset(self.builders.eradication_path)
-        task2.set_sif(self.builders.sif_path, platform=self.platform)
 
         experiment2 = Experiment.from_task(task2, name="Existing_Eradication_Default")
         self.platform.run_items(experiment2)
@@ -476,7 +470,7 @@ class TestEMODTask(unittest.TestCase):
 
     @pytest.mark.comps
     def test_set_sif_function_with_sif_id(self):
-        self.platform = Platform(manifest.comps_platform_name)
+        self.platform = Platform(manifest.comps_platform_name, num_retries=0)
         task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                       schema_path=self.builders.schema_path,
                                       config_builder=self.builders.config_builder,
@@ -576,8 +570,6 @@ class TestEMODTask(unittest.TestCase):
         task.add_embedded_python_scripts_from_path(self.embedded_python_folder)
         virtual_path = 'venv/lib/python3.9/site-packages/'
         task.add_py_path(virtual_path)
-
-        task.set_sif(self.builders.sif_path, platform=self.platform)
 
         task.pre_creation(Simulation(), self.platform)
         task.gather_common_assets()

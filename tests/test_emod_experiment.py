@@ -73,7 +73,6 @@ class TestEMODExperiment(unittest.TestCase):
                                            campaign_builder=self.builders.campaign_builder,
                                            report_builder=self.builders.reports_builder,
                                            demographics_builder=self.builders.demographics_builder)
-        base_task.set_sif(self.builders.sif_path, platform=self.platform)
 
         self.experiment = Experiment.from_task(task=base_task,
                                                name=self.case_name)
@@ -184,11 +183,9 @@ class TestEMODExperiment(unittest.TestCase):
                                            schema_path=self.builders.schema_path,
                                            config_builder=config_setting)
 
-        base_task.set_sif(self.builders.sif_path, platform=self.platform)
         self.experiment = Experiment.from_task(base_task,
                                                self.case_name)
-        self.experiment.run(wait_until_done=True,
-                            platform=self.platform)
+        self.experiment.run(wait_until_done=True, platform=self.platform)
 
         self.assertTrue(self.experiment.succeeded)
         sim = self.experiment.simulations[0]
@@ -209,7 +206,6 @@ class TestEMODExperiment(unittest.TestCase):
                                            config_builder=self.builders.config_builder,
                                            demographics_builder=self.builders.demographics_builder,
                                            embedded_python_scripts_path=manifest.embedded_python_folder)
-        base_task.set_sif(self.builders.sif_path, platform=self.platform)
 
         builder = SimulationBuilder()
         # Sweep parameter "Run_Number"
@@ -239,7 +235,6 @@ class TestEMODExperiment(unittest.TestCase):
                                         demographics_paths=self.builders.demographics_file,
                                         custom_reports_path=self.builders.custom_reports_file,
                                         embedded_python_scripts_path=manifest.embedded_python_folder)
-        base_task.set_sif(self.builders.sif_path, platform=self.platform)
 
         self.experiment = Experiment(name=self.case_name)
 
@@ -250,8 +245,7 @@ class TestEMODExperiment(unittest.TestCase):
             self.experiment.simulations.append(sim)
 
         with self.assertRaises(DuplicatedAssetError) as context:
-            self.experiment.run(wait_until_done=True,
-                                platform=self.platform)
+            self.experiment.run(wait_until_done=True, platform=self.platform)
         self.assertTrue("demographics.json" in str(context.exception))
 
         #  uncomment when fixed
@@ -280,7 +274,6 @@ class TestEMODExperiment(unittest.TestCase):
                                         campaign_path=self.builders.campaign_file,
                                         config_path="config.json",
                                         embedded_python_scripts_path=manifest.embedded_python_folder)
-        base_task.set_sif(self.builders.sif_path, platform=self.platform)
 
         self.experiment = Experiment(name=self.case_name)
         base_sim = Simulation(task=base_task)
@@ -290,8 +283,7 @@ class TestEMODExperiment(unittest.TestCase):
             self.experiment.simulations.append(sim)
 
         self.experiment.simulations[0].task.common_assets.add_asset(Asset(self.builders.demographics_file))
-        self.experiment.run(wait_until_done=True,
-                            platform=self.platform)
+        self.experiment.run(wait_until_done=True, platform=self.platform)
 
         self.assertTrue(self.experiment.succeeded)
 
@@ -313,14 +305,12 @@ class TestEMODExperiment(unittest.TestCase):
                                         custom_reports_path=self.builders.custom_reports_file,
                                         demographics_paths=self.builders.demographics_file)
         base_task.set_parameter("Enable_Interventions", 0)
-        base_task.set_sif(self.builders.sif_path, platform=self.platform)
         builder = SimulationBuilder()
         builder.add_sweep_definition(EMODTask.set_parameter_partial("Run_Number"), range(0, self.num_sim_long))
         self.experiment = Experiment.from_builder(builder,
                                                   base_task,
                                                   name=self.case_name)
-        self.experiment.run(wait_until_done=True,
-                            platform=self.platform)
+        self.experiment.run(wait_until_done=True, platform=self.platform)
 
         self.assertTrue(self.experiment.succeeded)
         for sim in self.experiment.simulations:

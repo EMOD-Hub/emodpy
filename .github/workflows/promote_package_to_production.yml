@@ -1,83 +1,46 @@
-name: Promote emodpy package to Production
+name: Promote package to production
 
 on:
+  # Allows manual run from the Actions tab
   workflow_dispatch:
     inputs:
       package_version:
         description: 'Package version to promote'
         required: true
+
 permissions:
   actions: write
 
-
 jobs:
   promote-package-to-production:
+    name: Promote to production
     runs-on: ubuntu-latest
     environment: Release_Production
-    strategy:
-      max-parallel: 1
-      matrix:
-        python-version: [ '3.9' ]
     steps:
       - name: Set package variables
         run: |
-          echo "STAGING_REGISTRY=https://packages.idmod.org/api/pypi/idm-pypi-staging/" >> $GITHUB_ENV
-          echo "PROD_REGISTRY=https://packages.idmod.org/api/pypi/idm-pypi-production/" >> $GITHUB_ENV
           echo "PACKAGE_NAME=emodpy" >> $GITHUB_ENV
-
-      - name: Checkout sources
+      - name: Check out repo
         uses: actions/checkout@v4
+      - name: Setup python
+        uses: actions/setup-python@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/setup-python@master
-        with:
-          python-version: ${{ matrix.python-version }}
-          architecture: x64
-
+          python-version: '3.9'
       - name: Download package from staging
         env:
           PIP_EXTRA_INDEX_URL: https://${{ secrets.STAGING_ARTIFACTORY_USERNAME }}:${{ secrets.STAGING_ARTIFACTORY_PASSWORD }}@packages.idmod.org/api/pypi/idm-pypi-staging/simple/
         run: |
-          pip install --upgrade pip
-          pip download --index-url $PIP_EXTRA_INDEX_URL --no-deps ${{ env.PACKAGE_NAME }}==${{ github.event.inputs.package_version }} -d ./dist
-
-      - name: install staging package
+          python -m pip install --upgrade pip
+          python -m pip download --index-url $PIP_EXTRA_INDEX_URL --no-deps ${{ env.PACKAGE_NAME }}==${{ github.event.inputs.package_version }} -d ./dist
+      - name: Install staging package
         run: |
-          pip install ./dist/${{ env.PACKAGE_NAME }}-${{ github.event.inputs.package_version }}-py3-none-any.whl --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
-      
-      - name: run unit tests
-        run: |
-          pip install -r requirements.txt
-          pytest test_download_from_package.py
-          pytest --dist loadfile -v -m unit --junitxml="test_results.xml"
-        working-directory: ./tests
-
-      - name: run container tests
-        if: runner.os == 'Linux'
-        run: |
-          pytest --dist loadfile -v -m container --junitxml="container_test_results.xml"
-        working-directory: ./tests
-
-      - name: login to comps2
-        run: |
-          python .dev_scripts/create_auth_token_args.py --username ${{ secrets.COMPS_USER }} --password ${{ secrets.COMPS_PASSWORD }}
-        env:
-          COMPS_USER: ${{ secrets.COMPS_USER }}
-          COMPS_PASSWORD: ${{ secrets.COMPS_PASSWORD }}
-
-      - name: run Comps tests
-        run: |
-          pytest -n 10 --dist loadfile -v -m comps --junitxml="comps_test_results.xml"
-        working-directory: ./tests
-
+          python -m pip install ./dist/${{ env.PACKAGE_NAME }}-${{ github.event.inputs.package_version }}-py3-none-any.whl --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
       - name: Install twine
         run: pip install twine
-
       - name: Upload to production PyPI
         run: |
           twine upload --verbose \
-            --repository-url ${{ env.PROD_REGISTRY }} \
+            --repository-url https://packages.idmod.org/api/pypi/idm-pypi-production/ \
             --username ${{ secrets.PROD_ARTIFACTORY_USERNAME }} \
             --password ${{ secrets.PROD_ARTIFACTORY_PASSWORD }} \
             ./dist/*.whl

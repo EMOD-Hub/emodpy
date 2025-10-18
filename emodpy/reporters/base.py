@@ -265,7 +265,7 @@ class BuiltInReporter(AbstractBaseReporter):
                  report_filter: ReportFilter = None):
         super().__init__()
         self.parameters: s2c.ReadOnlyDict = s2c.get_class_with_defaults(reporter_class_name,
-                                                                        reporters_object.get_schema_path())
+                                                                        schema_json=reporters_object.get_schema_json())
         if report_filter is not None:
             self._set_report_filter_parameters(report_filter=report_filter, reporter_class_name=reporter_class_name)
 
@@ -365,14 +365,19 @@ class Reporters(InputFilesList):
         self.builtin_reporters = []
         self.config_reporters = []
         self.schema_path = schema_path
+        self._schema_json = None
+
+        if self.schema_path:
+            with open(self.schema_path) as schema_file:
+                self._schema_json = json.load(schema_file)
 
     def __len__(self):
         return len(self.builtin_reporters) + len(self.config_reporters)
 
-    def get_schema_path(self) -> str:
-        if not self.schema_path:
+    def get_schema_json(self) -> dict:
+        if not self._schema_json:
             raise ValueError("schema_path is not set.")
-        return self.schema_path
+        return self._schema_json
 
     def add(self, reporter: AbstractBaseReporter) -> None:
         if isinstance(reporter, BuiltInReporter):

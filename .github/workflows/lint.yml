@@ -25,4 +25,4 @@ jobs:
           python -m pip install .[lint] --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
       - name: Lint
         run: |
-          flake8 --ignore=E501,E261,W503 --exclude="emodpy/tests/**" emodpy
+          flake8 --ignore=E501,E261,W503 emodpy

@@ -109,7 +109,6 @@ class TestWorkflowCampaign(unittest.TestCase):
         task = EMODTask.from_files(config_path=self.builders.config_file_basic,
                                    eradication_path=self.builders.eradication_path,
                                    campaign_path="campaign.json")
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         self.assertTrue(isinstance(task.campaign, EMODCampaign))
         self.assertEqual(len(task.campaign.events), 1)
         self.assertEqual(task.campaign.events[0]["Start_Day"], 2)
@@ -148,7 +147,6 @@ class TestWorkflowCampaign(unittest.TestCase):
                                       schema_path=self.builders.schema_path,
                                       demographics_builder=self.builders.demographics_builder,
                                       config_builder=self.builders.config_builder)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
 
         builder = SimulationBuilder()
         coverages = [0.1, 0.5]
@@ -228,7 +226,6 @@ class TestWorkflowCampaign(unittest.TestCase):
                                                                vaccine_box_duration=vaccine_box_duration),
                                       schema_path=self.builders.schema_path,
                                       config_builder=config_builder_builtin)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
 
         self.assertTrue(isinstance(task.campaign, EMODCampaign))
         self.assertEqual(len(task.campaign.events), 1)
@@ -299,7 +296,6 @@ class TestWorkflowCampaign(unittest.TestCase):
                                       schema_path=self.builders.schema_path,
                                       config_builder=config_builder_builtin,
                                       report_builder=partial(build_reporter, trigger_name=test_trigger_name))
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         self.assertTrue(isinstance(task.campaign, EMODCampaign))
         self.assertEqual(len(task.campaign.events), 2)
         self.assertEqual(task.campaign.events[0]['Start_Day'], timestep_be)
@@ -380,8 +376,6 @@ class TestWorkflowCampaign(unittest.TestCase):
                                       schema_path=self.builders.schema_path,
                                       config_builder=self.builders.config_builder,
                                       demographics_builder=None)
-
-        task.set_sif(self.builders.sif_path, platform=self.platform)
 
         builder = SimulationBuilder()
         # this will sweep over the entire parameter space in a cross-product fashion
@@ -471,8 +465,6 @@ class TestWorkflowCampaign(unittest.TestCase):
                                       config_builder=self.builders.config_builder,
                                       demographics_builder=None)
 
-        task.set_sif(self.builders.sif_path, platform=self.platform)
-
         builder = SimulationBuilder()
         # this will sweep over the entire parameter space in a cross-product fashion
         # you will get 2x3x2 simulations
@@ -539,7 +531,6 @@ class TestWorkflowCampaignGeneric(TestWorkflowCampaign):
     """
 
     def setup_custom_params(self):
-        self.builders.sif_path = manifest.sif_path_common
         self.builders.config_builder = helpers.config_builder_common
         self.builders.campaign_builder = helpers.campaign_builder_common
         self.reporter_builder = helpers.reports_builder_common

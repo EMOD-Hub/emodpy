@@ -103,7 +103,6 @@ class TestSerialization(unittest.TestCase):
                                        schema_path=self.builders.schema_path,
                                        config_builder=set_param_fn,
                                        demographics_builder=self.builders.demographics_builder)
-        task1.set_sif(self.builders.sif_path, platform=self.platform)
 
         self.experiment = Experiment.from_task(task=task1, name=self.case_name + " create serialization")
         self.experiment.run(wait_until_done=True, platform=self.platform)
@@ -123,7 +122,6 @@ class TestSerialization(unittest.TestCase):
                                        schema_path=self.builders.schema_path,
                                        demographics_builder=self.builders.demographics_builder,
                                        config_builder=set_param_from_sp_fn)
-        task2.set_sif(self.builders.sif_path, platform=self.platform)
         task2.common_assets.add_directory(assets_directory=serialized_files)
         experiment2 = Experiment.from_task(task=task2, name=self.case_name + " reaload serialization")
         experiment2.run(wait_until_done=True, platform=self.platform)

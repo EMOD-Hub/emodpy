@@ -1185,7 +1185,6 @@ class TestReportersCommon(unittest.TestCase):
                                            report_builder=build_reports,
                                            demographics_builder=self.builders.demographics_builder)
 
-        self.task.set_sif(manifest.sif_path_common, platform=platform)
         self.task.config.parameters.Custom_Coordinator_Events = self.event_list
         self.task.config.parameters.Custom_Node_Events = self.event_list
 

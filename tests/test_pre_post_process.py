@@ -84,7 +84,6 @@ class TestEmodPrePostProcess(unittest.TestCase):
                                       config_builder=set_param_fn,
                                       embedded_python_scripts_path=os.path.join(self.embedded_python_folder,
                                                                                 "dtk_post_process.py"))
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         # Create experiment from template
         experiment = Experiment.from_task(task, name=self.case_name)
 
@@ -100,7 +99,6 @@ class TestEmodPrePostProcess(unittest.TestCase):
         task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                       schema_path=self.builders.schema_path,
                                       embedded_python_scripts_path=manifest.embedded_python_folder)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         task.use_embedded_python = True
 
         task.pre_creation(Simulation(), self.platform)
@@ -130,7 +128,6 @@ class TestEmodPrePostProcess(unittest.TestCase):
                                       demographics_builder=self.builders.demographics_builder)
         task.add_embedded_python_scripts_from_path(os.path.join(self.embedded_python_folder, 'dtk_post_process.py'))
         task.use_embedded_python = True
-        task.set_sif(self.builders.sif_path, platform=self.platform)
 
         task.pre_creation(Simulation(), self.platform)
         experiment = Experiment.from_task(task, name=self.case_name)
@@ -156,7 +153,6 @@ class TestEmodPrePostProcess(unittest.TestCase):
         task.gather_common_assets()
 
         experiment = Experiment.from_task(task, name=self.case_name)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         task.gather_common_assets()
 
         self.assertEqual(task.eradication_path, self.builders.eradication_path)
@@ -178,7 +174,6 @@ class TestEmodPrePostProcess(unittest.TestCase):
                                    campaign_path=self.builders.campaign_file,
                                    embedded_python_scripts_path=self.embedded_python_folder,
                                    custom_reports_path=self.builders.custom_reports_file)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         # Create experiment from template
         experiment = Experiment.from_task(task, name=self.case_name)
 

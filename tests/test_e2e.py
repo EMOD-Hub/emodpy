@@ -157,7 +157,6 @@ class TestE2EGeneric(TestE2E):
                                    demographics_paths=self.builders.demographics_file,
                                    campaign_path=self.builders.campaign_file,
                                    embedded_python_scripts_path=os.path.join(manifest.embedded_python_folder))
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         builder = SimulationBuilder()
 
         # Sweep parameter "Run_Number"

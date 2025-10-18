@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import emod_common.bootstrap as emod_common
@@ -10,6 +11,7 @@ from emodpy.campaign.distributor import add_intervention_scheduled
 from emodpy.reporters.common import ReportEventCounter, ReportFilter, ReportEventRecorder
 import emodpy.campaign.waning_config as waning_config
 from emodpy.utils import emod_enum
+from emod_api.config import default_from_schema_no_validation as dfs
 from pathlib import Path
 import sys
 parent = Path(__file__).resolve().parent
@@ -79,6 +81,7 @@ def close_logger(logger):
         handler.close()
         logger.removeHandler(handler)
 
+
 def make_test_directory(case_name: str) -> str:
     test_folder = os.path.join(manifest.failed_tests, f"{case_name}")
     if os.path.exists(test_folder):
@@ -97,11 +100,12 @@ class BuildersCommon:
     schema_path = manifest.common_schema_path
     eradication_path = manifest.common_eradication_path
     input_folder = manifest.inputs_common
+
     config_file = os.path.join(input_folder, "config.json")
+    config_file_basic = os.path.join(input_folder, "config_basic.json")
     campaign_file = os.path.join(input_folder, "campaign.json")
     demographics_file = os.path.join(input_folder, "demographics.json")
-    demographics_file_basic = os.path.join(input_folder, "demographics_basic.json")
-    config_file_basic = os.path.join(input_folder, "config_basic.json")
+
     custom_reports_file = os.path.join(input_folder, "custom_reports.json")
     sif_path = manifest.sif_path_common
 
@@ -178,9 +182,9 @@ class BuildersGeneric(BuildersCommon):
     input_folder = manifest.inputs_generic
 
     config_file = os.path.join(input_folder, "config.json")
+    config_file_basic = os.path.join(input_folder, "config_basic.json")
     campaign_file = os.path.join(input_folder, "campaign.json")
     demographics_file = os.path.join(input_folder, "demographics.json")
-    config_file_basic = os.path.join(input_folder, "config_basic.json")
 
     sif_path = manifest.sif_path_generic
     custom_reports_file = None
@@ -189,6 +193,37 @@ class BuildersGeneric(BuildersCommon):
     def __init__(self):
         super().__init__()
 
+    @staticmethod
+    def write_files():
+        # Generate default config from schema - basic params
+        conf01 = dfs.get_default_config_from_schema(BuildersGeneric.schema_path, as_rod=True)
+        conf01.parameters.finalize()
+        with open(BuildersGeneric.config_file_basic, 'w') as fid01:
+            json.dump(conf01, fid01, sort_keys=True, indent=4)
+
+        # Generate default config from schema - adjusted params
+        conf02 = dfs.get_default_config_from_schema(BuildersGeneric.schema_path, as_rod=True)
+        cp = conf02.parameters
+        cp.Enable_Demographics_Builtin = 0
+        cp.Enable_Natural_Mortality = 1
+        cp.Demographics_Filenames.append('demographics.json')
+        cp.Base_Infectivity_Constant = 1
+        cp.Infectious_Period_Constant = 5
+        cp.Incubation_Period_Constant = 5
+        cp.Enable_Report_Event_Recorder = 1
+        cp.Enable_Spatial_Output = 1
+        cp.Age_Initialization_Distribution_Type = "DISTRIBUTION_COMPLEX"
+        cp.Birth_Rate_Dependence = "POPULATION_DEP_RATE"
+        cp.Simulation_Duration = 1825
+        cp.x_Base_Population = 0.001
+        cp.Spatial_Output_Channels.append('Population')
+        cp.Spatial_Output_Channels.append('Births')
+        cp.Report_Event_Recorder_Events.append('Births')
+        cp.Report_Event_Recorder_Events.append('NonDiseaseDeaths')
+        cp.Report_Event_Recorder_Events.append('HappyBirthday')
+        cp.finalize()
+        with open(BuildersGeneric.config_file, 'w') as fid01:
+            json.dump(conf02, fid01, sort_keys=True, indent=4)
 
     @staticmethod
     def config_builder(config):
@@ -206,3 +241,6 @@ class BuildersGeneric(BuildersCommon):
     def campaign_builder(campaign, demographic_coverage=0.97, vaccine_take=0.94, vaccine_box_duration=25):
         return campaign
 
+
+# Generate files for Generic on import
+BuildersGeneric.write_files()

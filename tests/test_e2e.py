@@ -27,7 +27,7 @@ class TestE2E(unittest.TestCase):
         self.experiment: Experiment
         self.custom_setUp()
         self.embedded_python_scripts_path = os.path.join(manifest.embedded_python_folder, "dtk_post_process.py")
-        self.platform = Platform(manifest.container_platform_name)
+        self.platform = Platform(manifest.container_platform_name, num_retries=0)
         self.original_working_dir = os.getcwd()
         self.case_name = os.path.basename(__file__) + "_" + self.__class__.__name__ + "_" + self._testMethodName
         print(f"\n{self.case_name}")
@@ -61,7 +61,6 @@ class TestE2E(unittest.TestCase):
                                       config_builder=self.builders.config_builder,
                                       embedded_python_scripts_path=self.embedded_python_scripts_path,
                                       demographics_builder=self.builders.demographics_builder)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         builder = SimulationBuilder()
 
         # Sweep parameter "Run_Number"
@@ -92,7 +91,6 @@ class TestE2E(unittest.TestCase):
                                       config_builder=self.builders.config_builder,
                                       embedded_python_scripts_path=self.embedded_python_scripts_path,
                                       demographics_builder=self.builders.demographics_builder)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         builder = SimulationBuilder()
 
         # Sweep parameter "Run_Number"
@@ -115,7 +113,6 @@ class TestE2E(unittest.TestCase):
                                    campaign_path=self.builders.campaign_file,
                                    custom_reports_path=self.builders.custom_reports_file,
                                    embedded_python_scripts_path=os.path.join(manifest.embedded_python_folder))
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         builder = SimulationBuilder()
 
         # Sweep parameter "Run_Number"
@@ -138,7 +135,6 @@ class TestE2EGeneric(TestE2E):
     def test_from_default_basic(self):
         task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                       schema_path=self.builders.schema_path)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         builder = SimulationBuilder()
 
         # Sweep parameter "Run_Number"
@@ -161,7 +157,6 @@ class TestE2EGeneric(TestE2E):
                                    demographics_paths=self.builders.demographics_file,
                                    campaign_path=self.builders.campaign_file,
                                    embedded_python_scripts_path=os.path.join(manifest.embedded_python_folder))
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         builder = SimulationBuilder()
 
         # Sweep parameter "Run_Number"

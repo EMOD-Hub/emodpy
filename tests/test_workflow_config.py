@@ -67,7 +67,6 @@ class TestWorkflowConfig(unittest.TestCase):
             helpers.delete_existing_folder(self.test_folder)
 
     def run_experiment(self, task):
-        task.set_sif(self.builders.sif_path, platform=self.platform)
 
         def param_update(simulation, param, value):
             return simulation.task.set_parameter(param, value)

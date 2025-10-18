@@ -56,6 +56,16 @@ packaging = [
     "twine",
     "bump2version",
 ]
+test = [
+    "emod-hiv",
+    "emod-malaria",
+    "emod-common",
+    "emod-generic",
+    "idmtools-test",
+    "pytest",
+    "unittest-xml-reporting~=3.2",
+    "pytest-xdist",
+]
 
 [project.urls]
 Repository="https://github.com/EMOD-Hub/emodpy"

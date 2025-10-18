@@ -100,7 +100,6 @@ class TestWorkflowDemographics(unittest.TestCase):
                                       schema_path=self.builders.schema_path,
                                       config_builder=self.builders.config_builder,
                                       demographics_builder=self.builders.demographics_builder)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
 
         self.assertEqual(['demographics.json'], task.config['parameters'][
             'Demographics_Filenames'])  # checking that it's using demog file from "from_defaults"
@@ -123,7 +122,6 @@ class TestWorkflowDemographics(unittest.TestCase):
                                       schema_path=self.builders.schema_path,
                                       config_builder=self.builders.config_builder,
                                       demographics_builder=None)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         builder = SimulationBuilder()
         ages = [10, 12, 15, 17, 21]
         builder.add_sweep_definition(update_demog_initial_prevalence, ages)
@@ -175,7 +173,6 @@ class TestWorkflowDemographics(unittest.TestCase):
                                       schema_path=self.builders.schema_path,
                                       demographics_builder=build_demographics,
                                       config_builder=self.builders.config_builder)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
 
         self.assertEqual(['demographics.json'], task.config['parameters'][
             'Demographics_Filenames'])  # checking that it's using demog file from "from_default"
@@ -211,7 +208,6 @@ class TestWorkflowDemographics(unittest.TestCase):
                                       demographics_builder=demog_builder,
                                       config_builder=self.builders.config_builder)
 
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         self.assertEqual([os.path.basename("demographics.json")], task.config.parameters['Demographics_Filenames'])
         self.assertEqual(0, task.config.parameters['Enable_Demographics_Builtin'])
         self.run_exp(task)
@@ -235,7 +231,6 @@ class TestWorkflowDemographics(unittest.TestCase):
                                       schema_path=self.builders.schema_path,
                                       demographics_builder=demog_builder,
                                       config_builder=self.builders.config_builder)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         self.assertEqual(['demographics.json'], task.config['parameters'][
             'Demographics_Filenames'])  # checking that it's using demog file from "from_default"
         self.assertEqual(0, task.config['parameters']['Enable_Demographics_Builtin'])
@@ -263,7 +258,6 @@ class TestWorkflowDemographics(unittest.TestCase):
                                       schema_path=self.builders.schema_path,
                                       demographics_builder=demog_builder,
                                       config_builder=self.builders.config_builder)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
 
         self.assertEqual(['demographics.json'], task.config['parameters'][
             'Demographics_Filenames'])  # checking that it's using demog file from "from_default"
@@ -301,7 +295,6 @@ class TestWorkflowDemographics(unittest.TestCase):
                                       schema_path=self.builders.schema_path,
                                       config_builder=self.builders.config_builder,
                                       demographics_builder=build_demog)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         experiment = self.run_exp(task)
 
         inset_chart_filename = "output/InsetChart.json"
@@ -357,7 +350,6 @@ class TestWorkflowDemographics(unittest.TestCase):
                                       schema_path=self.builders.schema_path,
                                       config_builder=self.builders.config_builder,
                                       demographics_builder=build_demog)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         experiment = self.run_exp(task)
 
         demog_filename = "Assets/demographics.json"
@@ -414,7 +406,6 @@ class TestWorkflowDemographics(unittest.TestCase):
                                       schema_path=self.builders.schema_path,
                                       config_builder=set_param_fn,
                                       demographics_builder=build_demog)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         experiment = self.run_exp(task)
 
         property_filename = "output/PropertyReport.json"
@@ -473,7 +464,6 @@ class TestWorkflowDemographics(unittest.TestCase):
                                    eradication_path=self.builders.eradication_path,
                                    demographics_paths=["demographics.json", overlay_filename],
                                    embedded_python_scripts_path=None)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
         experiment = self.run_exp(task)
 
         demog_filename = os.path.join("Assets", os.path.basename("demographics.json"))

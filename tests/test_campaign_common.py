@@ -84,6 +84,8 @@ class TestDemographicsConfigMalaria(TestMalaria, BaseDemographicsConfigTest):
 
 
 class BaseTestRepetitionConfigTest(BaseTestClass):
+    EC_name = 'StandardInterventionDistributionEventCoordinator'
+
     def test_init(self):
         with self.assertWarns(Warning) as context:
             repetition_config = RepetitionConfig()
@@ -93,14 +95,14 @@ class BaseTestRepetitionConfigTest(BaseTestClass):
 
     def test_set_repetitions(self):
         repetition_config = RepetitionConfig(number_repetitions=3, timesteps_between_repetitions=5)
-        campaign_object = s2c.get_class_with_defaults('StandardEventCoordinator', schema_json=self.schema_json)
+        campaign_object = s2c.get_class_with_defaults(self.EC_name, schema_json=self.schema_json)
         repetition_config._set_repetitions(campaign_object)
         self.assertEqual(campaign_object["Number_Repetitions"], 3)
         self.assertEqual(campaign_object["Timesteps_Between_Repetitions"], 5)
 
     def test_set_repetitions_infinity(self):
         repetition_config = RepetitionConfig(infinite_repetitions=True, timesteps_between_repetitions=30)
-        campaign_object = s2c.get_class_with_defaults('StandardEventCoordinator', schema_json=self.schema_json)
+        campaign_object = s2c.get_class_with_defaults(self.EC_name, schema_json=self.schema_json)
         repetition_config._set_repetitions(campaign_object)
         self.assertEqual(campaign_object["Number_Repetitions"], -1)
         self.assertEqual(campaign_object["Timesteps_Between_Repetitions"], 30)
@@ -139,7 +141,7 @@ class TestRepetitionConfigMalaria(TestMalaria, BaseTestRepetitionConfigTest):
 
 
 class BasePropertyRestrictionsTest(BaseTestClass):
-    EC_name = 'StandardEventCoordinator'
+    EC_name = 'StandardInterventionDistributionEventCoordinator'
 
     def test_init(self):
         with self.assertWarns(Warning) as context:

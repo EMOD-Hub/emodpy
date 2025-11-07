@@ -132,7 +132,7 @@ class TestWorkflowCampaign(unittest.TestCase):
             self.assertEqual(campaign_file, campaign_file_from_disk)
 
             stdout = files["stdout.txt"].decode("utf-8")
-            self.assertIn("'SimpleVaccine' interventions at node", stdout)
+            self.assertIn("'Vaccine' interventions at node", stdout)
 
     def campaign_sweeping_test(self, update_coverage):
         """
@@ -180,7 +180,7 @@ class TestWorkflowCampaign(unittest.TestCase):
             self.assertEqual(sim.tags["Demographic_Coverage"], coverage)
 
             stdout = files["stdout.txt"].decode("utf-8")
-            self.assertIn("'SimpleVaccine' interventions at node", stdout)
+            self.assertIn("'Vaccine' interventions at node", stdout)
 
     def test_campaign_sweeping_test_1(self):
         def update_vaccine_coverage(simulation, coverage):
@@ -249,7 +249,7 @@ class TestWorkflowCampaign(unittest.TestCase):
         self.assertEqual(len(campaign_file["Events"]), 1)
 
         stdout = files["stdout.txt"].decode("utf-8")
-        self.assertIn("'SimpleVaccine' interventions at node", stdout)
+        self.assertIn("'Vaccine' interventions at node", stdout)
 
     def test_scheduled_and_triggered_from_defaults(self):
         """
@@ -435,7 +435,7 @@ class TestWorkflowCampaign(unittest.TestCase):
             actual_combos.append((aliens_distribution, initial_population, coverage))
 
             stdout = files["stdout.txt"].decode("utf-8")
-            self.assertIn("'SimpleVaccine' interventions at node", stdout)
+            self.assertIn("'Vaccine' interventions at node", stdout)
 
         self.assertEqual(expected_combos, actual_combos)
 
@@ -517,7 +517,7 @@ class TestWorkflowCampaign(unittest.TestCase):
             actual_combos.append((aliens_distribution, initial_population))
 
             stdout = files["stdout.txt"].decode("utf-8")
-            self.assertIn("'SimpleVaccine' interventions at node", stdout)
+            self.assertIn("'Vaccine' interventions at node", stdout)
 
         self.assertEqual(expected_combos, actual_combos)
 

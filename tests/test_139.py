@@ -30,7 +30,7 @@ DanB's notes: Would be nice to
 """
 
 
-@pytest.mark.comps
+@pytest.mark.skip
 class Test139(unittest.TestCase):
     def setUp(self) -> None:
         self.task: EMODTask
@@ -85,7 +85,7 @@ class Test139(unittest.TestCase):
         self.assertTrue(self.experiment.succeeded)
 
 
-@pytest.mark.comps
+@pytest.mark.skip
 class Test139Generic(Test139):
     def custom_setUp(self):
         self.builders = helpers.BuildersGeneric

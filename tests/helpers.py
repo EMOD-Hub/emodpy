@@ -117,6 +117,7 @@ class BuildersCommon:
         """
         This function sets the minimum configuration for a simulation to run with emod_common.
         """
+        config.parameters.Enable_Default_Reporting = 1
         config.parameters.Incubation_Period_Distribution = emod_enum.DistributionType.CONSTANT_DISTRIBUTION
         config.parameters.Incubation_Period_Constant = 5
         config.parameters.Infectious_Period_Distribution = emod_enum.DistributionType.CONSTANT_DISTRIBUTION

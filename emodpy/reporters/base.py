@@ -302,7 +302,8 @@ class BuiltInReporter(AbstractBaseReporter):
     def to_dict(self) -> dict:
         # Transform into a dict by massaging the ReadOnlyDict and typing as dictionary
         self.parameters.finalize()
-        self.parameters.pop("Sim_Types")
+        if ("Sim_Types" in self.parameters):
+            self.parameters.pop("Sim_Types")
         return dict(self.parameters)
 
 

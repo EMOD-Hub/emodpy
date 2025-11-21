@@ -2,14 +2,14 @@ import unittest
 import pytest
 from typing import List, Callable
 
-from emod_api.demographics.Node import Node
-from emod_api.demographics.Updateable import Updateable
 from emod_api.demographics.age_distribution import AgeDistribution
+from emod_api.demographics.node import Node
+from emod_api.demographics.updateable import Updateable
 from emod_api.demographics.mortality_distribution import MortalityDistribution
 from emod_api.demographics.susceptibility_distribution import SusceptibilityDistribution
+from emodpy.utils.distributions import UniformDistribution
 
 from emodpy.demographics.demographics import Demographics
-from emodpy.utils.distributions import *
 
 @pytest.mark.unit
 class TestDemographics(unittest.TestCase):
@@ -192,16 +192,16 @@ class TestDemographics(unittest.TestCase):
     #
 
     def test_set_simple_age_distribution_works(self):
-        from emod_api.demographics.DemographicsTemplates import _set_age_simple
+        from emod_api.demographics.implicit_functions import _set_age_simple
         self._test_set_simple_distribution_works(use_case='age', implicit_functions=[_set_age_simple])
 
     def test_set_complex_age_distribution_works(self):
-        from emod_api.demographics.DemographicsTemplates import _set_age_complex
+        from emod_api.demographics.implicit_functions import _set_age_complex
         self._test_set_complex_distribution_works(use_case='age', implicit_functions=[_set_age_complex],
                                                   distribution=self.complex_age_distribution1)
 
     def test_set_complex_age_distribution_works_twice(self):
-        from emod_api.demographics.DemographicsTemplates import _set_age_complex
+        from emod_api.demographics.implicit_functions import _set_age_complex
         self._test_set_complex_distribution_works_twice(use_case='age', implicit_functions=[_set_age_complex],
                                                         distribution1=self.complex_age_distribution1,
                                                         distribution2=self.complex_age_distribution2)
@@ -211,16 +211,16 @@ class TestDemographics(unittest.TestCase):
     #
 
     def test_set_simple_susceptibility_distribution_works(self):
-        from emod_api.demographics.DemographicsTemplates import _set_suscept_simple
+        from emod_api.demographics.implicit_functions import _set_suscept_simple
         self._test_set_simple_distribution_works(use_case='susceptibility', implicit_functions=[_set_suscept_simple])
 
     def test_set_complex_susceptibility_distribution_works(self):
-        from emod_api.demographics.DemographicsTemplates import _set_suscept_complex
+        from emod_api.demographics.implicit_functions import _set_suscept_complex
         self._test_set_complex_distribution_works(use_case='susceptibility', implicit_functions=[_set_suscept_complex],
                                                   distribution=self.complex_susceptibility_distribution1)
 
     def test_set_complex_susceptibility_distribution_works_twice(self):
-        from emod_api.demographics.DemographicsTemplates import _set_suscept_complex
+        from emod_api.demographics.implicit_functions import _set_suscept_complex
         self._test_set_complex_distribution_works_twice(use_case='susceptibility', implicit_functions=[_set_suscept_complex],
                                                         distribution1=self.complex_susceptibility_distribution1,
                                                         distribution2=self.complex_susceptibility_distribution2)
@@ -230,17 +230,17 @@ class TestDemographics(unittest.TestCase):
     #
 
     def test_set_simple_prevalence_distribution_works(self):
-        from emod_api.demographics.DemographicsTemplates import _set_init_prev
+        from emod_api.demographics.implicit_functions import _set_init_prev
         self._test_set_simple_distribution_works(use_case='prevalence', implicit_functions=[_set_init_prev])
 
     # TODO: move risk to emodpy-malaria
     #  https://github.com/InstituteforDiseaseModeling/emodpy-malaria-old/issues/706
     # def test_set_simple_risk_distribution_works(self):
-    #     from emod_api.demographics.DemographicsTemplates import _set_enable_demog_risk
+    #     from emod_api.demographics.implicit_functions import _set_enable_demog_risk
     #     self._test_set_simple_distribution_works(use_case='risk_', implicit_functions=[_set_enable_demog_risk])
 
     def test_set_simple_migration_heterogeneity_distribution_works(self):
-        from emod_api.demographics.DemographicsTemplates import _set_migration_model_fixed_rate, _set_enable_migration_model_heterogeneity
+        from emod_api.demographics.implicit_functions import _set_migration_model_fixed_rate, _set_enable_migration_model_heterogeneity
         implicit_functions = [_set_migration_model_fixed_rate, _set_enable_migration_model_heterogeneity]
         self._test_set_simple_distribution_works(use_case='migration_heterogeneity',
                                                  implicit_functions=implicit_functions)
@@ -248,7 +248,7 @@ class TestDemographics(unittest.TestCase):
     # TODO: move innate_immune to emodpy-malaria
     #  https://github.com/InstituteforDiseaseModeling/emodpy-malaria-old/issues/706
     # def test_set_simple_innate_immune_distribution_works(self):
-    #     from emod_api.demographics.DemographicsTemplates import _set_immune_variation_type_cytokine_killing, \
+    #     from emod_api.demographics.implicit_functions import _set_immune_variation_type_cytokine_killing, \
     #         _set_immune_variation_type_pyrogenic_threshold
     #
     #     # cytokine killing should be allowed
@@ -274,7 +274,7 @@ class TestDemographics(unittest.TestCase):
     def test_set_complex_mortality_distribution_by_year_works(self):
         # This one is weird, because it uses two args for distributions that vary from the standard used by all the
         # others.
-        from emod_api.demographics.DemographicsTemplates import _set_enable_natural_mortality, _set_mortality_age_gender_year
+        from emod_api.demographics.implicit_functions import _set_enable_natural_mortality, _set_mortality_age_gender_year
 
         implicit_functions = [_set_enable_natural_mortality, _set_mortality_age_gender_year]
         selected_node_ids = [0]  # one way to specify the default node
@@ -312,7 +312,7 @@ class TestDemographics(unittest.TestCase):
         Returns:
             Nothing
         """
-        from emod_api.demographics.DemographicsTemplates import _set_age_simple, _set_age_complex
+        from emod_api.demographics.implicit_functions import _set_age_simple, _set_age_complex
         self._test_set_simple_distribution_works(use_case='age', implicit_functions=[_set_age_simple])
         self._test_set_complex_distribution_works(use_case='age', implicit_functions=[_set_age_complex],
                                                   distribution=self.complex_age_distribution1)
@@ -323,18 +323,18 @@ class TestDemographics(unittest.TestCase):
         Returns:
             Nothing
         """
-        from emod_api.demographics.DemographicsTemplates import _set_age_simple, _set_age_complex
+        from emod_api.demographics.implicit_functions import _set_age_simple, _set_age_complex
         self._test_set_complex_distribution_works(use_case='age', implicit_functions=[_set_age_complex],
                                                   distribution=self.complex_age_distribution1)
         self._test_set_simple_distribution_works(use_case='age', implicit_functions=[_set_age_simple])
 
     # No need to re-implement these when other tests are doing the exact same thing & we can reuse the code
     def test_explicit_node_selection_works(self):
-        from emod_api.demographics.DemographicsTemplates import _set_age_simple
+        from emod_api.demographics.implicit_functions import _set_age_simple
         self._test_set_simple_distribution_works(use_case='age', implicit_functions=[_set_age_simple], explicit=True)
 
     def test_implicit_node_selection_works(self):
-        from emod_api.demographics.DemographicsTemplates import _set_age_simple
+        from emod_api.demographics.implicit_functions import _set_age_simple
         self._test_set_simple_distribution_works(use_case='age', implicit_functions=[_set_age_simple], explicit=False)
 
     def test_add_ip_specific_node(self):

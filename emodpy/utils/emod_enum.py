@@ -1,11 +1,4 @@
-from enum import Enum
-
-
-class StrEnum(str, Enum):
-    def __str__(self) -> str:
-        return self.value
-    pass
-
+from emod_api.utils.str_enum import StrEnum
 
 class DistributionType(StrEnum):
     NOT_INITIALIZED = 'NOT_INITIALIZED'

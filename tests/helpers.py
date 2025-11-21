@@ -128,7 +128,7 @@ class BuildersCommon:
     @staticmethod
     def demographics_builder(aliens_distribution=None, total_population=500):
         from emodpy.demographics.demographics import Demographics
-        from emod_api.demographics.Node import Node
+        from emod_api.demographics.node import Node
 
         if not aliens_distribution:
             aliens_distribution = [0.3, 0.3, 0.4]

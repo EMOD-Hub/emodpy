@@ -4,6 +4,7 @@ from emod_api.demographics.demographics import Demographics as EMODAPIDemographi
 from emod_api.demographics.node import Node
 from emodpy.utils.distributions import UniformDistribution
 
+
 class Demographics(EMODAPIDemographics):
     PYROGENIC_THRESHOLD = 'PYROGENIC_THRESHOLD'
     CYTOKINE_KILLING = 'CYTOKINE_KILLING'
@@ -23,4 +24,3 @@ class Demographics(EMODAPIDemographics):
     @raw.setter
     def raw(self, value):
         raise AttributeError("raw is not a valid attribute for Demographics objects")
-

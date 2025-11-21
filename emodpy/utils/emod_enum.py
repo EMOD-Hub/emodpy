@@ -1,5 +1,6 @@
 from emod_api.utils.str_enum import StrEnum
 
+
 class DistributionType(StrEnum):
     NOT_INITIALIZED = 'NOT_INITIALIZED'
     CONSTANT_DISTRIBUTION = 'CONSTANT_DISTRIBUTION'

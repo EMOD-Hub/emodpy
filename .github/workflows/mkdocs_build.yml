@@ -16,12 +16,11 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v5
         with:
-          # Cannot use '3.x' until idmtools supports later versions
-          python-version: '3.9'
+          python-version: '3.x'
       - name: Install packages
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install .[docs]
+          python3 -m pip install .[docs] --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
       - name: Build static files
         run: |
           mkdocs build

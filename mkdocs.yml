@@ -35,8 +35,8 @@ nav:
   - Parameter Sweeps: sweeps.md
   - API Reference: autoapi/
   - Related Projects:
-    - EMOD-Generic: https://docs.idmod.org/projects/emod-generic
     - emod-api: https://docs.idmod.org/projects/emod-api/
+    - EMOD-Generic: https://docs.idmod.org/projects/emod-generic
     - idmtools: https://docs.idmod.org/projects/idmtools/
 
 plugins:

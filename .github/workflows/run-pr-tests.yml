@@ -32,14 +32,14 @@ jobs:
       - name: Run unit tests
         run: |
           cd tests
-          pytest test_download_from_package.py
-          pytest --dist loadfile -v -m unit --junitxml="test_results.xml"
+          python -m pytest test_download_from_package.py
+          python -m pytest --dist loadfile -v -m unit --junitxml="test_results.xml"
       - name: Run container tests
         if: runner.os == 'Linux'
         run: |
           cd tests
-          pytest test_download_from_package.py
-          pytest --dist loadfile -v -m container --junitxml="test_results.xml"
+          python -m pytest test_download_from_package.py
+          python -m pytest --dist loadfile -v -m container --junitxml="test_results.xml"
       - name: Upload emodpy test results
         uses: actions/upload-artifact@v4
         if: failure()

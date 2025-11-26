@@ -3,7 +3,7 @@ import os
 import typing
 from abc import ABCMeta, abstractmethod
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from idmtools.assets import Asset, AssetCollection, json_handler
 

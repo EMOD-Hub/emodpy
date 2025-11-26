@@ -29,6 +29,7 @@ import datetime
 import random
 import string
 
+import emod_api.campaign as default_campaign
 from emod_api.config import default_from_schema_no_validation as dfs
 from emod_api.schema_to_class import ReadOnlyDict
 from emod_api.demographics.Demographics import Demographics
@@ -267,7 +268,7 @@ class EMODTask(ITask):
         return default_config
 
     @staticmethod
-    def build_default_campaign(schema_path: Union[str, Path]) -> api_campaign:
+    def build_default_campaign(schema_path: Union[str, Path]) -> default_campaign:
         """
         Build the default (empty) campaign and set its schema_path.
 
@@ -277,7 +278,6 @@ class EMODTask(ITask):
         Returns:
             Fresh initialized campaign module with schema_path set
         """
-        import emod_api.campaign as default_campaign
         default_campaign.set_schema(schema_path_in=schema_path)
         return default_campaign
 

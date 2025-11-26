@@ -267,7 +267,7 @@ class EMODTask(ITask):
         return default_config
 
     @staticmethod
-    def build_default_campaign(schema_path: Union[str, Path]):
+    def build_default_campaign(schema_path: Union[str, Path]) -> api_campaign:
         """
         Build the default (empty) campaign and set its schema_path.
 
@@ -815,7 +815,7 @@ class EMODTask(ITask):
         return simulation.task.set_parameter(param, value)
 
     @classmethod
-    def set_parameter_partial(cls, parameter: str):
+    def set_parameter_partial(cls, parameter: str) -> partial[Simulation]:
         """
         Convenience callback for sweeps
 
@@ -827,7 +827,7 @@ class EMODTask(ITask):
         """
         return partial(cls.set_parameter_sweep_callback, param=parameter)
 
-    def get_parameter(self, name: str, default: Optional[Any] = None):
+    def get_parameter(self, name: str, default: Optional[Any] = None) -> Any:
         """
         Get a parameter in the simulation.
 

@@ -20,8 +20,8 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v5
         with:
-          # Cannot use '3.x' until idmtools supports 3.14
-          python-version: '3.13'
+          # Cannot use '3.x' until idmtools supports later versions
+          python-version: '3.9'
       - name: Install packages
         run: |
           python3 -m pip install --upgrade pip

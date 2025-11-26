@@ -1,10 +1,11 @@
 # Creating simulations
 
 Creating a simulation generally consists of 4 parts:
-- Creating the model configuration
-- Defining the demographics
-- Building the campaign
-- Configuring the reports
+
+ - Creating the model configuration
+ - Defining the demographics
+ - Building the campaign
+ - Configuring the reports
 
 ### Model Configuration
 

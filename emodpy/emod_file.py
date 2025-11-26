@@ -3,7 +3,7 @@ import os
 import typing
 from abc import ABCMeta, abstractmethod
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from idmtools.assets import Asset, AssetCollection, json_handler
 
@@ -72,7 +72,7 @@ class MigrationFiles(InputFilesList):
         if not self.migration_other_params:
             self.migration_other_params["Enable_Migration_Heterogeneity"] = 0
 
-    def update_migration_pattern(self, migration_pattern: MigrationPattern, **kwargs) -> None:
+    def update_migration_pattern(self, migration_pattern: MigrationPattern, **kwargs: Any) -> None:
         """
         Update migration pattern
 
@@ -237,7 +237,7 @@ class DemographicsFiles(InputFilesList):
             extend:
 
         Returns:
-            None
+
         """
         dfiles = [os.path.join(df.relative_path, df.filename) for df in self.assets]
         if dfiles:

@@ -47,8 +47,8 @@ jobs:
       - name: Run COMPS tests
         run: |
           cd tests
-          pytest test_download_from_package.py
-          pytest -n 10 --dist loadfile -v -m comps --junitxml="test_results.xml"
+          python -m pytest test_download_from_package.py
+          python -m pytest -n 10 --dist loadfile -v -m comps --junitxml="test_results.xml"
       - name: Upload emodpy test results
         uses: actions/upload-artifact@v4
         if: failure()

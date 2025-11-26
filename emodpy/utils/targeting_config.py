@@ -129,17 +129,16 @@ class AbstractTargetingConfig(ABC):
     classes must implement.  This class is needed to tie the TargetingLogic and
     BaseTargetingConfig classes together.
 
-    Args:
-        class_name: The subclass is responsible for setting the name of the EMOD class.
-            This name does not need to be the same as the python class, but it must
-            match what is used in EMOD.
+    class_name: The subclass is responsible for setting the name of the EMOD class.
+        This name does not need to be the same as the python class, but it must
+        match what is used in EMOD.
 
-        is_equal_to:
-            This is a parameter in all of EMOD's Targeting_Config classes.  The check
-            performed by the class is compared with the value of this parameter.
-            For example, if using HasIP with ip_key_value = "Risk:HIGH" and
-            is_equal_to = 0, individuals who do NOT have Risk = HIGH will be selected.
-            If is_equal_to = 1, then individuals who DO have Risk = HIGH will be selected.
+    is_equal_to:
+        This is a parameter in all of EMOD's Targeting_Config classes.  The check
+        performed by the class is compared with the value of this parameter.
+        For example, if using HasIP with ip_key_value = "Risk:HIGH" and
+        is_equal_to = 0, individuals who do NOT have Risk = HIGH will be selected.
+        If is_equal_to = 1, then individuals who DO have Risk = HIGH will be selected.
     """
     def __init__(self):
         self.class_name = "Unknown"
@@ -200,10 +199,10 @@ class AbstractTargetingConfig(ABC):
         This is the dictionary used to generate the JSON for EMOD.
 
         Args:
-            campaign: The campaign module that has the path to the schema
+            campaign (api_campaign): The campaign module that has the path to the schema
 
         Returns:
-            A ReadOnlyDict object created by schema_to_class
+            (ReadOnlyDict): Dict object created by schema_to_class
         """
         tc_obj = s2c.get_class_with_defaults(self.class_name, campaign.schema_path)
         tc_obj.Is_Equal_To = self.is_equal_to
@@ -229,10 +228,10 @@ class AbstractTargetingConfig(ABC):
         that the logic written in python is translated to the JSON correctly.
 
         Args:
-            campaign: The campaign module that has the path to the schema
+            campaign (api_campaign): The campaign module that has the path to the schema
 
         Returns:
-            A simple dictionary containing the data for EMOD.
+            (dict): A dictionary containing the data for EMOD.
         """
         tc_obj = self.to_schema_dict(campaign)
         tc_dict = self._clean_dict(tc_obj)
@@ -488,10 +487,10 @@ class HasIP(BaseTargetingConfig):
         This is the dictionary used to generate the JSON for EMOD.
 
         Args:
-            campaign: The campaign module that has the path to the schema
+            campaign (api_campaign): The campaign module that has the path to the schema
 
         Returns:
-            A ReadOnlyDict object created by schema_to_class
+            (ReadOnlyDict): Dict object created by schema_to_class
         """
         tc_obj = super().to_schema_dict(campaign)
         tc_obj.IP_Key_Value = self.ip_key_value
@@ -523,10 +522,10 @@ class HasIntervention(BaseTargetingConfig):
         This is the dictionary used to generate the JSON for EMOD.
 
         Args:
-            campaign: The campaign module that has the path to the schema
+            campaign (api_campaign): The campaign module that has the path to the schema
 
         Returns:
-            A ReadOnlyDict object created by schema_to_class
+            (ReadOnlyDict): Dict object created by schema_to_class
         """
         tc_obj = super().to_schema_dict(campaign)
         tc_obj.Intervention_Name = self.intervention_name

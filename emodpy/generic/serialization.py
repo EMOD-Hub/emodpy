@@ -32,7 +32,6 @@ def add_serialization_timesteps(task: EMODTask, timesteps: List[int], end_at_fin
         use_absolute_times (bool): False means the method will define simulation times instead of time steps see documentation on Serialization_Type for details
 
     Returns:
-        None
 
     """
     enable_serialization(task, use_absolute_times)
@@ -59,7 +58,7 @@ def load_serialized_population(task: EMODTask, population_path: str, population_
         population_filenames (List[str]): names of files in question
 
     Returns:
-        None
+
     """
     task.update_parameters({"Serialized_Population_Path": population_path,
                             "Serialized_Population_Filenames": population_filenames})

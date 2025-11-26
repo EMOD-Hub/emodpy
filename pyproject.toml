@@ -32,21 +32,11 @@ classifiers = [
 
 [project.optional-dependencies]
 docs = [
-    "sphinxext.remoteliteralinclude~=0.4",
-    "sphinxext-rediraffe",
-    "pygit2>=1.4",
-    "sphinx~=6.2",
-    "pydata-sphinx-theme",
-    "sphinxcontrib-napoleon~=0.7",
-    "plantweb~=1.2",
-    "sphinxcontrib-programoutput~=0.17",
-    "nbsphinx~=0.9",
-    "jupyterlab~=4.0",
-    "myst-parser~=2.0",
-    "readthedocs-sphinx-search~=0.3",
-    "sphinx-copybutton~=0.5",
-    "pygithub~=2.3",
-    "sphinxcontrib-jquery~=4.1",
+    "mkdocs-material",
+    "mkdocs-include-markdown-plugin",
+    "mkdocstrings-python",
+    "mkdocs-autoapi",
+    "mkdocs-glightbox",
 ]
 lint = [
     "flake8",
@@ -57,19 +47,20 @@ packaging = [
     "bump2version",
 ]
 test = [
-    "emod-hiv",
-    "emod-malaria",
     "emod-common",
     "emod-generic",
+    "emod-hiv",
+    "emod-malaria",
     "idmtools-test",
     "pytest",
-    "unittest-xml-reporting~=3.2",
+    "pytest-cov",
     "pytest-xdist",
+    "unittest-xml-reporting~=3.2",
 ]
 
 [project.urls]
-Repository="https://github.com/EMOD-Hub/emodpy"
-Issues="https://github.com/EMOD-Hub/emodpy/issues"
+Repository = "https://github.com/EMOD-Hub/emodpy"
+Issues = "https://github.com/EMOD-Hub/emodpy/issues"
 
 [project.entry-points.idmtools_task]
 idmtools_task_emod = "emodpy.emod_task:EMODTaskSpecification"

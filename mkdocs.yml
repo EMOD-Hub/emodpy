@@ -30,7 +30,6 @@ theme:
 
 nav:
   - Home: index.md
-  - FAQ: faq.md
   - Creating Simulations: sims.md
   - Parameter Sweeps: sweeps.md
   - API Reference: autoapi/

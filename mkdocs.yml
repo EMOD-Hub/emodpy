@@ -1,5 +1,5 @@
 site_name: emodpy
-site_url: https://docs.idmod.org/projects/emodpy/en/latest/
+site_url: https://emod-hub.github.io/emodpy/
 repo_name: EMOD-Hub/emodpy
 repo_url: https://github.com/EMOD-Hub/emodpy
 
@@ -34,7 +34,6 @@ nav:
   - Parameter Sweeps: sweeps.md
   - API Reference: autoapi/
   - Related Projects:
-    - emod-api: https://docs.idmod.org/projects/emod-api/
     - EMOD-Generic: https://docs.idmod.org/projects/emod-generic
     - idmtools: https://docs.idmod.org/projects/idmtools/
 

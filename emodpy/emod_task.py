@@ -31,6 +31,7 @@ import datetime
 import random
 import string
 
+import emod_api.campaign as api_campaign
 from emod_api.config import default_from_schema_no_validation as dfs
 from emod_api.schema_to_class import ReadOnlyDict
 
@@ -268,7 +269,7 @@ class EMODTask(ITask):
         return default_config
 
     @staticmethod
-    def build_default_campaign(schema_path: Union[str, Path]):
+    def build_default_campaign(schema_path: Union[str, Path]) -> api_campaign:
         """
         Build the default (empty) campaign and set its schema_path.
 
@@ -278,9 +279,8 @@ class EMODTask(ITask):
         Returns:
             Fresh initialized campaign module with schema_path set
         """
-        import emod_api.campaign as default_campaign
-        default_campaign.set_schema(schema_path_in=schema_path)
-        return default_campaign
+        api_campaign.set_schema(schema_path_in=schema_path)
+        return api_campaign
 
     @classmethod
     def from_defaults(cls,
@@ -816,7 +816,7 @@ class EMODTask(ITask):
         return simulation.task.set_parameter(param, value)
 
     @classmethod
-    def set_parameter_partial(cls, parameter: str):
+    def set_parameter_partial(cls, parameter: str) -> partial[Simulation]:
         """
         Convenience callback for sweeps
 
@@ -828,7 +828,7 @@ class EMODTask(ITask):
         """
         return partial(cls.set_parameter_sweep_callback, param=parameter)
 
-    def get_parameter(self, name: str, default: Optional[Any] = None):
+    def get_parameter(self, name: str, default: Optional[Any] = None) -> Any:
         """
         Get a parameter in the simulation.
 

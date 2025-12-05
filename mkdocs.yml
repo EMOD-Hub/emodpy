@@ -30,8 +30,6 @@ theme:
 
 nav:
   - Home: index.md
-  - Creating Simulations: sims.md
-  - Parameter Sweeps: sweeps.md
   - API Reference: autoapi/
   - Related Projects:
     - emod-api: https://emod-hub.github.io/emod-api/

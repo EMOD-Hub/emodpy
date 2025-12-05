@@ -5,9 +5,9 @@ import pytest
 import time
 from emod_api.config import default_from_schema_no_validation as dfs
 from emodpy.demographics.demographics import Demographics
-import emod_api.demographics.Demographics as Demographics_api
-import emod_api.demographics.Node as Node
-from emod_api.demographics.PropertiesAndAttributes import IndividualAttributes, IndividualProperty, \
+import emod_api.demographics.demographics as Demographics_api
+from emod_api.demographics.node import Node
+from emod_api.demographics.properties_and_attributes import IndividualAttributes, IndividualProperty, \
     IndividualProperties, NodeAttributes
 
 from idmtools.entities.experiment import Experiment
@@ -158,7 +158,7 @@ class TestWorkflowDemographics(unittest.TestCase):
 
         def build_demographics():
             from emodpy.demographics.demographics import Demographics
-            from emod_api.demographics.Node import Node
+            from emod_api.demographics.node import Node
             from emod_api.demographics.susceptibility_distribution import SusceptibilityDistribution
 
             default_node = Node(lat=0, lon=0, pop=10000, forced_id=0)

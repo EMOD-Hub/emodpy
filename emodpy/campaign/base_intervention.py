@@ -1,12 +1,12 @@
 import warnings
 
 from emodpy.campaign.common import CommonInterventionParameters
-from emodpy.utils.emod_enum import StrEnum
 from emodpy.utils import is_valid_key_value_pair
 from emodpy.utils.distributions import BaseDistribution
 
 from emod_api import schema_to_class as s2c
 from emod_api import campaign as api_campaign
+from emod_api.utils.str_enum import StrEnum
 
 from typing import Union
 

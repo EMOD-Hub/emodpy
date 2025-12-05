@@ -112,7 +112,7 @@ class StandardEventCoordinator(InterventionDistributorEventCoordinator):
                 Property_Restrictions, Property_Restrictions_Within_Node and Node_Property_Restrictions in the coordinator.
 
         Returns:
-            s2c.ReadOnlyDict: StandardEventCoordinator
+            (ReadOnlyDict): StandardEventCoordinator
         """
         super().__init__(campaign, "StandardInterventionDistributionEventCoordinator",
                          intervention_list=intervention_list)

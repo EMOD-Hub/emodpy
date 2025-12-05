@@ -7,7 +7,7 @@ from emodpy.utils import (validate_value_range, validate_bins, validate_node_pro
                           validate_individual_event, validate_individual_property, validate_list_of_strings,
                           validate_intervention_name, validate_node_event, validate_coordinator_event,
                           validate_surveillance_event)
-from emodpy.utils.emod_enum import StrEnum
+from emod_api.utils.str_enum import StrEnum
 
 
 class SpatialReportChannels(StrEnum):

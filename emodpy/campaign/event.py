@@ -26,7 +26,6 @@ class BaseEvent:
             - Defaults to None.
 
     Returns:
-        None
 
     """
     def __init__(self,

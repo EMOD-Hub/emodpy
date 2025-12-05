@@ -15,7 +15,3 @@ The emodpy package is currently available on a [Python package index server][idm
 ```
 pip install emodpy --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
 ```
-
-{%
-    include-markdown "bib.md"
-%}

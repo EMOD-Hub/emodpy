@@ -1,6 +1,9 @@
-[emodpy]: https://docs.idmod.org/projects/emodpy/
-[emod-api]: https://docs.idmod.org/projects/emod-api/
-[idmtools]: https://docs.idmod.org/projects/idmtools/
+[emod-api]: https://emod-hub.github.io/emod-api/
 [emod-generic]: https://docs.idmod.org/projects/emod-generic/en/latest/parameter-overview.html
+[emodpy]: https://emod-hub.github.io/emodpy/
+[emodpy_hiv]: https://docs.idmod.org/projects/emodpy-hiv/
 [idmod]: https://www.idmod.org/
+[idmtools]: https://docs.idmod.org/projects/idmtools/
+[idmtools_cli]: https://docs.idmod.org/projects/idmtools/en/latest/cli/cli_index.html
+[idmtools_config]: https://docs.idmod.org/projects/idmtools/en/latest/configuration.html
 [idm_pypi]: https://packages.idmod.org/

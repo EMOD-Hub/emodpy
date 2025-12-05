@@ -30,8 +30,8 @@ theme:
 
 nav:
   - Home: index.md
-  - API Reference: autoapi/
-  - Related Projects:
+  - API reference: autoapi/
+  - Related projects:
     - emod-api: https://emod-hub.github.io/emod-api/
     - EMOD-Generic: https://docs.idmod.org/projects/emod-generic
     - idmtools: https://docs.idmod.org/projects/idmtools/

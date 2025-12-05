@@ -3,18 +3,7 @@
 
 # emodpy
 
-## Documentation
-
-Documentation available at https://docs.idmod.org/projects/emodpy/en/latest/.
-
-To build the documentation locally, do the following:
-
-1. Create and activate a venv.
-2. Navigate to the root directory of the repo and enter the following
-
-    ```
-    pip install .[docs]
-    ```
+Documentation available at https://emod-hub.github.io/emodpy/
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -101,18 +90,18 @@ pip install idmtools-test --extra-index-url=https://packages.idmod.org/api/pypi/
 
 ## Building docs
 
-Install all necessary documentation tools using ``pip install -r doc/requirements.txt`` and install emodpy in the same environment. Navigate to the docs folder and enter ``make html``. If you make updates to the docstrings, you must reinstall emodpy to pick up the latest changes in the documentation build. It's also good practice to run ``make clean`` before rebuilding the documentation to avoid missing errors or warnings. These steps are only for testing the build locally before committing changes. The documentation build on Read the Docs will run automatically when new code is committed. 
+Install all necessary documentation tools using ``pip install .[docs] --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple`` and run the command ``mkdocs build``. After changing docstrings, reinstall emodpy to pick up the latest changes in the documentation build.
+
 
 # Community
 The EMOD Community is made up of researchers and software developers, primarily focused on malaria and HIV research.
-We value mutual respect, openness, and a collaborative spirit. If these values resonate with you, 
-we invite you to join our EMOD Slack Community by completing this form:
+We value mutual respect, openness, and a collaborative spirit. If these values resonate with you, we invite you to join our EMOD Slack Community by completing this form:
 
 https://forms.office.com/r/sjncGvBjvZ
+
 
 # Disclaimer
 
 The code in this repository was developed by IDM and other collaborators to support our joint research on flexible agent-based modeling.
- We've made it publicly available under the MIT License to provide others with a better understanding of our research and an opportunity to build upon it for 
- their own work. We make no representations that the code works as intended or that we will provide support, address issues that are found, or accept pull requests.
- You are welcome to create your own fork and modify the code to suit your own modeling needs as permitted under the MIT License.
+We've made it publicly available under the MIT License to provide others with a better understanding of our research and an opportunity to build upon it for their own work. We make no representations that the code works as intended or that we will provide support, address issues that are found, or accept pull requests.
+You are welcome to create your own fork and modify the code to suit your own modeling needs as permitted under the MIT License.

@@ -1,11 +1,11 @@
 ![Staging: emodpy](https://github.com/InstituteforDiseaseModeling/emodpy-idmtools/workflows/Staging:%20emodpy/badge.svg)
 
+
 # emodpy
 
 ## Documentation
 
 Documentation available at https://docs.idmod.org/projects/emodpy/en/latest/.
-
 
 To build the documentation locally, do the following:
 
@@ -13,13 +13,9 @@ To build the documentation locally, do the following:
 2. Navigate to the root directory of the repo and enter the following
 
     ```
-    pip install -r requirements.txt
-    cd docs
-    pip install -r requirements.txt
-    cd ..
-    pip install -e .
+    pip install .[docs]
     ```
-    
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**

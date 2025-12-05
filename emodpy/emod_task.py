@@ -21,6 +21,8 @@ from idmtools.entities.simulation import Simulation
 from idmtools.registry.task_specification import TaskSpecification
 from idmtools.utils.json import load_json_file
 from idmtools.entities.iplatform import IPlatform
+
+from emodpy.demographics.demographics import Demographics
 from emodpy.emod_file import ClimateFiles, DemographicsFiles, MigrationFiles
 from emodpy.campaign.emod_campaign import EMODCampaign
 from emodpy.reporters.base import Reporters
@@ -31,7 +33,6 @@ import string
 
 from emod_api.config import default_from_schema_no_validation as dfs
 from emod_api.schema_to_class import ReadOnlyDict
-from emod_api.demographics.demographics import Demographics
 
 user_logger = getLogger('user')
 logger = getLogger(__name__)

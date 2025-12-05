@@ -13,6 +13,8 @@ See [idmtools documentation][idmtools] for a diagram showing how idmtools and ea
 
 The emodpy package is currently available on a [Python package index server][idm_pypi] managed by the [Institute for Disease Modeling][idmod].
 
+Typically, emodpy is installed as part of [emodpy-malaria][emodpy-malaria] or [emodpy-hiv.][emodpy-hiv]. It can be installed independently as below:
+
 ```
 pip install emodpy --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
 ```

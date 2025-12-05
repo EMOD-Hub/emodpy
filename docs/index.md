@@ -4,9 +4,10 @@ title: Home
 
 # Welcome to emodpy
 
-The emodpy package is a collection of Python scripts and utilities created to streamline user interactions with EMOD and idmtools. Additional functionality for interacting with EMOD is provided by [emod-api][emod-api] and [idmtools][idmtools].
+The emodpy package is a collection of Python scripts for using EMOD. It integrates the configuring of EMOD with idmtools ability to run a model on different platforms. Typical use of emodpy is as part of a disease specific package like [emodpy-malaria][emodpy-malaria] or [emodpy-hiv][emodpy-hiv].
 
-See and  [idmtools documentation][idmtools] for a diagram showing how idmtools and each of the related packages are used in an end-to-end workflow using EMOD as the disease transmission model.
+
+See [idmtools documentation][idmtools] for a diagram showing how idmtools and each of the related packages are used in an end-to-end workflow using EMOD as the disease transmission model.
 
 ## Installation
 

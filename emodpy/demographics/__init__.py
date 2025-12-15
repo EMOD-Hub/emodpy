@@ -10,10 +10,7 @@ from emod_api.demographics.susceptibility_distribution import SusceptibilityDist
 
 from emodpy.demographics.demographics import Demographics
 
-from emod_api.demographics import implicit_functions
-
-
- # __all_exports: A list of classes that are intended to be exported from this module.
+# __all_exports: A list of classes that are intended to be exported from this module.
 __all_exports = [
     Node,
     OverlayNode,

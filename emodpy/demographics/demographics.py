@@ -3,6 +3,7 @@ from typing import List
 from emod_api.demographics.demographics import Demographics as EMODAPIDemographics
 from emod_api.demographics.node import Node
 
+
 class Demographics(EMODAPIDemographics):
 
     def __init__(self, nodes: List[Node], default_node: Node = None, idref: str = None, set_defaults: bool = True):

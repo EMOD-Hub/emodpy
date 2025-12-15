@@ -35,7 +35,6 @@ class TestEMODTask(unittest.TestCase):
         self.original_working_dir = os.getcwd()
         self.task: EMODTask
         self.experiment: Experiment
-        self.platform = Platform(manifest.container_platform_name, num_retries=0)
         self.test_folder = helpers.make_test_directory(self.case_name)
         self.setup_custom_params()
 
@@ -61,6 +60,12 @@ class TestEMODTask(unittest.TestCase):
             os.chdir(self.original_working_dir)
             helpers.delete_existing_folder(self.test_folder)
 
+
+class TestEMODTaskCOMPSPlatform(TestEMODTask):
+    def setUp(self):
+        super().setUp()
+        self.platform = Platform(manifest.comps_platform_name, num_retries=0)
+
     def download_singularity_ac(self, asset_collection_id, out_filename, output_path):
         # download sif from comps, currently not working, see issue:
         # https://github.com/InstituteforDiseaseModeling/idmtools/issues/1574
@@ -73,6 +78,53 @@ class TestEMODTask(unittest.TestCase):
                 asset.save_as(os.path.join(output_path, out_filename))
                 break
 
+    @pytest.mark.comps
+    def test_set_sif_function_with_sif_file(self):
+        asset_collection_id = "bcf11390-75df-ef11-930c-f0921c167860"  # please update to the latest one
+        sif_name = "dtk_run_rocky_py39.sif"
+        self.download_singularity_ac(asset_collection_id, sif_name, self.test_folder)
+        task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
+                                      schema_path=self.builders.schema_path,
+                                      config_builder=self.builders.config_builder,
+                                      demographics_builder=self.builders.demographics_builder,
+                                      embedded_python_scripts_path=self.embedded_python_folder)
+        task.set_sif(os.path.join(self.test_folder, sif_name), self.platform)
+        experiment = Experiment.from_task(task, name=self.case_name)
+        experiment.run(platform=self.platform, wait_until_done=True)
+        experiment_from_comps = self.platform.get_item(experiment.id, item_type=ItemType.EXPERIMENT, raw=True)
+        comps_ac = self.platform.get_item(experiment_from_comps.configuration.asset_collection_id,
+                                          item_type=ItemType.ASSETCOLLECTION)
+        comps_sif_asset = [ac for ac in comps_ac if ac.filename == sif_name]
+        self.assertTrue(len(comps_sif_asset), 1)
+
+    @pytest.mark.comps
+    def test_set_sif_function_with_sif_id(self):
+        task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
+                                      schema_path=self.builders.schema_path,
+                                      config_builder=self.builders.config_builder,
+                                      demographics_builder=self.builders.demographics_builder)
+        task.set_sif(self.builders.sif_path, platform=self.platform)
+        experiment = Experiment.from_task(task, name=self.case_name)
+        experiment.run(platform=self.platform, wait_until_done=True)
+        experiment_from_comps = self.platform.get_item(experiment.id, item_type=ItemType.EXPERIMENT, raw=True)
+        comps_ac = self.platform.get_item(experiment_from_comps.configuration.asset_collection_id,
+                                          item_type=ItemType.ASSETCOLLECTION)
+        comps_sif_asset = [ac for ac in comps_ac if ac.filename == "dtk_run_rocky_py39.sif"]
+        self.assertTrue(len(comps_sif_asset), 1)
+
+    @pytest.mark.comps
+    def test_set_sif_function_with_comps_with_bad_filename(self):
+        task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
+                                      schema_path=self.builders.schema_path,
+                                      config_builder=self.builders.config_builder,
+                                      demographics_builder=self.builders.demographics_builder)
+        self.assertRaises(ValueError, task.set_sif, path_to_sif="my_id.txt", platform=self.platform)
+
+
+class TestEMODTaskContainerPlatform(TestEMODTask):
+    def setUp(self):
+        super().setUp()
+        self.platform = Platform(manifest.container_platform_name, num_retries=0)
 
     @pytest.mark.container
     def test_from_files(self):
@@ -433,7 +485,8 @@ class TestEMODTask(unittest.TestCase):
                         "function returns a Reporters object" in str(context.exception),
                         msg=str(context.exception))
 
-    def skip_test_config_deepcopy(self):
+    @pytest.mark.skip
+    def test_skip_config_deepcopy(self):
         """
             Test copy.deepcopy(EMODTask.config) is working.
         """
@@ -448,50 +501,6 @@ class TestEMODTask(unittest.TestCase):
             config_json = json.load(config_file)['parameters']
         self.assertEqual(config, config_json)
 
-    @pytest.mark.comps
-    def test_set_sif_function_with_sif_file(self):
-        self.platform = Platform(manifest.comps_platform_name)
-        asset_collection_id = "bcf11390-75df-ef11-930c-f0921c167860"  # please update to the latest one
-        sif_name = "dtk_run_rocky_py39.sif"
-        self.download_singularity_ac(asset_collection_id, sif_name, self.test_folder)
-        task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
-                                      schema_path=self.builders.schema_path,
-                                      config_builder=self.builders.config_builder,
-                                      demographics_builder=self.builders.demographics_builder,
-                                      embedded_python_scripts_path=self.embedded_python_folder)
-        task.set_sif(os.path.join(self.test_folder, sif_name), self.platform)
-        experiment = Experiment.from_task(task, name=self.case_name)
-        experiment.run(platform=self.platform, wait_until_done=True)
-        experiment_from_comps = self.platform.get_item(experiment.id, item_type=ItemType.EXPERIMENT, raw=True)
-        comps_ac = self.platform.get_item(experiment_from_comps.configuration.asset_collection_id,
-                                          item_type=ItemType.ASSETCOLLECTION)
-        comps_sif_asset = [ac for ac in comps_ac if ac.filename == sif_name]
-        self.assertTrue(len(comps_sif_asset), 1)
-
-    @pytest.mark.comps
-    def test_set_sif_function_with_sif_id(self):
-        self.platform = Platform(manifest.comps_platform_name, num_retries=0)
-        task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
-                                      schema_path=self.builders.schema_path,
-                                      config_builder=self.builders.config_builder,
-                                      demographics_builder=self.builders.demographics_builder)
-        task.set_sif(self.builders.sif_path, platform=self.platform)
-        experiment = Experiment.from_task(task, name=self.case_name)
-        experiment.run(platform=self.platform, wait_until_done=True)
-        experiment_from_comps = self.platform.get_item(experiment.id, item_type=ItemType.EXPERIMENT, raw=True)
-        comps_ac = self.platform.get_item(experiment_from_comps.configuration.asset_collection_id,
-                                          item_type=ItemType.ASSETCOLLECTION)
-        comps_sif_asset = [ac for ac in comps_ac if ac.filename == "dtk_run_rocky_py39.sif"]
-        self.assertTrue(len(comps_sif_asset), 1)
-
-    @pytest.mark.comps
-    def test_set_sif_function_with_comps_with_bad_filename(self):
-        self.platform = Platform(manifest.comps_platform_name)
-        task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
-                                      schema_path=self.builders.schema_path,
-                                      config_builder=self.builders.config_builder,
-                                      demographics_builder=self.builders.demographics_builder)
-        self.assertRaises(ValueError, task.set_sif, path_to_sif="my_id.txt", platform=self.platform)
 
     @pytest.mark.container
     def test_set_sif_function_with_slurm_file_process_platform(self):

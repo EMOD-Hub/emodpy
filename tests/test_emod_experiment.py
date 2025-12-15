@@ -27,9 +27,34 @@ class TestEMODExperiment:
     num_sim = 2
     num_sim_long = 20
     original_working_dir = manifest.test_directory_absolute_path
+    environment_block = None
+
 
     def setup_custom_params(self):
         self.builders = helpers.BuildersCommon
+
+    @pytest.fixture(autouse=True)
+    def run_every_test(self, request) -> None:
+        # Pre-test
+        self.case_name = request.node.name
+        print(f"\n{self.case_name}")
+        os.chdir(self.original_working_dir)
+        self.platform = Platform(self.environment_block, num_retries=0)
+        self.test_folder = helpers.make_test_directory(self.case_name)  # Moves to failed test directory
+        self.setup_custom_params()
+        self.succeeded = False
+
+        # Run test
+        yield
+
+        # Post-test
+        helpers.close_logger(logger.parent)
+        os.chdir(self.original_working_dir)
+        if (self.succeeded):
+            helpers.delete_existing_folder(self.test_folder)
+
+class TestEMODExperimentCOMPS(TestEMODExperiment):
+    environment_block = manifest.comps_platform_name
 
     def singularity_test(self, my_sif_path, embedded_python_scripts_path=None):
         """
@@ -52,25 +77,6 @@ class TestEMODExperiment:
         stdout = files["stdout.txt"].decode("utf-8")
         assert "EMOD Disease Transmission Kernel" in stdout
 
-    @pytest.fixture(autouse=True)
-    def run_every_test(self, request) -> None:
-        # Pre-test
-        self.case_name = request.node.name
-        print(f"\n{self.case_name}")
-        os.chdir(self.original_working_dir)
-        self.platform = Platform(manifest.container_platform_name, num_retries=0)
-        self.test_folder = helpers.make_test_directory(self.case_name)  # Moves to failed test directory
-        self.setup_custom_params()
-        self.succeeded = False
-
-        # Run test
-        yield
-
-        # Post-test
-        helpers.close_logger(logger.parent)
-        os.chdir(self.original_working_dir)
-        if (self.succeeded):
-            helpers.delete_existing_folder(self.test_folder)
 
     @pytest.mark.comps
     def test_experiment_from_task_with_singularity_from_local_file(self):
@@ -112,6 +118,10 @@ class TestEMODExperiment:
         self.singularity_test(my_sif_path=this_sif_path)
 
         self.succeeded = True
+
+
+class TestEMODExperimentContainer(TestEMODExperiment):
+    environment_block = manifest.container_platform_name
 
     @pytest.mark.container
     def test_experiment_from_task_with_task_from_default_simple(self):

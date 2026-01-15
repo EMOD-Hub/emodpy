@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "emodpy"
-version = "2.1.17"
+version = "2.1.18"
 description = "Core tools for modeling using EMOD"
 readme = "README.md"
 requires-python = ">=3.9"

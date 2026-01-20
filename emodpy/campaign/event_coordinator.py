@@ -24,7 +24,7 @@ class BaseEventCoordinator:
             event_coordinator_class_name (str):
                 - The name of the event coordinator class to be used. This should match the schema.
         """
-        self._coordinator = s2c.get_class_with_defaults(event_coordinator_class_name, campaign.schema_path)
+        self._coordinator = s2c.get_class_with_defaults(event_coordinator_class_name, schema_json=campaign.get_schema())
 
     def to_schema_dict(self) -> s2c.ReadOnlyDict:
         """

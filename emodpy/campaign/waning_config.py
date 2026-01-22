@@ -90,7 +90,7 @@ class Combo(AbstractWaningConfig):
         """
         This method is used to convert the Combo waning effect object to a schema dictionary.
         """
-        wc_obj = s2c.get_class_with_defaults("WaningEffectCombo", campaign.schema_path)
+        wc_obj = s2c.get_class_with_defaults("WaningEffectCombo", schema_json=campaign.get_schema())
         wc_obj.Add_Effects = self.add_effects
         wc_obj.Expires_When_All_Expire = self.expires_when_all_expire
         wc_obj.Effect_List = [effect.to_schema_dict(campaign) for effect in self.effect_list]
@@ -125,7 +125,7 @@ class Box(BaseWaningConfig):
         """
         This method is used to convert the Box waning effect object to a schema dictionary.
         """
-        wc_obj = s2c.get_class_with_defaults("WaningEffectBox", campaign.schema_path)
+        wc_obj = s2c.get_class_with_defaults("WaningEffectBox", schema_json=campaign.get_schema())
         wc_obj.Initial_Effect = self.initial_effect
         wc_obj.Box_Duration = self.box_duration
         wc_obj.pop("schema", None)
@@ -165,7 +165,7 @@ class BoxExponential(BaseWaningConfig):
         """
         This method is used to convert the BoxExponential waning effect object to a schema dictionary.
         """
-        wc_obj = s2c.get_class_with_defaults("WaningEffectBoxExponential", campaign.schema_path)
+        wc_obj = s2c.get_class_with_defaults("WaningEffectBoxExponential", schema_json=campaign.get_schema())
         wc_obj.Initial_Effect = self.initial_effect
         wc_obj.Box_Duration = self.box_duration
         wc_obj.Decay_Time_Constant = self.decay_time_constant
@@ -191,7 +191,7 @@ class Constant(BaseWaningConfig):
         """
         This method is used to convert the Constant waning effect object to a schema dictionary.
         """
-        wc_obj = s2c.get_class_with_defaults("WaningEffectConstant", campaign.schema_path)
+        wc_obj = s2c.get_class_with_defaults("WaningEffectConstant", schema_json=campaign.get_schema())
         wc_obj.Initial_Effect = self.initial_effect
         wc_obj.pop("schema", None)
         wc_obj.pop("explicits", None)
@@ -226,7 +226,7 @@ class Exponential(BaseWaningConfig):
         """
         This method is used to convert the Exponential waning effect object to a schema dictionary.
         """
-        wc_obj = s2c.get_class_with_defaults("WaningEffectExponential", campaign.schema_path)
+        wc_obj = s2c.get_class_with_defaults("WaningEffectExponential", schema_json=campaign.get_schema())
         wc_obj.Initial_Effect = self.initial_effect
         wc_obj.Decay_Time_Constant = self.decay_time_constant
         wc_obj.pop("schema", None)
@@ -289,7 +289,7 @@ class MapLinear(BaseWaningConfig):
         """
         This method is used to convert the MapLinear waning effect object to a schema dictionary.
         """
-        wc_obj = s2c.get_class_with_defaults("WaningEffectMapLinear", campaign.schema_path)
+        wc_obj = s2c.get_class_with_defaults("WaningEffectMapLinear", schema_json=campaign.get_schema())
         wc_obj.Initial_Effect = self.initial_effect
         wc_obj.Durability_Map = self.durability_map.to_schema_dict(campaign)
         wc_obj.Expire_At_Durability_Map_End = self.expire_at_durability_map_end
@@ -333,7 +333,7 @@ class MapLinearAge(BaseWaningConfig):
         """
         This method is used to convert the MapLinearAge waning effect object to a schema dictionary.
         """
-        wc_obj = s2c.get_class_with_defaults("WaningEffectMapLinearAge", campaign.schema_path)
+        wc_obj = s2c.get_class_with_defaults("WaningEffectMapLinearAge", schema_json=campaign.get_schema())
         wc_obj.Initial_Effect = self.initial_effect
         wc_obj.Durability_Map = self.durability_map.to_schema_dict(campaign)
         wc_obj.pop("schema", None)
@@ -375,7 +375,7 @@ class MapLinearSeasonal(BaseWaningConfig):
         """
         This method is used to convert the MapLinearSeasonal waning effect object to a schema dictionary.
         """
-        wc_obj = s2c.get_class_with_defaults("WaningEffectMapLinearSeasonal", campaign.schema_path)
+        wc_obj = s2c.get_class_with_defaults("WaningEffectMapLinearSeasonal", schema_json=campaign.get_schema())
         wc_obj.Initial_Effect = self.initial_effect
         wc_obj.Durability_Map = self.durability_map.to_schema_dict(campaign)
         wc_obj.pop("schema", None)
@@ -421,7 +421,7 @@ class MapPiecewise(BaseWaningConfig):
         """
         This method is used to convert the MapPiecewise waning effect object to a schema dictionary.
         """
-        wc_obj = s2c.get_class_with_defaults("WaningEffectMapPiecewise", campaign.schema_path)
+        wc_obj = s2c.get_class_with_defaults("WaningEffectMapPiecewise", schema_json=campaign.get_schema())
         wc_obj.Initial_Effect = self.initial_effect
         wc_obj.Durability_Map = self.durability_map.to_schema_dict(campaign)
         wc_obj.Expire_At_Durability_Map_End = self.expire_at_durability_map_end
@@ -457,7 +457,7 @@ class RandomBox(BaseWaningConfig):
         """
         This method is used to convert the RandomBox waning effect object to a schema dictionary.
         """
-        wc_obj = s2c.get_class_with_defaults("WaningEffectRandomBox", campaign.schema_path)
+        wc_obj = s2c.get_class_with_defaults("WaningEffectRandomBox", schema_json=campaign.get_schema())
         wc_obj.Initial_Effect = self.initial_effect
         wc_obj.Expected_Discard_Time = self.expected_discard_time
         wc_obj.pop("schema", None)

@@ -380,7 +380,7 @@ class IVCalendar(IndividualIntervention):
             """
             A function that converts the Sigmoid object to a schema dictionary.
             """
-            aap = s2c.get_class_with_defaults("idmType:AgeAndProbability", campaign.schema_path)
+            aap = s2c.get_class_with_defaults("idmType:AgeAndProbability", schema_json=campaign.get_schema())
             aap.Age = self.age_days
             aap.Probability = self.probability
             aap.finalize()

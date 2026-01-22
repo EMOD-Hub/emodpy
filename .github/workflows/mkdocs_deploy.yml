@@ -4,21 +4,19 @@ on:
   push:
     branches:
       - main
-    paths: 
-      - 'mkdocs.yml'
-      - 'docs/**'
 
   # Allows manual run from the Actions tab
   workflow_dispatch:
 
 jobs:
   build-docs:
+    name: Build docs
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
       - name: Install packages
@@ -35,6 +33,7 @@ jobs:
           path: site/
 
   deploy-docs:
+    name: Deploy docs
     runs-on: ubuntu-latest
     environment:
       name: github-pages

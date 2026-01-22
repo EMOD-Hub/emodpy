@@ -35,7 +35,7 @@ class _BaseIntervention:
                  intervention_type: InterventionType,
                  common_intervention_parameters: CommonInterventionParameters = None):
 
-        self._intervention = s2c.get_class_with_defaults(intervention_class_name, campaign.schema_path)
+        self._intervention = s2c.get_class_with_defaults(intervention_class_name, schema_json=campaign.get_schema())
         self.intervention_class_name = intervention_class_name
         self.intervention_type = intervention_type
         if common_intervention_parameters is not None:

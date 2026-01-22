@@ -2,7 +2,8 @@ name: Run COMPS tests
 
 on:
   pull_request:
-    branches: main
+    branches:
+      - main
 
   # Allows manual run from the Actions tab
   workflow_dispatch:

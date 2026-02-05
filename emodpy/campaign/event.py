@@ -52,14 +52,14 @@ class BaseEvent:
         Returns:
             s2c.ReadOnlyDict: The CampaignEvent or CampaignEventByYear event.
         """
-        self._event = s2c.get_class_with_defaults(self.event_class_name, campaign.schema_path)
+        self._event = s2c.get_class_with_defaults(self.event_class_name, schema_json=campaign.get_schema())
         self._event.Event_Coordinator_Config = self.coordinator.to_schema_dict()
 
         if self.node_ids:
-            node_conf = s2c.get_class_with_defaults("NodeSetNodeList", campaign.schema_path)
+            node_conf = s2c.get_class_with_defaults("NodeSetNodeList", schema_json=campaign.get_schema())
             node_conf.Node_List = self.node_ids
         else:
-            node_conf = s2c.get_class_with_defaults("NodeSetAll", campaign.schema_path)
+            node_conf = s2c.get_class_with_defaults("NodeSetAll", schema_json=campaign.get_schema())
         self._event.Nodeset_Config = node_conf
 
         if self.event_name:
@@ -129,7 +129,7 @@ class CampaignEventByYear(BaseEvent):
             bool: True if the year is supported, otherwise False.
         """
         try:
-            event = s2c.get_class_with_defaults(self.event_class_name, campaign.schema_path)
+            event = s2c.get_class_with_defaults(self.event_class_name, schema_json=campaign.get_schema())
         except ValueError:
             return False
 

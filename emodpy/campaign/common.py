@@ -528,7 +528,7 @@ class ValueMap:
         """
         A function that converts the ValueMap object to a schema dictionary.
         """
-        value_map = s2c.get_class_with_defaults("idmType:InterpolatedValueMap", campaign.schema_path)
+        value_map = s2c.get_class_with_defaults("idmType:InterpolatedValueMap", schema_json=campaign.get_schema())
         value_map.Times = self._times
         value_map.Values = self._values
         value_map.pop('schema', None)

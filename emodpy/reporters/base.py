@@ -264,8 +264,7 @@ class BuiltInReporter(AbstractBaseReporter):
                  reporter_class_name: str,
                  report_filter: ReportFilter = None):
         super().__init__()
-        self.parameters: s2c.ReadOnlyDict = s2c.get_class_with_defaults(reporter_class_name,
-                                                                        schema_json=reporters_object.get_schema_json())
+        self.parameters: s2c.ReadOnlyDict = s2c.get_class_with_defaults(reporter_class_name, schema_json=reporters_object.get_schema_json())
         if report_filter is not None:
             self._set_report_filter_parameters(report_filter=report_filter, reporter_class_name=reporter_class_name)
 

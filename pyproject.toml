@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "emodpy"
-version = "2.1.17"
+version = "2.1.19"
 description = "Core tools for modeling using EMOD"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -19,7 +19,7 @@ authors = [
 keywords = ['modeling', 'IDM']
 dependencies = [
     "idmtools[full]~=2.2",
-    "emod-api~=2.0",
+    "emod-api>=2.0.39",
     "matplotlib",
 ]
 license = "MIT"

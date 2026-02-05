@@ -204,7 +204,7 @@ class AbstractTargetingConfig(ABC):
         Returns:
             (ReadOnlyDict): Dict object created by schema_to_class
         """
-        tc_obj = s2c.get_class_with_defaults(self.class_name, campaign.schema_path)
+        tc_obj = s2c.get_class_with_defaults(self.class_name, schema_json=campaign.get_schema())
         tc_obj.Is_Equal_To = self.is_equal_to
         return tc_obj
 

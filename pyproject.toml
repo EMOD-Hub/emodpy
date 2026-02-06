@@ -20,7 +20,6 @@ keywords = ['modeling', 'IDM']
 dependencies = [
     "idmtools[full]~=3.0",
     "emod-api~=2.2.0",
-    "matplotlib",
 ]
 license = "MIT"
 classifiers = [

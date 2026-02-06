@@ -1,6 +1,5 @@
 import os
 import unittest
-import xmlrunner
 import pytest
 from idmtools.assets.file_list import FileList
 from idmtools.core.platform_factory import Platform
@@ -129,7 +128,3 @@ class ClimateGenerationTest(unittest.TestCase):
             barr_out = wi.retrieve_output_file_info([os.path.join('out', paths)])
 
         print(barr_out)
-
-
-if __name__ == "__main__":
-    unittest.main(testRunner=xmlrunner.XMLTestRunner(output='reports'))

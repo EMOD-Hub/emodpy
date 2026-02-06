@@ -67,7 +67,8 @@ def delete_existing_file(file):
 
 
 def delete_existing_folder(folder):
-    shutil.rmtree(folder)
+    if os.path.exists(folder):
+        shutil.rmtree(folder)
 
 
 def close_logger(logger):

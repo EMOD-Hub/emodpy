@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "emodpy"
-version = "2.1.19"
+version = "2.2.0"
 description = "Core tools for modeling using EMOD"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -18,14 +18,19 @@ authors = [
 ]
 keywords = ['modeling', 'IDM']
 dependencies = [
-    "idmtools[full]~=2.2",
-    "emod-api>=2.0.39",
+    "idmtools[full]~=3.0",
+    "emod-api~=2.2.0",
     "matplotlib",
 ]
 license = "MIT"
 classifiers = [
     "Intended Audience :: Science/Research",
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Framework :: IDM-Tools :: models",
 ]
@@ -51,11 +56,9 @@ test = [
     "emod-generic",
     "emod-hiv",
     "emod-malaria",
-    "idmtools-test",
     "pytest",
     "pytest-cov",
     "pytest-xdist",
-    "unittest-xml-reporting~=3.2",
 ]
 
 [project.urls]
@@ -71,5 +74,12 @@ emodpy = "emodpy_cli.cli.schema:emodpy"
 [tool.setuptools.packages]
 find = {include = ["emodpy*"]}
 
-[tool.pip]
-extra-index-url = "https://packages.idmod.org/api/pypi/pypi-production/simple"
+[tool.bumpversion]
+current_version = "2.2.0"
+commit = true
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+
+[[tool.bumpversion.files]]
+filename = "emodpy/__init__.py"

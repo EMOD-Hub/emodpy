@@ -42,7 +42,6 @@ class TestEMODExperiment:
         self.platform = Platform(self.environment_block, num_retries=0)
         self.test_folder = helpers.make_test_directory(self.case_name)  # Moves to failed test directory
         self.setup_custom_params()
-        self.succeeded = False
 
         # Run test
         yield
@@ -50,8 +49,7 @@ class TestEMODExperiment:
         # Post-test
         helpers.close_logger(logger.parent)
         os.chdir(self.original_working_dir)
-        if (self.succeeded):
-            helpers.delete_existing_folder(self.test_folder)
+
 
 class TestEMODExperimentCOMPS(TestEMODExperiment):
     environment_block = manifest.comps_platform_name
@@ -95,8 +93,6 @@ class TestEMODExperimentCOMPS(TestEMODExperiment):
 
         self.singularity_test(my_sif_path=targ_sif_file)
 
-        self.succeeded = True
-
     @pytest.mark.comps
     def test_experiment_from_task_with_singularity(self):
         """
@@ -116,8 +112,6 @@ class TestEMODExperimentCOMPS(TestEMODExperiment):
         # Write asset id to file (needs to be *.id)
         sbi.asset_collection.to_id_file(this_sif_path)
         self.singularity_test(my_sif_path=this_sif_path)
-
-        self.succeeded = True
 
 
 class TestEMODExperimentContainer(TestEMODExperiment):
@@ -141,7 +135,6 @@ class TestEMODExperimentContainer(TestEMODExperiment):
         exp_obj.run(wait_until_done=True, platform=self.platform)
         assert exp_obj.succeeded
 
-        self.succeeded = True
 
     @pytest.mark.container
     def test_experiment_from_task_with_task_from_default_param_custom_cb(self):
@@ -169,7 +162,6 @@ class TestEMODExperimentContainer(TestEMODExperiment):
         config_parameters = json.loads(files["config.json"])['parameters']
         assert config_parameters["Simulation_Duration"] == 7
 
-        self.succeeded = True
 
     @pytest.mark.container
     def test_experiment_from_builder_with_task_from_default(self):
@@ -197,7 +189,6 @@ class TestEMODExperimentContainer(TestEMODExperiment):
             config_parameters = json.loads(files["config.json"])['parameters']
             assert config_parameters["Run_Number"] == sim.tags["Run_Number"]
 
-        self.succeeded = True
 
     @pytest.mark.container
     def test_simulations_manual_builder_with_task_from_file(self):
@@ -234,7 +225,6 @@ class TestEMODExperimentContainer(TestEMODExperiment):
         #     config_parameters = json.loads(files["config.json"])['parameters']
         #     self.assertEqual(config_parameters["Run_Number"], i)
 
-        self.succeeded = True
 
     @pytest.mark.container
     def test_simulations_manual_builder_with_task_from_file_workaround(self):
@@ -275,7 +265,6 @@ class TestEMODExperimentContainer(TestEMODExperiment):
 
         assert set(run_numbers) == set(list(range(self.num_sim_long)))
 
-        self.succeeded = True
 
     @pytest.mark.container
     def test_experiment_from_builder_with_task_from_file(self):
@@ -298,8 +287,6 @@ class TestEMODExperimentContainer(TestEMODExperiment):
             files = self.platform.get_files(sim, ["config.json"])
             config_parameters = json.loads(files["config.json"])['parameters']
             assert config_parameters["Run_Number"] == sim.tags["Run_Number"]
-
-        self.succeeded = True
 
 
 class TestEMODExperimentGeneric(TestEMODExperiment):

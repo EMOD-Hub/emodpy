@@ -27,7 +27,8 @@ jobs:
     name: Bump patch version
     runs-on: ubuntu-latest
     needs:
-      - run-tests
+      - run-tests01
+      - run-tests02
     steps:
       - name: Bump version
         uses: callowayproject/bump-my-version@v1

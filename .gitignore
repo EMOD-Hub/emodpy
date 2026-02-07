@@ -288,13 +288,6 @@ ipython_config.py
 # pyenv
 .python-version
 
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
-
 # celery beat schedule file
 celerybeat-schedule
 
@@ -337,41 +330,8 @@ dmypy.json
 **/.local_data
 **/test_results.xml
 /data
-#example/**/*.experiment.*
-#examples/**/.pytest_cache/
-#examples/analyzers/download/
-#examples/download/
-#examples/generic_sim/download-e2eB/
-#examples/**/task.diskcache/
-#examples/ssmt/**/output/
-#examples/vistools/**/workitem_output/
-#examples/outputs/
-#examples/Serialization/**/outputs/
-#examples/Serialization/**/*.txt
-#examples/Serialization/**/*.csv
-#examples/Serialization/**/*.png
-#examples/kurt_workflow/COMPS_ID
-#examples/reporters/run_with_custom_reporters_malaria/*.dll
-#examples/inputs/generic-ongoing/malaria/bin/Eradication.exe
-#examples/inputs/malaria_on_going/bin/Eradication.exe
-#examples/Eradication.exe
-#
-#tests/reload_sim_download/**
-#tests/serialized_file_download/**
-#tests/population.json
-#tests/population.png
-#tests/timeseries.csv
-#tests/timeseries.png
-#tests/output/
-#tests/output_*/
-#tests/test_results.xml
-#tests/test_ssmt/output/
-#tests/inputs/climate/*.json
 
 **.buildlog
 **COMPS_logs.log
 /docs/_build
 /docs/emodpy.*
-!/examples/inputs/bin/
-examples/kevin_workflow/outputs/
-examples/kevin_workflow/inputs/*/reporter_plugins/

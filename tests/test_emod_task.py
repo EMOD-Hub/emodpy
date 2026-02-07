@@ -118,7 +118,7 @@ class TestEMODTaskContainerPlatform(TestEMODTask):
         These files were originally created with from_defaults and then saved to the inputs folder.
 
         """
-        self.platform = Platform(manifest.container_platform_name, num_retries=0)
+        self.platform = Platform(manifest.container_platform_name, num_retries=0, job_directory=self.test_folder)
         task = EMODTask.from_files(eradication_path=self.builders.eradication_path,
                                    config_path=self.builders.config_file,
                                    campaign_path=self.builders.campaign_file,
@@ -168,7 +168,7 @@ class TestEMODTaskContainerPlatform(TestEMODTask):
 
     @pytest.mark.container
     def test_from_files_config_only(self):
-        self.platform = Platform(manifest.container_platform_name, num_retries=0)
+        self.platform = Platform(manifest.container_platform_name, num_retries=0, job_directory=self.test_folder)
         task = EMODTask.from_files(eradication_path=self.builders.eradication_path,
                                    config_path=self.builders.config_file_basic)
 
@@ -184,7 +184,7 @@ class TestEMODTaskContainerPlatform(TestEMODTask):
         We do not validate custom_reports.json when we use from_files
         just add it to the assets and set Custom_Reports_Filename in the config.
         """
-        self.platform = Platform(manifest.container_platform_name, num_retries=0)
+        self.platform = Platform(manifest.container_platform_name, num_retries=0, job_directory=self.test_folder)
         task = EMODTask.from_files(eradication_path=self.builders.eradication_path,
                                    config_path=self.builders.config_file,
                                    campaign_path=self.builders.campaign_file,
@@ -201,7 +201,7 @@ class TestEMODTaskContainerPlatform(TestEMODTask):
 
     @pytest.mark.container
     def test_from_default(self):
-        self.platform = Platform(manifest.container_platform_name, num_retries=0)
+        self.platform = Platform(manifest.container_platform_name, num_retries=0, job_directory=self.test_folder)
         task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                       campaign_builder=self.builders.campaign_builder,
                                       schema_path=self.builders.schema_path,
@@ -251,7 +251,7 @@ class TestEMODTaskContainerPlatform(TestEMODTask):
         """
         Test EMODTask.from_defaults with schema and eradication only
         """
-        self.platform = Platform(manifest.container_platform_name, num_retries=0)
+        self.platform = Platform(manifest.container_platform_name, num_retries=0, job_directory=self.test_folder)
         task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                       schema_path=self.builders.schema_path)
 
@@ -295,7 +295,7 @@ class TestEMODTaskContainerPlatform(TestEMODTask):
             config.parameters.Enable_Demographics_Builtin = 1
             return config
 
-        self.platform = Platform(manifest.container_platform_name, num_retries=0)
+        self.platform = Platform(manifest.container_platform_name, num_retries=0, job_directory=self.test_folder)
         task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                       schema_path=self.builders.schema_path,
                                       config_builder=config_builder)
@@ -323,7 +323,7 @@ class TestEMODTaskContainerPlatform(TestEMODTask):
     @pytest.mark.container
     def test_eradication_file_as_asset(self):
         # testing from file
-        self.platform = Platform(manifest.container_platform_name, num_retries=0)
+        self.platform = Platform(manifest.container_platform_name, num_retries=0, job_directory=self.test_folder)
         task = EMODTask.from_files(eradication_path=None,
                                    config_path=self.builders.config_file_basic)
         task.common_assets.add_asset(self.builders.eradication_path)
@@ -336,7 +336,7 @@ class TestEMODTaskContainerPlatform(TestEMODTask):
 
     @pytest.mark.container
     def test_existing_eradication_default(self):
-        self.platform = Platform(manifest.container_platform_name, num_retries=0)
+        self.platform = Platform(manifest.container_platform_name, num_retries=0, job_directory=self.test_folder)
         task2 = EMODTask.from_defaults(eradication_path=None,
                                        schema_path=self.builders.schema_path,
                                        config_builder=self.builders.config_builder,
@@ -525,7 +525,7 @@ class TestEMODTaskContainerPlatform(TestEMODTask):
         """
         Test add_py_path, verifies that the path is added to the command string.
         """
-        self.platform = Platform(manifest.container_platform_name, num_retries=0)
+        self.platform = Platform(manifest.container_platform_name, num_retries=0, job_directory=self.test_folder)
         task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                       schema_path=self.builders.schema_path,
                                       config_builder=self.builders.config_builder,

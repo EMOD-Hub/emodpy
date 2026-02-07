@@ -3,7 +3,6 @@ import os
 import sys
 import shutil
 import pytest
-import unittest
 import time
 from pathlib import Path
 
@@ -23,42 +22,33 @@ def param_update(simulation, param, value):
 
 
 @pytest.mark.container
-class TestSerialization(unittest.TestCase):
+class TestSerialization():
     """
         To test dtk_pre_process and dtk_pre_process through EMODTask
     """
-    def setUp(self) -> None:
-        self.num_sim = 2
-        self.num_sim_long = 20
-        self.case_name = os.path.basename(__file__) + "_" + self._testMethodName
-        print(f"\n{self.case_name}")
-        self.original_working_dir = os.getcwd()
-        self.task: EMODTask
-        self.experiment: Experiment
-        self.platform = Platform(manifest.container_platform_name)
-        self.test_folder = helpers.make_test_directory(self.case_name)
-        self.setup_custom_params()
     def setup_custom_params(self):
         self.builders = helpers.BuildersCommon
 
-    def tearDown(self) -> None:
-        # Check if the test failed and leave the data in the folder if it did
-        test_result = self.defaultTestResult()
-        if test_result.errors:
-            with open("experiment_location.txt", "w") as f:
-                if hasattr(self, "experiment"):
-                    f.write(f"The failed experiment can be viewed at {self.platform.endpoint}/#explore/"
-                            f"Simulations?filters=ExperimentId={self.experiment.uid}")
-                else:
-                    f.write("The experiment was not created.")
-            os.chdir(self.original_working_dir)
-            helpers.close_logger(logger.parent)
-        else:
-            helpers.close_logger(logger.parent)
-            if os.name == "nt":
-                time.sleep(1)  # only needed for windows
-            os.chdir(self.original_working_dir)
-            helpers.delete_existing_folder(self.test_folder)
+    @pytest.fixture(autouse=True)
+    # Set-up and tear-down for each test
+    def run_every_test(self, request) -> None:
+        # Pre-test
+        self.num_sim = 2
+        self.num_sim_long = 20
+        self.case_name = os.path.basename(__file__) + "_" + request.node.name
+        self.original_working_dir = os.getcwd()
+        self.task: EMODTask
+        self.experiment: Experiment
+        self.test_folder = helpers.make_test_directory(self.case_name)
+        self.platform = Platform(manifest.container_platform_name, job_directory=self.test_folder)
+        self.setup_custom_params()
+
+        # Run test
+        yield
+
+        # Post-test
+        helpers.close_logger(logger.parent)
+        os.chdir(self.original_working_dir)
 
     def test_serialization(self):
         """
@@ -96,7 +86,6 @@ class TestSerialization(unittest.TestCase):
             config.parameters.Serialized_Population_Filenames = ["state-00010.dtk"]
             return config
 
-
         # 1) Run eradication to generate serialized population files
         task1 = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                        campaign_builder=self.builders.campaign_builder,
@@ -112,9 +101,9 @@ class TestSerialization(unittest.TestCase):
                                                     'output/InsetChart.json'], output=self.test_folder)
 
         serialized_files = os.path.join(self.test_folder, sim.id, "output")
-        self.assertTrue(os.path.isdir(serialized_files))
-        self.assertTrue(os.path.isfile(os.path.join(serialized_files, 'state-00010.dtk')))
-        self.assertTrue(os.path.isfile(os.path.join(serialized_files, 'InsetChart.json')))
+        assert(os.path.isdir(serialized_files))
+        assert(os.path.isfile(os.path.join(serialized_files, 'state-00010.dtk')))
+        assert(os.path.isfile(os.path.join(serialized_files, 'InsetChart.json')))
 
         # 2) Create new experiment and sim with previous serialized file
         task2 = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
@@ -125,7 +114,7 @@ class TestSerialization(unittest.TestCase):
         task2.common_assets.add_directory(assets_directory=serialized_files)
         experiment2 = Experiment.from_task(task=task2, name=self.case_name + " reaload serialization")
         experiment2.run(wait_until_done=True, platform=self.platform)
-        self.assertTrue(experiment2.succeeded, msg=f"Experiment {experiment2.uid} failed.")
+        assert(experiment2.succeeded)
 
         files = self.platform.get_files(experiment2.simulations[0], ["output/InsetChart.json"])
         path = os.path.join(serialized_files, "InsetChart.json")
@@ -135,7 +124,7 @@ class TestSerialization(unittest.TestCase):
             del experiment1_inset["DateTime"]  # different, remove
             del experiment2_inset["DateTime"]
 
-        self.assertEqual(experiment1_inset, experiment2_inset, msg="Inset charts are not equal.")
+        assert(experiment1_inset==experiment2_inset)
 
 
 @pytest.mark.container
@@ -146,9 +135,3 @@ class TestSerializationGeneric(TestSerialization):
 
     def setup_custom_params(self):
         self.builders = helpers.BuildersGeneric
-
-
-if __name__ == "__main__":
-    import unittest
-
-    unittest.main()

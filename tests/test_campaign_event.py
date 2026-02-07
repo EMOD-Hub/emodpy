@@ -38,7 +38,3 @@ class TestScheduledDistributorHIV(BaseEventTest, TestHIV):
         self.campaign.set_schema(self.schema_path)
         self.start_year = 1990
         self.is_year_supported = True
-
-
-if __name__ == '__main__':
-    unittest.main()

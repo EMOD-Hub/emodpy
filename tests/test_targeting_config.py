@@ -1,10 +1,9 @@
-import unittest
 import copy
 import os
 import pytest
 
 import emodpy.utils.targeting_config as tc
-from emodpy.emod_task import EMODTask
+from emodpy.emod_task import EMODTask, logger
 from pathlib import Path
 import sys
 parent = Path(__file__).resolve().parent
@@ -13,17 +12,7 @@ import helpers
 
 
 @pytest.mark.unit
-class TestTargetingConfig(unittest.TestCase):
-
-    def setUp(self) -> None:
-        self.num_sim = 2
-        self.num_sim_long = 20
-        self.case_name = os.path.basename(__file__) + "_" + self._testMethodName
-        print(f"\n{self.case_name}")
-        self.original_working_dir = os.getcwd()
-        self.test_folder = helpers.make_test_directory(self.case_name)
-        self.setup_custom_params()
-        self.campaign = EMODTask.build_default_campaign(schema_path=self.builders.schema_path)
+class TestTargetingConfig():
 
     def setup_custom_params(self):
         """
@@ -32,15 +21,24 @@ class TestTargetingConfig(unittest.TestCase):
         """
         self.builders = helpers.BuildersCommon
 
-    def tearDown(self) -> None:
-        # Check if the test failed and leave the data in the folder if it did
-        test_result = self.defaultTestResult()
-        if not test_result.errors:
-            os.chdir(self.original_working_dir)
-            helpers.delete_existing_folder(self.test_folder)
-        else:
-            os.chdir(self.original_working_dir)
+    @pytest.fixture(autouse=True)
+    # Set-up and tear-down for each test
+    def run_every_test(self, request) -> None:
+        # Pre-test
+        self.num_sim = 2
+        self.num_sim_long = 20
+        self.case_name = os.path.basename(__file__) + "_" + request.node.name
+        self.original_working_dir = os.getcwd()
+        self.test_folder = helpers.make_test_directory(self.case_name)
+        self.setup_custom_params()
+        self.campaign = EMODTask.build_default_campaign(schema_path=self.builders.schema_path)
 
+        # Run test
+        yield
+
+        # Post-test
+        helpers.close_logger(logger.parent)
+        os.chdir(self.original_working_dir)
 
     def test_is_pregnant(self):
         """
@@ -53,20 +51,20 @@ class TestTargetingConfig(unittest.TestCase):
         is_preg_no_1  = ~tc.IsPregnant()
         is_preg_no_2  = ~tc.IsPregnant()
 
-        self.assertEqual( is_preg_yes_1, is_preg_yes_2 )
-        self.assertEqual( is_preg_no_1, is_preg_no_2 )
-        self.assertNotEqual( is_preg_yes_1, is_preg_no_1 )
-        self.assertNotEqual( is_preg_yes_2, is_preg_no_2 )
-        self.assertNotEqual( is_preg_yes_2, is_preg_no_1 )
-        self.assertNotEqual( is_preg_yes_1, is_preg_no_2 )
+        assert(is_preg_yes_1==is_preg_yes_2)
+        assert(is_preg_no_1==is_preg_no_2)
+        assert(is_preg_yes_1!=is_preg_no_1)
+        assert(is_preg_yes_2!=is_preg_no_2)
+        assert(is_preg_yes_2!=is_preg_no_1)
+        assert(is_preg_yes_1!=is_preg_no_2)
 
         not_is_preg_yes_1 = ~is_preg_yes_1
         not_is_preg_no_1  = ~is_preg_no_1
 
-        self.assertNotEqual( is_preg_yes_1, not_is_preg_yes_1 )
-        self.assertNotEqual( is_preg_no_1,  not_is_preg_no_1 )
-        self.assertEqual( is_preg_no_1,  not_is_preg_yes_1 )
-        self.assertEqual( is_preg_yes_1, not_is_preg_no_1 )
+        assert(is_preg_yes_1!=not_is_preg_yes_1)
+        assert(is_preg_no_1!=not_is_preg_no_1)
+        assert(is_preg_no_1==not_is_preg_yes_1)
+        assert(is_preg_yes_1==not_is_preg_no_1)
 
         is_yes_json = {
             "class": "IsPregnant",
@@ -78,10 +76,10 @@ class TestTargetingConfig(unittest.TestCase):
             "Is_Equal_To": 0
         }
 
-        self.assertDictEqual( is_yes_json, is_preg_yes_1.to_simple_dict(self.campaign) )
-        self.assertDictEqual( is_yes_json, is_preg_yes_2.to_simple_dict(self.campaign) )
-        self.assertDictEqual( is_no_json,  is_preg_no_1.to_simple_dict(self.campaign) )
-        self.assertDictEqual( is_no_json,  is_preg_no_2.to_simple_dict(self.campaign) )
+        assert(is_yes_json==is_preg_yes_1.to_simple_dict(self.campaign))
+        assert(is_yes_json==is_preg_yes_2.to_simple_dict(self.campaign))
+        assert(is_no_json==is_preg_no_1.to_simple_dict(self.campaign))
+        assert(is_no_json==is_preg_no_2.to_simple_dict(self.campaign))
 
     def test_has_ip(self):
         """
@@ -95,14 +93,14 @@ class TestTargetingConfig(unittest.TestCase):
         has_ip_location_urban  =  tc.HasIP( ip_key_value= "Location:URBAN" )
         has_ip_location_rural  =  tc.HasIP( ip_key_value= "Location:RURAL" )
 
-        self.assertEqual( has_ip_risk_no, has_ip_risk_no )
-        self.assertEqual( has_ip_risk_yes, has_ip_risk_yes )
-        self.assertNotEqual( has_ip_risk_no, has_ip_risk_yes )
-        self.assertNotEqual( has_ip_risk_yes, has_ip_risk_no )
-        self.assertNotEqual( has_ip_risk_no, not_has_ip_risk_no )
-        self.assertNotEqual( has_ip_risk_yes, not_has_ip_risk_yes )
-        self.assertNotEqual( has_ip_location_urban, has_ip_location_rural )
-        self.assertNotEqual( has_ip_risk_yes, has_ip_location_rural )
+        assert(has_ip_risk_no==has_ip_risk_no)
+        assert(has_ip_risk_yes==has_ip_risk_yes)
+        assert(has_ip_risk_no!=has_ip_risk_yes)
+        assert(has_ip_risk_yes!=has_ip_risk_no)
+        assert(has_ip_risk_no!=not_has_ip_risk_no)
+        assert(has_ip_risk_yes!=not_has_ip_risk_yes)
+        assert(has_ip_location_urban!=has_ip_location_rural)
+        assert(has_ip_risk_yes!=has_ip_location_rural)
 
         has_ip_risk_no_json = {
             "class": "HasIP",
@@ -140,12 +138,12 @@ class TestTargetingConfig(unittest.TestCase):
             "IP_Key_Value" : "Location:RURAL"
         }
         
-        self.assertDictEqual( has_ip_risk_no_json,            has_ip_risk_no.to_simple_dict(self.campaign)  )
-        self.assertDictEqual( has_ip_risk_yes_json,           has_ip_risk_yes.to_simple_dict(self.campaign) )
-        self.assertDictEqual( not_has_ip_risk_no_json,    not_has_ip_risk_no.to_simple_dict(self.campaign)  )
-        self.assertDictEqual( not_has_ip_risk_yes_json,   not_has_ip_risk_yes.to_simple_dict(self.campaign) )
-        self.assertDictEqual( has_ip_location_urban_json,     has_ip_location_urban.to_simple_dict(self.campaign) )
-        self.assertDictEqual( has_ip_location_rural_json,     has_ip_location_rural.to_simple_dict(self.campaign) )
+        assert(has_ip_risk_no_json==has_ip_risk_no.to_simple_dict(self.campaign))
+        assert(has_ip_risk_yes_json==has_ip_risk_yes.to_simple_dict(self.campaign))
+        assert(not_has_ip_risk_no_json==not_has_ip_risk_no.to_simple_dict(self.campaign))
+        assert(not_has_ip_risk_yes_json==not_has_ip_risk_yes.to_simple_dict(self.campaign))
+        assert(has_ip_location_urban_json==has_ip_location_urban.to_simple_dict(self.campaign))
+        assert(has_ip_location_rural_json==has_ip_location_rural.to_simple_dict(self.campaign))
 
     def test_has_intervention(self):
         """
@@ -157,24 +155,24 @@ class TestTargetingConfig(unittest.TestCase):
         has_intervention_vaccine_flu_no_1     = ~tc.HasIntervention( intervention_name="FluVaccine" )
         has_intervention_vaccine_flu_no_2     = ~tc.HasIntervention( intervention_name="FluVaccine" )
 
-        self.assertEqual(    has_intervention_vaccine_flu_yes_1, has_intervention_vaccine_flu_yes_2 )
-        self.assertEqual(    has_intervention_vaccine_flu_no_1,  has_intervention_vaccine_flu_no_2  )
-        self.assertNotEqual( has_intervention_vaccine_flu_yes_1, has_intervention_vaccine_flu_no_1  )
-        self.assertNotEqual( has_intervention_vaccine_flu_yes_2, has_intervention_vaccine_flu_no_2  )
-        self.assertNotEqual( has_intervention_vaccine_flu_yes_2, has_intervention_vaccine_flu_no_1  )
-        self.assertNotEqual( has_intervention_vaccine_flu_yes_1, has_intervention_vaccine_flu_no_2  )
+        assert(has_intervention_vaccine_flu_yes_1==has_intervention_vaccine_flu_yes_2)
+        assert(has_intervention_vaccine_flu_no_1==has_intervention_vaccine_flu_no_2)
+        assert(has_intervention_vaccine_flu_yes_1!=has_intervention_vaccine_flu_no_1)
+        assert(has_intervention_vaccine_flu_yes_2!=has_intervention_vaccine_flu_no_2)
+        assert(has_intervention_vaccine_flu_yes_2!=has_intervention_vaccine_flu_no_1)
+        assert(has_intervention_vaccine_flu_yes_1!=has_intervention_vaccine_flu_no_2)
 
         not_has_intervention_vaccine_flu_yes_1 = ~has_intervention_vaccine_flu_yes_1
         not_has_intervention_vaccine_flu_no_1  = ~has_intervention_vaccine_flu_no_1
 
-        self.assertNotEqual( has_intervention_vaccine_flu_yes_1, not_has_intervention_vaccine_flu_yes_1 )
-        self.assertNotEqual( has_intervention_vaccine_flu_no_1,  not_has_intervention_vaccine_flu_no_1  )
-        self.assertEqual(    has_intervention_vaccine_flu_no_1,  not_has_intervention_vaccine_flu_yes_1 )
-        self.assertEqual(    has_intervention_vaccine_flu_yes_1, not_has_intervention_vaccine_flu_no_1  )
+        assert(has_intervention_vaccine_flu_yes_1!=not_has_intervention_vaccine_flu_yes_1)
+        assert(has_intervention_vaccine_flu_no_1!=not_has_intervention_vaccine_flu_no_1)
+        assert(has_intervention_vaccine_flu_no_1==not_has_intervention_vaccine_flu_yes_1)
+        assert(has_intervention_vaccine_flu_yes_1==not_has_intervention_vaccine_flu_no_1)
 
         has_intervention_vaccine_covid_yes  =  tc.HasIntervention( intervention_name="CovidVaccine" )
 
-        self.assertNotEqual( has_intervention_vaccine_flu_yes_1, has_intervention_vaccine_covid_yes )
+        assert(has_intervention_vaccine_flu_yes_1!=has_intervention_vaccine_covid_yes)
 
         has_intervention_vaccine_flu_yes_json = {
             "class": "HasIntervention",
@@ -194,11 +192,11 @@ class TestTargetingConfig(unittest.TestCase):
             "Intervention_Name" : "CovidVaccine"
         }
 
-        self.assertDictEqual( has_intervention_vaccine_flu_yes_json,       has_intervention_vaccine_flu_yes_1.to_simple_dict(self.campaign) )
-        self.assertDictEqual( has_intervention_vaccine_flu_no_json,        has_intervention_vaccine_flu_no_1.to_simple_dict(self.campaign)  )
-        self.assertDictEqual( has_intervention_vaccine_flu_no_json,    not_has_intervention_vaccine_flu_yes_1.to_simple_dict(self.campaign) )
-        self.assertDictEqual( has_intervention_vaccine_flu_yes_json,   not_has_intervention_vaccine_flu_no_1.to_simple_dict(self.campaign)  )
-        self.assertDictEqual( has_intervention_vaccine_covid_yes_json,     has_intervention_vaccine_covid_yes.to_simple_dict(self.campaign) )
+        assert(has_intervention_vaccine_flu_yes_json==has_intervention_vaccine_flu_yes_1.to_simple_dict(self.campaign))
+        assert(has_intervention_vaccine_flu_no_json==has_intervention_vaccine_flu_no_1.to_simple_dict(self.campaign))
+        assert(has_intervention_vaccine_flu_no_json==not_has_intervention_vaccine_flu_yes_1.to_simple_dict(self.campaign))
+        assert(has_intervention_vaccine_flu_yes_json==not_has_intervention_vaccine_flu_no_1.to_simple_dict(self.campaign))
+        assert(has_intervention_vaccine_covid_yes_json==has_intervention_vaccine_covid_yes.to_simple_dict(self.campaign))
 
     def test_targeting_logic(self):
         """
@@ -235,10 +233,10 @@ class TestTargetingConfig(unittest.TestCase):
             ]
         }
 
-        self.assertDictEqual( is_high_risk_AND_pregnant_json, is_high_risk_AND_pregnant.to_simple_dict(self.campaign) )
-        self.assertTrue( is_preg.is_equal_to )
-        self.assertTrue( has_ip_risk_high.is_equal_to )
-        self.assertTrue( has_flu_vaccine.is_equal_to )
+        assert(is_high_risk_AND_pregnant_json==is_high_risk_AND_pregnant.to_simple_dict(self.campaign))
+        assert(is_preg.is_equal_to)
+        assert(has_ip_risk_high.is_equal_to)
+        assert(has_flu_vaccine.is_equal_to)
 
         # ----------------
         # --- Test NOT AND
@@ -263,10 +261,10 @@ class TestTargetingConfig(unittest.TestCase):
             ]
         }
 
-        self.assertDictEqual( not_is_high_risk_AND_pregnant_json, not_is_high_risk_AND_pregnant.to_simple_dict(self.campaign) )
-        self.assertTrue( is_preg.is_equal_to )
-        self.assertTrue( has_ip_risk_high.is_equal_to )
-        self.assertTrue( has_flu_vaccine.is_equal_to )
+        assert(not_is_high_risk_AND_pregnant_json==not_is_high_risk_AND_pregnant.to_simple_dict(self.campaign))
+        assert(is_preg.is_equal_to)
+        assert(has_ip_risk_high.is_equal_to)
+        assert(has_flu_vaccine.is_equal_to)
 
         # ----------------
         # --- Test AND NOT
@@ -291,10 +289,10 @@ class TestTargetingConfig(unittest.TestCase):
             ]
         }
 
-        self.assertDictEqual( is_high_risk_AND_not_pregnant_json, is_high_risk_AND_not_pregnant.to_simple_dict(self.campaign) )
-        self.assertTrue( is_preg.is_equal_to )
-        self.assertTrue( has_ip_risk_high.is_equal_to )
-        self.assertTrue( has_flu_vaccine.is_equal_to )
+        assert(is_high_risk_AND_not_pregnant_json==is_high_risk_AND_not_pregnant.to_simple_dict(self.campaign))
+        assert(is_preg.is_equal_to)
+        assert(has_ip_risk_high.is_equal_to)
+        assert(has_flu_vaccine.is_equal_to)
 
         # -------------
         # --- Test OR
@@ -321,10 +319,10 @@ class TestTargetingConfig(unittest.TestCase):
             ]
         }
 
-        self.assertDictEqual( is_high_risk_OR_pregnant_json, is_high_risk_OR_pregnant.to_simple_dict(self.campaign) )
-        self.assertTrue( is_preg.is_equal_to )
-        self.assertTrue( has_ip_risk_high.is_equal_to )
-        self.assertTrue( has_flu_vaccine.is_equal_to )
+        assert(is_high_risk_OR_pregnant_json==is_high_risk_OR_pregnant.to_simple_dict(self.campaign))
+        assert(is_preg.is_equal_to)
+        assert(has_ip_risk_high.is_equal_to)
+        assert(has_flu_vaccine.is_equal_to)
 
         # ----------------
         # --- Test NOT OR
@@ -351,10 +349,10 @@ class TestTargetingConfig(unittest.TestCase):
             ]
         }
 
-        self.assertDictEqual( not_is_high_risk_OR_pregnant_json, not_is_high_risk_OR_pregnant.to_simple_dict(self.campaign) )
-        self.assertTrue( is_preg.is_equal_to )
-        self.assertTrue( has_ip_risk_high.is_equal_to )
-        self.assertTrue( has_flu_vaccine.is_equal_to )
+        assert(not_is_high_risk_OR_pregnant_json==not_is_high_risk_OR_pregnant.to_simple_dict(self.campaign))
+        assert(is_preg.is_equal_to)
+        assert(has_ip_risk_high.is_equal_to)
+        assert(has_flu_vaccine.is_equal_to)
 
         # -----------------
         # --- Test OR NOT
@@ -381,10 +379,10 @@ class TestTargetingConfig(unittest.TestCase):
             ]
         }
 
-        self.assertDictEqual( is_high_risk_OR_not_pregnant_json, is_high_risk_OR_not_pregnant.to_simple_dict(self.campaign) )
-        self.assertTrue( is_preg.is_equal_to )
-        self.assertTrue( has_ip_risk_high.is_equal_to )
-        self.assertTrue( has_flu_vaccine.is_equal_to )
+        assert(is_high_risk_OR_not_pregnant_json==is_high_risk_OR_not_pregnant.to_simple_dict(self.campaign))
+        assert(is_preg.is_equal_to)
+        assert(has_ip_risk_high.is_equal_to)
+        assert(has_flu_vaccine.is_equal_to)
 
         # ---------------------------
         # --- Test AND reverse order
@@ -409,10 +407,10 @@ class TestTargetingConfig(unittest.TestCase):
             ]
         }
 
-        self.assertDictEqual( is_pregnant_AND_high_risk_json, is_pregnant_AND_high_risk.to_simple_dict(self.campaign) )
-        self.assertTrue( is_preg.is_equal_to )
-        self.assertTrue( has_ip_risk_high.is_equal_to )
-        self.assertTrue( has_flu_vaccine.is_equal_to )
+        assert(is_pregnant_AND_high_risk_json==is_pregnant_AND_high_risk.to_simple_dict(self.campaign))
+        assert(is_preg.is_equal_to)
+        assert(has_ip_risk_high.is_equal_to)
+        assert(has_flu_vaccine.is_equal_to)
 
         # --------------------------
         # --- Test OR reverse order
@@ -439,10 +437,10 @@ class TestTargetingConfig(unittest.TestCase):
             ]
         }
 
-        self.assertDictEqual( is_pregnant_OR_high_risk_json, is_pregnant_OR_high_risk.to_simple_dict(self.campaign) )
-        self.assertTrue( is_preg.is_equal_to )
-        self.assertTrue( has_ip_risk_high.is_equal_to )
-        self.assertTrue( has_flu_vaccine.is_equal_to )
+        assert(is_pregnant_OR_high_risk_json==is_pregnant_OR_high_risk.to_simple_dict(self.campaign))
+        assert(is_preg.is_equal_to)
+        assert(has_ip_risk_high.is_equal_to)
+        assert(has_flu_vaccine.is_equal_to)
 
         # -------------------------------
         # --- Test combining AND and OR
@@ -481,10 +479,10 @@ class TestTargetingConfig(unittest.TestCase):
             ]
         }
 
-        self.assertDictEqual( is_high_risk_AND_pregnant_OR_low_risk_AND_has_flu_vaccine_json, 
-                              is_high_risk_AND_pregnant_OR_low_risk_AND_has_flu_vaccine1.to_simple_dict(self.campaign) )
-        self.assertDictEqual( is_high_risk_AND_pregnant_OR_low_risk_AND_has_flu_vaccine_json, 
-                              is_high_risk_AND_pregnant_OR_low_risk_AND_has_flu_vaccine2.to_simple_dict(self.campaign) )
+        assert(is_high_risk_AND_pregnant_OR_low_risk_AND_has_flu_vaccine_json==
+               is_high_risk_AND_pregnant_OR_low_risk_AND_has_flu_vaccine1.to_simple_dict(self.campaign))
+        assert(is_high_risk_AND_pregnant_OR_low_risk_AND_has_flu_vaccine_json==
+               is_high_risk_AND_pregnant_OR_low_risk_AND_has_flu_vaccine2.to_simple_dict(self.campaign))
 
         # -------------------------------
         # --- Test combining OR and AND
@@ -525,10 +523,10 @@ class TestTargetingConfig(unittest.TestCase):
             ]
         }
 
-        self.assertDictEqual( is_high_risk_OR_pregnant_AND_low_risk_OR_has_flu_vaccine_json, 
-                              is_high_risk_OR_pregnant_AND_low_risk_OR_has_flu_vaccine1.to_simple_dict(self.campaign) )
-        self.assertDictEqual( is_high_risk_OR_pregnant_AND_low_risk_OR_has_flu_vaccine_json, 
-                              is_high_risk_OR_pregnant_AND_low_risk_OR_has_flu_vaccine2.to_simple_dict(self.campaign) )
+        assert(is_high_risk_OR_pregnant_AND_low_risk_OR_has_flu_vaccine_json==
+               is_high_risk_OR_pregnant_AND_low_risk_OR_has_flu_vaccine1.to_simple_dict(self.campaign))
+        assert(is_high_risk_OR_pregnant_AND_low_risk_OR_has_flu_vaccine_json==
+               is_high_risk_OR_pregnant_AND_low_risk_OR_has_flu_vaccine2.to_simple_dict(self.campaign))
 
         # --------------------------------------------------------------
         # --- Test using parentheses to change the order of operations
@@ -584,8 +582,8 @@ class TestTargetingConfig(unittest.TestCase):
             ]
         }
 
-        self.assertDictEqual( is_high_risk_or_pregnant_AND_low_risk_or_has_flu_vaccine_json, 
-                              is_high_risk_or_pregnant_AND_low_risk_or_has_flu_vaccine.to_simple_dict(self.campaign) )
+        assert(is_high_risk_or_pregnant_AND_low_risk_or_has_flu_vaccine_json==
+               is_high_risk_or_pregnant_AND_low_risk_or_has_flu_vaccine.to_simple_dict(self.campaign))
 
         # ---------------------------------------------------------------------
         # --- Test that operators don't change state of object
@@ -599,37 +597,37 @@ class TestTargetingConfig(unittest.TestCase):
         #
         tmp = has_ip_risk_high & is_preg
         tmp_copy = copy.deepcopy(tmp)
-        self.assertTrue( isinstance( tmp,      tc._TargetingLogic ) )
-        self.assertTrue( isinstance( tmp_copy, tc._TargetingLogic ) )
+        assert(isinstance(tmp, tc._TargetingLogic))
+        assert(isinstance(tmp_copy, tc._TargetingLogic))
 
         tmp_neg = ~tmp
-        self.assertEqual( 1, tmp.is_equal_to )
-        self.assertEqual( 0, tmp_neg.is_equal_to )
-        self.assertDictEqual( tmp_copy.to_simple_dict(self.campaign), tmp.to_simple_dict(self.campaign) )
+        assert(1==tmp.is_equal_to)
+        assert(0==tmp_neg.is_equal_to)
+        assert(tmp_copy.to_simple_dict(self.campaign)==tmp.to_simple_dict(self.campaign))
 
         #
         # Check AND
         #
         tmp_and_flu = tmp & has_flu_vaccine
-        self.assertDictEqual( tmp_copy.to_simple_dict(self.campaign), tmp.to_simple_dict(self.campaign) )
+        assert(tmp_copy.to_simple_dict(self.campaign)==tmp.to_simple_dict(self.campaign))
 
         tmp_and_flu = has_flu_vaccine & tmp
-        self.assertDictEqual( tmp_copy.to_simple_dict(self.campaign), tmp.to_simple_dict(self.campaign) )
+        assert(tmp_copy.to_simple_dict(self.campaign)==tmp.to_simple_dict(self.campaign))
 
         tmp_and_and = tmp & tmp
-        self.assertDictEqual( tmp_copy.to_simple_dict(self.campaign), tmp.to_simple_dict(self.campaign) )
-        
+        assert(tmp_copy.to_simple_dict(self.campaign)==tmp.to_simple_dict(self.campaign))
+
         #
         # Check OR
         #
         tmp_and_flu = tmp | has_flu_vaccine
-        self.assertDictEqual( tmp_copy.to_simple_dict(self.campaign), tmp.to_simple_dict(self.campaign) )
+        assert(tmp_copy.to_simple_dict(self.campaign)==tmp.to_simple_dict(self.campaign))
 
         tmp_and_flu = has_flu_vaccine | tmp
-        self.assertDictEqual( tmp_copy.to_simple_dict(self.campaign), tmp.to_simple_dict(self.campaign) )
+        assert(tmp_copy.to_simple_dict(self.campaign)==tmp.to_simple_dict(self.campaign))
 
         tmp_and_and = tmp | tmp
-        self.assertDictEqual( tmp_copy.to_simple_dict(self.campaign), tmp.to_simple_dict(self.campaign) )
+        assert(tmp_copy.to_simple_dict(self.campaign)==tmp.to_simple_dict(self.campaign))
 
         # --------------------------------------------------------------
         # --- Test inversion on TargetingLogic when logically combining
@@ -679,7 +677,7 @@ class TestTargetingConfig(unittest.TestCase):
                 ]
             ]
         }
-        self.assertDictEqual( or_not_json, or_not.to_simple_dict(self.campaign) )
+        assert(or_not_json==or_not.to_simple_dict(self.campaign))
 
         #
         # AND not
@@ -720,7 +718,7 @@ class TestTargetingConfig(unittest.TestCase):
                 ]
             ]
         }
-        self.assertDictEqual( and_not_json, and_not.to_simple_dict(self.campaign) )
+        assert(and_not_json==and_not.to_simple_dict(self.campaign))
 
         not_or = ~((has_ip_risk_low & has_covid_vaccine) | has_flu_vaccine) | is_preg
 
@@ -760,7 +758,7 @@ class TestTargetingConfig(unittest.TestCase):
                 ]
             ]
         }
-        self.assertDictEqual( not_or_json, not_or.to_simple_dict(self.campaign) )
+        assert(not_or_json==not_or.to_simple_dict(self.campaign))
 
         #
         # not AND
@@ -801,7 +799,7 @@ class TestTargetingConfig(unittest.TestCase):
                 ]
             ]
         }
-        self.assertDictEqual( not_and_json, not_and.to_simple_dict(self.campaign) )
+        assert(not_and_json==not_and.to_simple_dict(self.campaign))
 
         # -------------------------------------------
         # --- Test deeply nested logic
@@ -879,9 +877,4 @@ class TestTargetingConfig(unittest.TestCase):
                 ]
             ]
         }
-        self.assertDictEqual( nested_json, nested.to_simple_dict(self.campaign) )
-
-
-if __name__ == "__main__":
-    import unittest
-    unittest.main()
+        assert(nested_json==nested.to_simple_dict(self.campaign))

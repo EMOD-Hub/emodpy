@@ -39,8 +39,8 @@ class TestEMODExperiment:
         self.case_name = request.node.name
         print(f"\n{self.case_name}")
         os.chdir(self.original_working_dir)
-        self.platform = Platform(self.environment_block, num_retries=0)
         self.test_folder = helpers.make_test_directory(self.case_name)  # Moves to failed test directory
+        self.platform = Platform(self.environment_block, num_retries=0, job_directory=self.test_folder)
         self.setup_custom_params()
 
         # Run test

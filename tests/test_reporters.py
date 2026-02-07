@@ -49,7 +49,7 @@ class TestReportersCommon(unittest.TestCase):
         # Pre-test
         self.task: EMODTask
         self.original_working_dir = os.getcwd()
-        self.case_name = self._testMethodName
+        self.case_name = request.node.name
         self.test_folder = helpers.make_test_directory(self.case_name)
         self.setup_custom_params()
         self.add_test_values()
@@ -58,27 +58,8 @@ class TestReportersCommon(unittest.TestCase):
         yield
 
         # Post-test
-        test_result = self.defaultTestResult()
-        if test_result.errors:
-            if hasattr(self, "task"):  # don't need to do this for error checking tests
-                # writing data to be looked at in the failed_tests folder
-                if len(self.task.common_assets) > 0:
-                    for asset in self.task.common_assets:
-                        if asset.filename == "custom_reports.json":
-                            with open(asset.filename, "w") as f:
-                                f.write(asset.content)
-                with open("config.json", "w") as f:
-                    f.write(json.dumps(self.task.config, indent=4))
-                helpers.close_logger(idmtools_logger.parent)
-                os.chdir(self.original_working_dir)
-            else:
-                os.chdir(self.original_working_dir)
-                # error checking doesn't make any files
-                helpers.delete_existing_folder(self.test_folder)
-        else:
-            helpers.close_logger(idmtools_logger.parent)
-            os.chdir(self.original_working_dir)
-            helpers.delete_existing_folder(self.test_folder)
+        helpers.close_logger(idmtools_logger.parent)
+        os.chdir(self.original_working_dir)
 
     def add_test_values(self):
         self.reporter = Reporters(self.builders.schema_path)
@@ -438,16 +419,13 @@ class TestReportersCommon(unittest.TestCase):
 
     @pytest.mark.unit
     def test_report_coordinator_event_recorder_error_checking(self):
-        with self.assertRaises(ValueError) as context:
-            ReportCoordinatorEventRecorder(reporters_object=self.reporter,
-                                           event_list=[])
-        self.assertTrue("event_list must be a list of strings" in str(context.exception),
-                        msg=str(context.exception))
-        with self.assertRaises(ValueError) as context:
-            ReportCoordinatorEventRecorder(reporters_object=self.reporter,
-                                           event_list=[""])
-        self.assertTrue("event_list must be a list of non-empty strings" in str(context.exception),
-                        msg=str(context.exception))
+        with pytest.raises(ValueError) as e_info:
+            ReportCoordinatorEventRecorder(reporters_object=self.reporter, event_list=[])
+        assert("event_list must be a list of strings" in str(e_info))
+
+        with pytest.raises(ValueError) as e_info:
+            ReportCoordinatorEventRecorder(reporters_object=self.reporter, event_list=[""])
+        assert("event_list must be a list of non-empty strings" in str(e_info))
 
     @pytest.mark.unit
     def test_report_surveillance_event_recorder_custom(self):
@@ -458,10 +436,9 @@ class TestReportersCommon(unittest.TestCase):
             return reporters
 
         task = self.create_final_task(build_reports)
-        self.assertEqual(task.config.parameters.Report_Surveillance_Event_Recorder_Events, self.event_list)
-        self.assertEqual(task.config.parameters.Report_Surveillance_Event_Recorder_Ignore_Events_In_List, 0)
-        self.assertEqual(task.config.parameters.Report_Surveillance_Event_Recorder_Stats_By_IPs,
-                         self.individual_properties)
+        assert(task.config.parameters.Report_Surveillance_Event_Recorder_Events==self.event_list)
+        assert(task.config.parameters.Report_Surveillance_Event_Recorder_Ignore_Events_In_List==0)
+        assert(task.config.parameters.Report_Surveillance_Event_Recorder_Stats_By_IPs==self.individual_properties)
 
     @pytest.mark.unit
     def test_report_surveillance_event_recorder_default(self):
@@ -1137,7 +1114,7 @@ class TestReportersCommon(unittest.TestCase):
             return reporters
 
         os.chdir(self.original_working_dir)
-        platform = Platform(manifest.container_platform_name)
+        platform = Platform(manifest.container_platform_name, job_directory=self.test_folder)
         os.chdir(self.test_folder)
         self.task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                            schema_path=self.builders.schema_path,
@@ -1178,11 +1155,10 @@ class TestReportersCommon(unittest.TestCase):
         except Exception as e:
             all_good = False
             exception = e
-        assert(all_good, f"Error: {exception}")
+        assert(all_good)
 
 
-@pytest.mark.skip(reason="Skipping because reports in Generic-Ongoing EMOD meaningfully different and"
-                         " are not implemented in emodpy yet.")
+@pytest.mark.skip(reason="Skipping because reports in Generic-Ongoing EMOD meaningfully different")
 class TestReportersGeneric(TestReportersCommon):
     """
     Testing using Generic-Ongoing EMOD

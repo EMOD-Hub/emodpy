@@ -30,8 +30,6 @@ class TestDownloadFromPackage():
         yield
 
         # Post-test
-        if os.path.exists(self.test_folder):
-            helpers.delete_existing_folder(self.test_folder)
         os.chdir(self.original_working_dir)
 
     def test_eradication_and_schema(self):

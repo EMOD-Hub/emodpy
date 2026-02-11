@@ -16,10 +16,10 @@ authors = [
     {name = "Svetlana Titova", email = "svetlana.titova@gatesfoundation.org"},
     {name = "Ye Chen", email = "ye.chen@gatesfoundation.org"},
 ]
-keywords = ['modeling', 'IDM']
+keywords = ["modeling", "IDM"]
 dependencies = [
     "idmtools[full]~=3.0",
-    "emod-api~=2.2.0",
+    "emod-api~=3.0.0",
 ]
 license = "MIT"
 classifiers = [
@@ -31,7 +31,6 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
-    "Framework :: IDM-Tools :: models",
 ]
 
 [project.optional-dependencies]
@@ -74,7 +73,7 @@ emodpy = "emodpy_cli.cli.schema:emodpy"
 find = {include = ["emodpy*"]}
 
 [tool.bumpversion]
-current_version = "2.2.0"
+current_version = "3.0.0"
 commit = true
 
 [[tool.bumpversion.files]]

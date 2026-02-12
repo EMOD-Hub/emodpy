@@ -1,8 +1,0 @@
-group1:
-  - Simulation_Duration: 100
-  - Simulation_Timestep: 1
-  - Start_Time: [0, 1]
-  - Run_Number: [1, 2]
-group2:
-  - Start_Time: [2, 4]
-  - Run_Number: [3, 4]

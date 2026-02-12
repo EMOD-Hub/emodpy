@@ -11,7 +11,6 @@ from emodpy.campaign.waning_config import Box, BoxExponential, Combo, Constant, 
 from base_test import TestHIV, TestMalaria, BaseTestClass
 
 
-
 class BaseWaningConfigTest(BaseTestClass):
     def test_box(self):
         box = Box(constant_effect=0.8, box_duration=365)
@@ -162,7 +161,3 @@ class TestWaningConfigMalaria(TestMalaria, BaseWaningConfigTest):
         TestHIV().setUp()
         self.campaign_obj = campaign
         self.campaign_obj.set_schema(self.schema_path)
-
-
-if __name__ == '__main__':
-    unittest.main()

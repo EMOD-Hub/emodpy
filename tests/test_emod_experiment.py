@@ -27,9 +27,32 @@ class TestEMODExperiment:
     num_sim = 2
     num_sim_long = 20
     original_working_dir = manifest.test_directory_absolute_path
+    environment_block = None
+
 
     def setup_custom_params(self):
         self.builders = helpers.BuildersCommon
+
+    @pytest.fixture(autouse=True)
+    def run_every_test(self, request) -> None:
+        # Pre-test
+        self.case_name = request.node.name
+        print(f"\n{self.case_name}")
+        os.chdir(self.original_working_dir)
+        self.test_folder = helpers.make_test_directory(self.case_name)  # Moves to failed test directory
+        self.platform = Platform(self.environment_block, num_retries=0, job_directory=self.test_folder)
+        self.setup_custom_params()
+
+        # Run test
+        yield
+
+        # Post-test
+        helpers.close_logger(logger.parent)
+        os.chdir(self.original_working_dir)
+
+
+class TestEMODExperimentCOMPS(TestEMODExperiment):
+    environment_block = manifest.comps_platform_name
 
     def singularity_test(self, my_sif_path, embedded_python_scripts_path=None):
         """
@@ -52,25 +75,6 @@ class TestEMODExperiment:
         stdout = files["stdout.txt"].decode("utf-8")
         assert "EMOD Disease Transmission Kernel" in stdout
 
-    @pytest.fixture(autouse=True)
-    def run_every_test(self, request) -> None:
-        # Pre-test
-        self.case_name = request.node.name
-        print(f"\n{self.case_name}")
-        os.chdir(self.original_working_dir)
-        self.platform = Platform(manifest.container_platform_name, num_retries=0)
-        self.test_folder = helpers.make_test_directory(self.case_name)  # Moves to failed test directory
-        self.setup_custom_params()
-        self.succeeded = False
-
-        # Run test
-        yield
-
-        # Post-test
-        helpers.close_logger(logger.parent)
-        os.chdir(self.original_working_dir)
-        if (self.succeeded):
-            helpers.delete_existing_folder(self.test_folder)
 
     @pytest.mark.comps
     def test_experiment_from_task_with_singularity_from_local_file(self):
@@ -88,8 +92,6 @@ class TestEMODExperiment:
             fid01.write(ret_dict[out_filename])
 
         self.singularity_test(my_sif_path=targ_sif_file)
-
-        self.succeeded = True
 
     @pytest.mark.comps
     def test_experiment_from_task_with_singularity(self):
@@ -111,7 +113,9 @@ class TestEMODExperiment:
         sbi.asset_collection.to_id_file(this_sif_path)
         self.singularity_test(my_sif_path=this_sif_path)
 
-        self.succeeded = True
+
+class TestEMODExperimentContainer(TestEMODExperiment):
+    environment_block = manifest.container_platform_name
 
     @pytest.mark.container
     def test_experiment_from_task_with_task_from_default_simple(self):
@@ -131,7 +135,6 @@ class TestEMODExperiment:
         exp_obj.run(wait_until_done=True, platform=self.platform)
         assert exp_obj.succeeded
 
-        self.succeeded = True
 
     @pytest.mark.container
     def test_experiment_from_task_with_task_from_default_param_custom_cb(self):
@@ -159,7 +162,6 @@ class TestEMODExperiment:
         config_parameters = json.loads(files["config.json"])['parameters']
         assert config_parameters["Simulation_Duration"] == 7
 
-        self.succeeded = True
 
     @pytest.mark.container
     def test_experiment_from_builder_with_task_from_default(self):
@@ -187,7 +189,6 @@ class TestEMODExperiment:
             config_parameters = json.loads(files["config.json"])['parameters']
             assert config_parameters["Run_Number"] == sim.tags["Run_Number"]
 
-        self.succeeded = True
 
     @pytest.mark.container
     def test_simulations_manual_builder_with_task_from_file(self):
@@ -224,7 +225,6 @@ class TestEMODExperiment:
         #     config_parameters = json.loads(files["config.json"])['parameters']
         #     self.assertEqual(config_parameters["Run_Number"], i)
 
-        self.succeeded = True
 
     @pytest.mark.container
     def test_simulations_manual_builder_with_task_from_file_workaround(self):
@@ -265,7 +265,6 @@ class TestEMODExperiment:
 
         assert set(run_numbers) == set(list(range(self.num_sim_long)))
 
-        self.succeeded = True
 
     @pytest.mark.container
     def test_experiment_from_builder_with_task_from_file(self):
@@ -288,8 +287,6 @@ class TestEMODExperiment:
             files = self.platform.get_files(sim, ["config.json"])
             config_parameters = json.loads(files["config.json"])['parameters']
             assert config_parameters["Run_Number"] == sim.tags["Run_Number"]
-
-        self.succeeded = True
 
 
 class TestEMODExperimentGeneric(TestEMODExperiment):

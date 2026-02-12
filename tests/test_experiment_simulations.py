@@ -61,12 +61,11 @@ class TestExperimentSimulations:
     def run_every_test(self, request) -> None:
         # Pre-test
         self.case_name = request.node.name
-        print(f"\n{self.case_name}")
         os.chdir(self.original_working_dir)
-        self.platform = Platform(manifest.container_platform_name, num_retries=0)
         self.test_folder = helpers.make_test_directory(self.case_name)  # Moves to failed test directory
+        self.platform = Platform(manifest.container_platform_name, num_retries=0, job_directory=self.test_folder)
+
         self.setup_custom_params()
-        self.succeeded = False
 
         # Run test
         yield
@@ -74,8 +73,6 @@ class TestExperimentSimulations:
         # Post-test
         os.chdir(self.original_working_dir)
         helpers.close_logger(logger.parent)
-        if (self.succeeded):
-            helpers.delete_existing_folder(self.test_folder)
 
     @pytest.mark.container
     def test_mix_tasks_in_experiment(self):
@@ -115,9 +112,6 @@ class TestExperimentSimulations:
         sims = experiment.simulations
         assert len(sims) == 7
         assert experiment.succeeded, f"Experiment {experiment.uid} failed.\n"
-        print(f"Experiment {experiment.uid} succeeded.")
-
-        self.succeeded = True
 
     @pytest.mark.container
     def test_create_suite(self):
@@ -128,10 +122,8 @@ class TestExperimentSimulations:
 
         suite_uid = ids[0][1]
         got_suite = self.platform.get_item(item_id=suite_uid, item_type=ItemType.SUITE, raw=True)
-        suite_type_expected = FileSuite if manifest.container_platform_name == "ContainerPlatform" else CompsSuite
+        suite_type_expected = FileSuite if manifest.container_platform_name == "Container" else CompsSuite
         assert isinstance(got_suite, suite_type_expected)
-
-        self.succeeded = True
 
     @pytest.mark.container
     def test_suite_experiment(self):
@@ -147,14 +139,14 @@ class TestExperimentSimulations:
 
         # Test suite retrieval
         got_suite = self.platform.get_item(item_id=suite.uid, item_type=ItemType.SUITE, raw=True)
-        suite_type_expected = FileSuite if manifest.container_platform_name == "ContainerPlatform" else CompsSuite
+        suite_type_expected = FileSuite if manifest.container_platform_name == "Container" else CompsSuite
         assert isinstance(got_suite, suite_type_expected)
 
         # Test retrieve experiment from suite
         exps = self.platform._get_children_for_platform_item(got_suite)
         assert len(exps) == 1
         exp = exps[0]
-        experiment_type_expected = FileExperiment if manifest.container_platform_name == "ContainerPlatform" else CompsExperiment
+        experiment_type_expected = FileExperiment if manifest.container_platform_name == "Container" else CompsExperiment
         assert isinstance(exp, experiment_type_expected)
         assert exp.suite_id is not None
 
@@ -168,7 +160,7 @@ class TestExperimentSimulations:
         sims = self.platform._get_children_for_platform_item(comps_exp)
         assert len(sims) == 3
         sim = sims[0]
-        simulation_type_expected = FileSimulation if manifest.container_platform_name == "ContainerPlatform" else CompsSimulation
+        simulation_type_expected = FileSimulation if manifest.container_platform_name == "Container" else CompsSimulation
         assert isinstance(sim, simulation_type_expected)
         assert sim.experiment_id is not None
 
@@ -200,8 +192,6 @@ class TestExperimentSimulations:
         assert sim.parent is not None
 
         assert suite.succeeded, f"Suite {suite.uid} failed.\n"
-
-        self.succeeded = True
 
 
 class TestExperimentSimulationsGeneric(TestExperimentSimulations):

@@ -1,7 +1,6 @@
 import os
 from functools import partial
 import pytest
-import unittest
 import time
 from idmtools.builders import SimulationBuilder
 from idmtools.core.platform_factory import Platform
@@ -20,38 +19,31 @@ def param_update_task(simulation, param, value):
 
 
 @pytest.mark.container
-class TestE2E(unittest.TestCase):
-
-    def setUp(self) -> None:
-        self.task: EMODTask
-        self.experiment: Experiment
-        self.custom_setUp()
-        self.embedded_python_scripts_path = os.path.join(manifest.embedded_python_folder, "dtk_post_process.py")
-        self.platform = Platform(manifest.container_platform_name, num_retries=0)
-        self.original_working_dir = os.getcwd()
-        self.case_name = os.path.basename(__file__) + "_" + self.__class__.__name__ + "_" + self._testMethodName
-        print(f"\n{self.case_name}")
-        self.test_folder = helpers.make_test_directory(self.case_name)
+class TestE2E():
 
     def custom_setUp(self):
         self.builders = helpers.BuildersCommon
 
-    def tearDown(self) -> None:
-        # Check if the test failed and leave the data in the folder if it did
-        test_result = self.defaultTestResult()
-        if test_result.errors:
-            if hasattr(self, "experiment"):  # if not able to make experiment, there's no experiment
-                with open("experiment_location.txt", "w") as f:
-                    f.write(f"The failed experiment can be viewed at {self.platform.endpoint}/#explore/"
-                            f"Simulations?filters=ExperimentId={self.experiment.uid}")
-            os.chdir(self.original_working_dir)
-            helpers.close_logger(logger.parent)
-        else:
-            helpers.close_logger(logger.parent)
-            if os.name == "nt":
-                time.sleep(1)  # only needed for windows
-            os.chdir(self.original_working_dir)
-            helpers.delete_existing_folder(self.test_folder)
+    @pytest.fixture(autouse=True)
+    # Set-up and tear-down for each test
+    def run_every_test(self, request) -> None:
+        # Pre-test
+        self.task: EMODTask
+        self.experiment: Experiment
+        self.custom_setUp()
+        self.embedded_python_scripts_path = os.path.join(manifest.embedded_python_folder, "dtk_post_process.py")
+        self.original_working_dir = os.getcwd()
+        self.case_name = os.path.basename(__file__) + "_" + self.__class__.__name__ + "_" + request.node.name
+        self.test_folder = helpers.make_test_directory(self.case_name)
+        self.platform = Platform(type=manifest.container_platform_name, job_directory=self.test_folder, num_retries=0)
+
+        # Run test
+        yield
+
+        # Post-test
+        os.chdir(self.original_working_dir)
+        helpers.close_logger(logger.parent)
+
 
     def test_from_default_with_misc_features_error(self):
         num_sim = 2
@@ -66,7 +58,7 @@ class TestE2E(unittest.TestCase):
         # Sweep parameter "Run_Number"
         builder.add_sweep_definition(EMODTask.set_parameter_partial("Run_Number"), range(0, num_sim))
 
-        with self.assertRaises(ValueError) as context:
+        with pytest.raises(ValueError) as e_info:
             builder.add_sweep_definition(partial(param_update_task, param="numeric_values"), [123, 234])
             self.experiment = Experiment.from_builder(builders=builder,
                                                       base_task=task,
@@ -78,9 +70,9 @@ class TestE2E(unittest.TestCase):
             self.experiment.run(platform=self.platform)
             self.platform.wait_till_done(self.experiment, refresh_interval=1)
 
-            self.assertTrue(self.experiment.succeeded)
+            assert(self.experiment.succeeded)
 
-        self.assertIn(" 'numeric_values' not a valid parameter based on schema.", context.exception.args[0])
+        assert(" 'numeric_values' not a valid parameter based on schema." in str(e_info))
 
     def test_from_default_with_misc_features(self):
         num_sim = 2
@@ -103,7 +95,7 @@ class TestE2E(unittest.TestCase):
                                                         "number_tag": 123})
         self.experiment.run(platform=self.platform)
         self.platform.wait_till_done(self.experiment, refresh_interval=1)
-        self.assertTrue(self.experiment.succeeded)
+        assert(self.experiment.succeeded)
 
     def test_from_files_with_misc_features(self):
         num_sim_long = 2
@@ -124,7 +116,7 @@ class TestE2E(unittest.TestCase):
                                                         "string_tag": "test", "number_tag": 123})
         self.experiment.run(platform=self.platform)
         self.platform.wait_till_done(self.experiment, refresh_interval=1)
-        self.assertTrue(self.experiment.succeeded)
+        assert(self.experiment.succeeded)
 
 
 @pytest.mark.container
@@ -147,7 +139,7 @@ class TestE2EGeneric(TestE2E):
                                                         "number_tag": 123})
         self.experiment.run(platform=self.platform)
         self.platform.wait_till_done(self.experiment, refresh_interval=1)
-        self.assertTrue(self.experiment.succeeded)
+        assert(self.experiment.succeeded)
 
     def test_from_files_with_misc_features(self):
         # without custom_reports.json for generic
@@ -168,8 +160,4 @@ class TestE2EGeneric(TestE2E):
                                                         "string_tag": "test", "number_tag": 123})
         self.experiment.run(platform=self.platform)
         self.platform.wait_till_done(self.experiment, refresh_interval=1)
-        self.assertTrue(self.experiment.succeeded)
-
-
-if __name__ == '__main__':
-    unittest.main()
+        assert(self.experiment.succeeded)

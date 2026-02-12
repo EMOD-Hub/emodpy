@@ -1,24 +1,21 @@
 import json
 import pytest
-import unittest
+
 
 @pytest.mark.unit
-class EmodpyImportTest(unittest.TestCase):
-    def setUp(self) -> None:
+class TestEmodpyImport():
+
+    @pytest.fixture(autouse=True)
+    def run_every_test(self, request) -> None:
+        # Pre-test
         self.expected_items = None
         self.found_items = None
-        pass
+
 
     def verify_expected_items_present(self, namespace):
         self.found_items = dir(namespace)
         for item in self.expected_items:
-            self.assertIn(
-                item,
-                self.found_items
-            )
-
-    def tearDown(self) -> None:
-        pass
+            assert(item in self.found_items)
 
     def test_package_emodpy(self):
         import emodpy
@@ -37,23 +34,20 @@ class EmodpyImportTest(unittest.TestCase):
 
         specified_campaign_name = "BobbyMcGee"
         test_campaign_default = e_c.EMODCampaign(use_defaults=True)
-        self.assertIsNotNone(test_campaign_default)
+        assert(test_campaign_default is not None)
         test_camapaign_string = test_campaign_default.json
         test_campaign_dict = json.loads(test_camapaign_string)
         observed_campaign_name = test_campaign_dict["Campaign_Name"]
-        self.assertNotEqual(specified_campaign_name, observed_campaign_name)
+        assert(specified_campaign_name!=observed_campaign_name)
         observed_use_defaults = test_campaign_dict["Use_Defaults"]
-        self.assertTrue(observed_use_defaults)
-
-        test_campaign_specified = e_c.EMODCampaign(
-            name=specified_campaign_name
-        )
-        self.assertIsNotNone(test_campaign_specified)
+        assert(observed_use_defaults)
+        test_campaign_specified = e_c.EMODCampaign(name=specified_campaign_name)
+        assert(test_campaign_specified is not None)
         test_campaign_specified_string = test_campaign_specified.json
         test_campaign_specified_dict = json.loads(test_campaign_specified_string)
 
-        self.assertEqual(specified_campaign_name, test_campaign_specified_dict["Campaign_Name"])
-        self.assertTrue(test_campaign_specified_dict["Use_Defaults"])
+        assert(specified_campaign_name==test_campaign_specified_dict["Campaign_Name"])
+        assert(test_campaign_specified_dict["Use_Defaults"])
         pass
 
     def test_collections_utils(self):

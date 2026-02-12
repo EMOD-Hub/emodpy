@@ -21,6 +21,8 @@ from idmtools.entities.simulation import Simulation
 from idmtools.registry.task_specification import TaskSpecification
 from idmtools.utils.json import load_json_file
 from idmtools.entities.iplatform import IPlatform
+
+from emodpy.demographics.demographics import Demographics
 from emodpy.emod_file import ClimateFiles, DemographicsFiles, MigrationFiles
 from emodpy.campaign.emod_campaign import EMODCampaign
 from emodpy.reporters.base import Reporters
@@ -32,7 +34,6 @@ import string
 import emod_api.campaign as api_campaign
 from emod_api.config import default_from_schema_no_validation as dfs
 from emod_api.schema_to_class import ReadOnlyDict
-from emod_api.demographics.Demographics import Demographics
 
 user_logger = getLogger('user')
 logger = getLogger(__name__)
@@ -213,7 +214,7 @@ class EMODTask(ITask):
             raise ValueError("Something went wrong with demographics_builder, "
                              "please make sure that the demographics_builder function returns a Demographics object.")
 
-        demog_path = demographics.generate_file(demog_path)
+        demographics.to_file(path=demog_path)
 
         # Process associated migration files and add them to the asset collection.
         for mig_path in demographics.migration_files:
@@ -230,7 +231,7 @@ class EMODTask(ITask):
 
         # Set the demographics file name for the simulation.
         demog_files = [pathlib.PurePath(demog_path).name]
-        demographics._SetDemographicFileNames(demog_files)
+        demographics.set_demographics_filenames(filenames=demog_files)
 
         # Apply implicit parameters before the demographics object is destroyed.
         for fn in demographics.implicits:

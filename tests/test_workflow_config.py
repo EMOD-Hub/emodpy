@@ -1,10 +1,5 @@
-# flake8: noqa W605,F821
-import itertools
-import json
 import os
-import time
 import pytest
-import unittest
 from emodpy.emod_task import EMODTask, logger
 from functools import partial
 
@@ -27,44 +22,32 @@ I think this could use more tests. I would add a test for the following:
 """
 
 @pytest.mark.container
-class TestWorkflowConfig(unittest.TestCase):
+class TestWorkflowConfig():
     """
         Tests for EMODTask
     """
-
-    def setUp(self) -> None:
-        self.num_sim = 2
-        self.num_sim_long = 20
-        self.case_name = os.path.basename(__file__) + "_" + self._testMethodName
-        print(f"\n{self.case_name}")
-        self.original_working_dir = os.getcwd()
-        self.task: EMODTask
-        self.experiment: Experiment
-        self.platform = Platform(manifest.container_platform_name)
-        self.test_folder = helpers.make_test_directory(self.case_name)
-        self.setup_custom_params()
-
     def setup_custom_params(self):
         self.builders = helpers.BuildersCommon
 
-    def tearDown(self) -> None:
-        # Check if the test failed and leave the data in the folder if it did
-        test_result = self.defaultTestResult()
-        if test_result.errors:
-            with open("experiment_location.txt", "w") as f:
-                if self.experiment:
-                    f.write(f"The failed experiment can be viewed at {self.platform.endpoint}/#explore/"
-                            f"Simulations?filters=ExperimentId={self.experiment.uid}")
-                else:
-                    f.write("The experiment was not created.")
-            os.chdir(self.original_working_dir)
-            helpers.close_logger(logger.parent)
-        else:
-            helpers.close_logger(logger.parent)
-            if os.name == "nt":
-                time.sleep(1)  # only needed for windows
-            os.chdir(self.original_working_dir)
-            helpers.delete_existing_folder(self.test_folder)
+    @pytest.fixture(autouse=True)
+    # Set-up and tear-down for each test
+    def run_every_test(self, request) -> None:
+        self.num_sim = 2
+        self.num_sim_long = 20
+        self.case_name = os.path.basename(__file__) + "_" + request.node.name
+        self.original_working_dir = os.getcwd()
+        self.task: EMODTask
+        self.experiment: Experiment
+        self.test_folder = helpers.make_test_directory(self.case_name)
+        self.platform = Platform(manifest.container_platform_name, job_directory=self.test_folder)
+        self.setup_custom_params()
+
+        # Run test
+        yield
+
+        # Post-test
+        os.chdir(self.original_working_dir)
+        helpers.close_logger(logger.parent)
 
     def run_experiment(self, task):
 
@@ -79,7 +62,7 @@ class TestWorkflowConfig(unittest.TestCase):
         experiment = Experiment.from_builder(builder, task, name=self.case_name)
         self.platform.run_items(experiment)
         self.platform.wait_till_done(experiment)
-        self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
+        assert(experiment.succeeded)
         return experiment
 
     def config_builder_builtin_demographics(self, config):
@@ -117,6 +100,7 @@ class TestWorkflowConfig(unittest.TestCase):
                                       config_builder=self.config_builder_builtin_demographics)
         self.run_experiment(task)
 
+
 @pytest.mark.container
 class TestWorkflowConfigGeneric(TestWorkflowConfig):
     """
@@ -125,7 +109,3 @@ class TestWorkflowConfigGeneric(TestWorkflowConfig):
 
     def setup_custom_params(self):
         self.builders = helpers.BuildersGeneric
-
-
-if __name__ == "__main__":
-    unittest.main()

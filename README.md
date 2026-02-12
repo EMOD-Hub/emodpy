@@ -1,106 +1,37 @@
-![Staging: emodpy](https://github.com/InstituteforDiseaseModeling/emodpy-idmtools/workflows/Staging:%20emodpy/badge.svg)
-
-
 # emodpy
 
-Documentation available at https://emod-hub.github.io/emodpy/
+[![Build docs and deploy to GH Pages](https://github.com/EMOD-Hub/emodpy/actions/workflows/mkdocs_deploy.yml/badge.svg)](https://github.com/EMOD-Hub/emodpy/actions/workflows/mkdocs_deploy.yml)
+[![Lint](https://github.com/EMOD-Hub/emodpy/actions/workflows/lint.yml/badge.svg)](https://github.com/EMOD-Hub/emodpy/actions/workflows/lint.yml)
+[![Test and update version](https://github.com/EMOD-Hub/emodpy/actions/workflows/test_and_bump_version.yml/badge.svg)](https://github.com/EMOD-Hub/emodpy/actions/workflows/test_and_bump_version.yml)
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**
+## Python Version
 
-- [User Installation](#user-installation)
-  - [Pre-requisites](#pre-requisites)
-- [Development Environment Setup](#development-environment-setup)
-  - [First Time Setup](#first-time-setup)
-  - [Development Tips](#development-tips)
-  - [To run examples or tests](#to-run-examples-or-tests)
-  - [Building docs](#building-docs)
-- [Community](#community)
-- [Disclaimer](#disclaimer)
+Python 3.13 is the recommended and supported version.
 
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+## Documentation
 
+Documentation available at https://emod-hub.github.io/emodpy/.
 
-# User Installation
+To build the documentation locally, do the following:
 
-```bash
-pip install emodpy --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
-```
+1. Create and activate a venv.
+2. Navigate to the root directory of the repo.
+    ```
+    python -m pip install .[docs]
+    ```
 
-## Pre-requisites
-- Python 3.9 x64
+## Running tests
 
+Please see the documentation for [testing](/tests/README.md).
 
-# Development Environment Setup
-
-When setting up your environment for the first time, you can use the following instructions
-
-## First Time Setup
-1) Clone the repository:
-   ```bash
-   > git clone https://github.com/EMOD-Hub/emodpy.git
-   ```
-2) Create a virtualenv. On Windows, please use venv to create the environment
-   `python -m venv idmtools`
-   On Unix(Mac/Linux) you can use venv or virtualenv
-3) Activate the virtualenv
-4) If you are on windows, run `pip install py-make --upgrade --force-reinstall`
-5) Then run `python ./.dev_scripts/bootstrap.py`. This will install all the tools. 
-
-## Development Tips
-
-There is a Makefile file available for most common development tasks. Here is a list of commands
-```bash
-clean       -   Clean up temproary files
-lint        -   Lint package and tests
-test        -   Run All tests
-coverage    -   Run tests and generate coverage report that is shown in browser
-```
-On Windows, you can use `pymake` instead of `make`
-
-## To run examples or tests
-
-First, install idmtools packages including emodpy package from idm artifactory
-
-staging artifactory with nightly build packages:
-```bash
-pip install idmtools[idm] --index-url=https://email:password@packages.idmod.org/api/pypi/pypi-staging/simple
-OR
-pip install idmtools[full] --index-url=https://email:password@packages.idmod.org/api/pypi/pypi-staging/simple
-```
-[idm] option will install all idmtools packages except idmtools_platform_local package
-
-[full] option will install all idmtools packages including idmtools_platform_local package
-
-email:password is your company login credentials. password should be encoded for specially characters
-
-production artifactory with latest release packages:
-```bash
-pip install idmtools[idm] --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
-OR
-pip install idmtools[full] --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
-```
-To run integration tests or examples, you also need to install idmtools-test package
-```bash
-pip install idmtools-test --extra-index-url=https://email:password@packages.idmod.org/api/pypi/pypi-staging/simple
-OR
-pip install idmtools-test --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
-```
-
-## Building docs
-
-Install all necessary documentation tools using ``pip install .[docs] --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple`` and run the command ``mkdocs build``. After changing docstrings, reinstall emodpy to pick up the latest changes in the documentation build.
-
-
-# Community
+## Community
 The EMOD Community is made up of researchers and software developers, primarily focused on malaria and HIV research.
 We value mutual respect, openness, and a collaborative spirit. If these values resonate with you, we invite you to join our EMOD Slack Community by completing this form:
 
 https://forms.office.com/r/sjncGvBjvZ
 
 
-# Disclaimer
+## Disclaimer
 
 The code in this repository was developed by IDM and other collaborators to support our joint research on flexible agent-based modeling.
 We've made it publicly available under the MIT License to provide others with a better understanding of our research and an opportunity to build upon it for their own work. We make no representations that the code works as intended or that we will provide support, address issues that are found, or accept pull requests.

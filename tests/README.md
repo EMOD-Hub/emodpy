@@ -1,23 +1,11 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**
+## Installation
 
-- [run emodpy tests locally](#run-emodpy-tests-locally)
+To run the tests, you need to install extra dependencies.  Please use the following command in the root directory:
 
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+`$ python -m pip install -e .[test]`
 
-# run emodpy tests locally
+## Running the Tests
 
-How to run these tests locally after you have emodpy installed in a virtual environment. 
+Run the tests using the following command from the root directory of the project:
 
-1. Active your virtual environment
-
-2. Install testing requirements
-```bash
-pip install -r tests/requirements.txt --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
-```
-
-3. run emod tests
-```bash
-pytest -v -m emod
-```
+`$ python -m pytest -v tests/`

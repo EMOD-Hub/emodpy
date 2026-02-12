@@ -44,11 +44,6 @@ docs = [
 lint = [
     "flake8",
 ]
-packaging = [
-    "build",
-    "twine",
-    "bump2version",
-]
 test = [
     "emod-common",
     "emod-generic",

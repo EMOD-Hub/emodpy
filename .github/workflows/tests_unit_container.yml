@@ -1,4 +1,4 @@
-name: Run tests
+name: Run local tests
 
 on:
   pull_request:

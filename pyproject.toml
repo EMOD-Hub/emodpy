@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "emodpy"
+version = "1.35.0"
+description = "Core tools for modeling using EMOD"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    {name = "Sharon Chen", email = "sharon.chen@gatesfoundation.org"},
+    {name = "Zhaowei Du", email = "zhaowei.du@gatesfoundation.org"},
+    {name = "Clark Kirkman IV", email = "clark.kirkmand@gatesfoundation.org"},
+    {name = "Daniel Bridenbecker", email = "daniel.bridenbecker@gatesfoundation.org"},
+    {name = "Svetlana Titova", email = "svetlana.titova@gatesfoundation.org"},
+    {name = "Ye Chen", email = "ye.chen@gatesfoundation.org"},
+]
+keywords = ["modeling", "IDM"]
+dependencies = [
+    "idmtools[full]~=3.0",
+    "emod-api~=1.35.0",
+]
+license = "MIT"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+]
+
+[project.optional-dependencies]
+docs = [
+    "mkdocs-material",
+    "mkdocs-include-markdown-plugin",
+    "mkdocstrings-python",
+    "mkdocs-autoapi",
+    "mkdocs-glightbox",
+]
+lint = [
+    "flake8",
+]
+test = [
+    "emod-common",
+    "emod-malaria",
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist",
+]
+
+[project.urls]
+Repository = "https://github.com/EMOD-Hub/emodpy"
+Issues = "https://github.com/EMOD-Hub/emodpy/issues"
+
+[project.entry-points.idmtools_task]
+idmtools_task_emod = "emodpy.emod_task:EMODTaskSpecification"
+
+[project.entry-points."idmtools_cli.cli_plugins"]
+emodpy = "emodpy_cli.cli.schema:emodpy"
+
+[tool.setuptools.packages]
+find = {include = ["emodpy*"]}
+
+[tool.bumpversion]
+current_version = "1.35.0"
+commit = true
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+
+[[tool.bumpversion.files]]
+filename = "emodpy/__init__.py"

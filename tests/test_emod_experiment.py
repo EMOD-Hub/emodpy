@@ -16,8 +16,6 @@ from idmtools.core import ItemType
 from idmtools.entities.experiment import Experiment
 from idmtools.entities.iplatform import IPlatform
 from idmtools.entities.simulation import Simulation
-# from idmtools_platform_comps.utils.python_requirements_ac.requirements_to_asset_collection import RequirementsToAssetCollection
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 from idmtools_platform_comps.utils.singularity_build import SingularityBuildWorkItem
 
 from emodpy.emod_task import EMODTask, add_ep4_from_path
@@ -348,7 +346,7 @@ class EMODExperimentTest(ABC):
 
 @pytest.mark.comps
 @pytest.mark.emod
-class TestEMODExperimentLinux(ITestWithPersistence, EMODExperimentTest):
+class TestEMODExperimentLinux(EMODExperimentTest):
     """
     Test idmtools.entities.experiment with Linux Generic Emod build
     """

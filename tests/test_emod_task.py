@@ -18,7 +18,6 @@ from emodpy.reporters.custom import ReportNodeDemographics
 from idmtools.entities.experiment import Experiment
 from idmtools.entities.simulation import Simulation
 from idmtools.core.platform_factory import Platform
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 
 import emod_api.demographics.Demographics as Demographics
 from emod_api.config import from_schema as fs
@@ -58,7 +57,7 @@ def set_demog_file(config, demographics_file):
 
 
 @pytest.mark.emod
-class TestEMODTask(ITestWithPersistence):
+class TestEMODTask():
     """
         Tests for EMODTask
     """

@@ -4,7 +4,6 @@ import os
 import pytest
 from idmtools.core.platform_factory import Platform
 from idmtools.entities.experiment import Experiment
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 
 from emodpy.defaults import EMODSir
 from emodpy.emod_task import EMODTask
@@ -96,7 +95,7 @@ def immunity_blood_test(base_sensitivity, positive_threshold_acquisitionimmunity
 
 @pytest.mark.comps
 @pytest.skip(reason="Need these tests to use the right constructor #593", allow_module_level=True)
-class TestAddCampaignFromScript(ITestWithPersistence):
+class TestAddCampaignFromScript():
 
     def setUp(self) -> None:
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName

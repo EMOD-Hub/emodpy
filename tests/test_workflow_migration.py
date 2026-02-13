@@ -13,7 +13,6 @@ from collections import namedtuple
 
 from idmtools.core.platform_factory import Platform
 from idmtools.entities.experiment import Experiment
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 from idmtools.builders import SimulationBuilder
 
 from emodpy.emod_task import EMODTask
@@ -69,7 +68,7 @@ def get_output_filenames(migration_type, filenames):
 
 
 @pytest.mark.emod
-class TestMigration(ITestWithPersistence):
+class TestMigration():
     @classmethod
     def define_test_environment(cls):
         cls.eradication_path = manifest.eradication_path_linux

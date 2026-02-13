@@ -10,7 +10,6 @@ from idmtools.assets import Asset
 from idmtools.entities.experiment import Experiment
 from idmtools.entities.simulation import Simulation
 from idmtools.core.platform_factory import Platform
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 
 from emodpy.emod_task import EMODTask
 from emodpy.emod_task import add_ep4_from_path
@@ -58,7 +57,7 @@ def delete_existing_file(file):
 
 
 @pytest.mark.emod
-class TestEmodPrePostProcess(ITestWithPersistence):
+class TestEmodPrePostProcess():
     """
         To test dtk_pre_process and dtk_pre_process through EMODTask
     """

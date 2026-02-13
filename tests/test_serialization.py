@@ -4,7 +4,6 @@ import pytest
 from idmtools_platform_comps.utils.download.download import DownloadWorkItem, CompressType
 from idmtools.core.platform_factory import Platform
 from idmtools.entities.experiment import Experiment
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 from emodpy.emod_task import EMODTask
 from emodpy.utils import EradicationBambooBuilds
 from emodpy.bamboo import get_model_files
@@ -16,7 +15,7 @@ sif_path = manifest.sft_id_file
 
 
 @pytest.mark.emod
-class TestSerialization(ITestWithPersistence):
+class TestSerialization():
 
     @classmethod
     def setUpClass(cls) -> None:

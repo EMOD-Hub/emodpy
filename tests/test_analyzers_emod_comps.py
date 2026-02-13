@@ -12,9 +12,6 @@ from idmtools.builders import SimulationBuilder
 from idmtools.core import ItemType
 from idmtools.core.platform_factory import Platform
 from idmtools.entities.experiment import Experiment
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
-from idmtools_test.utils.utils import del_file, del_folder
-
 from emodpy.analyzers.population_analyzer import PopulationAnalyzer
 from emodpy.analyzers.timeseries_analyzer import TimeseriesAnalyzer
 from emodpy.defaults import EMODSir
@@ -25,10 +22,26 @@ BIN_PATH = os.path.join(current_directory, "..", "examples", "inputs", "bin")
 INPUT_PATH = os.path.join(current_directory, "..", "examples", "serialization", "inputs")
 
 
+def del_file(filename: str, dir: str = None):
+    if dir:
+        filepath = os.path.join(dir, filename)
+    else:
+        filepath = os.path.join(os.path.curdir, filename)
+
+    if os.path.exists(filepath):
+        print(filepath)
+        os.remove(filepath)
+
+
+def del_folder(path: str):
+    if os.path.exists(path):
+        shutil.rmtree(path)
+
+
 @pytest.mark.comps
 @pytest.mark.analysis
 @pytest.skip(reason="Need these tests to use the right constructor #593", allow_module_level=True)
-class TestAnalyzeManagerEmodComps(ITestWithPersistence):
+class TestAnalyzeManagerEmodComps():
 
     def generate_experiment(self) -> Experiment:
         base_task = EMODTask.from_default(default=EMODSir(), eradication_path=os.path.join(BIN_PATH, "Eradication.exe"))

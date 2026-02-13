@@ -1,10 +1,9 @@
 import json
 import pytest
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 
 
 @pytest.mark.emod
-class EmodpyImportTest(ITestWithPersistence):
+class EmodpyImportTest():
     def setUp(self) -> None:
         self.expected_items = None
         self.found_items = None

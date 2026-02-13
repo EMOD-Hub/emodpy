@@ -14,7 +14,6 @@ from idmtools.core.platform_factory import Platform
 from idmtools.core import ItemType
 from idmtools.entities.experiment import Experiment
 from idmtools.entities.iplatform import IPlatform
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 
 from emodpy.emod_task import EMODTask
 from pathlib import Path
@@ -191,7 +190,7 @@ class EMODExperimentTest(ABC):
 
 @pytest.mark.comps
 @pytest.mark.emod
-class TestEMODExperimentLinux(ITestWithPersistence, EMODExperimentTest):
+class TestEMODExperimentLinux(EMODExperimentTest):
 
     @classmethod
     def setUpClass(cls):

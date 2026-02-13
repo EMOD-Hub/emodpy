@@ -11,7 +11,6 @@ from idmtools.entities import Suite
 from idmtools.entities.experiment import Experiment
 from idmtools.entities.simulation import Simulation
 from idmtools.entities.templated_simulation import TemplatedSimulations
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 from emodpy.emod_task import EMODTask
 from emod_api.config import from_schema as fs
 from tests import manifest
@@ -23,7 +22,7 @@ sif_path = manifest.sft_id_file
 
 
 @pytest.mark.comps
-class TestExperimentSimulations(ITestWithPersistence):
+class TestExperimentSimulations():
 
     def get_sir_experiment(self, case_name) -> Experiment:
         eradication_path = manifest.eradication_path_linux

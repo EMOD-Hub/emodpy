@@ -1,4 +1,4 @@
-import emod_generic.bootstrap as dtk
+import emod_common.bootstrap as dtk
 from . import manifest
 import os
 import unittest

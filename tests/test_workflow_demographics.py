@@ -2,7 +2,6 @@ import os
 import pytest
 import shutil
 from functools import partial
-from abc import ABC, abstractmethod
 
 from emod_api.config import default_from_schema_no_validation as dfs
 import emod_api.demographics.Demographics as Demographics
@@ -12,7 +11,6 @@ from emod_api.demographics.PropertiesAndAttributes import IndividualAttributes, 
 
 from idmtools.entities.experiment import Experiment
 from idmtools.core.platform_factory import Platform
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 from idmtools.builders import SimulationBuilder
 
 from emodpy.emod_task import EMODTask
@@ -43,12 +41,11 @@ def set_param_fn(config, implicit_config_set_fns=None):
 # bamboo_api_login() only work in console
 # Please run this test from console for the first time or run 'test_download_from_bamboo.py' from console before
 # running this test
-class TestWorkflowDemographics(ITestWithPersistence, ABC):
+class TestWorkflowDemographics():
     """
         Base test class to test emod_api.demographics in a workflow
     """
     @classmethod
-    @abstractmethod
     def define_test_environment(cls):
         cls.plan = EradicationBambooBuilds.CI_GENERIC
         cls.eradication_path = manifest.eradication_path_win

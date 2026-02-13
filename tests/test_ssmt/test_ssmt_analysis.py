@@ -5,16 +5,19 @@ import pytest
 from idmtools.analysis.platform_anaylsis import PlatformAnalysis
 from idmtools.core import ItemType
 from idmtools.core.platform_factory import Platform
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
-from idmtools_test.utils.utils import del_folder
 
 from emodpy.analyzers.adult_vectors_analyzer import AdultVectorsAnalyzer
 from emodpy.analyzers.population_analyzer import PopulationAnalyzer
 
 
+def del_folder(path: str):
+    if os.path.exists(path):
+        shutil.rmtree(path)
+
+
 @pytest.mark.comps
 @pytest.mark.ssmt
-class TestSSMTAnalysis(ITestWithPersistence):
+class TestSSMTAnalysis():
 
     def setUp(self) -> None:
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName

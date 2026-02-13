@@ -2,8 +2,6 @@ import os
 import pytest
 import shutil
 from functools import partial
-from abc import ABC, abstractmethod
-# from sys import platform
 import json
 
 from emod_api.config import default_from_schema_no_validation as dfs
@@ -15,7 +13,6 @@ from emod_api.schema import get_schema as gs
 from idmtools.entities.experiment import Experiment
 from idmtools.builders import SimulationBuilder
 from idmtools.core.platform_factory import Platform
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 
 from emodpy.emod_task import EMODTask
 from emodpy.utils import download_latest_bamboo, download_latest_schema, EradicationBambooBuilds, bamboo_api_login
@@ -40,11 +37,10 @@ set_Run_Number = partial(param_update, param="Run_Number")
 # bamboo_api_login() only work in console
 # Please run this test from console for the first time or run 'test_download_from_bamboo.py' from console before
 # running this test
-class TestWorkflowConfig(ITestWithPersistence, ABC):
+class TestWorkflowConfig():
     """
         Base test class to test emod_api.config in a workflow
     """
-    @abstractmethod
     def define_test_environment(self):
         self.plan = EradicationBambooBuilds.GENERIC_WIN
         self.eradication_path = manifest.eradication_path_win

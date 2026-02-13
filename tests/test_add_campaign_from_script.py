@@ -1,13 +1,15 @@
 import json
 import os
-
 import pytest
+
 from idmtools.core.platform_factory import Platform
 from idmtools.entities.experiment import Experiment
 
 from emodpy.defaults import EMODSir
 from emodpy.emod_task import EMODTask
-from examples.serialization.globals import BIN_PATH
+
+import emod_common.bootstrap as dtk
+import tests.manifest as mani
 
 
 def simple_vaccine(start_day, initial_effect, name="SimpleVaccine1"):
@@ -102,9 +104,13 @@ class TestAddCampaignFromScript():
         self.platform = Platform('COMPS2')
         print(self.case_name)
 
+        mani.delete_existing_file(mani.eradication_path_linux)
+        mani.delete_existing_file(mani.schema_path_linux)
+        dtk.setup(mani.package_folder)
+
     def test_add_campaign_from_script(self):
         # create EMODTask from default
-        task = EMODTask.from_default(default=EMODSir(), eradication_path=os.path.join(BIN_PATH, "Eradication.exe"))
+        task = EMODTask.from_default(default=EMODSir(), eradication_path=mani.eradication_path_linux)
 
         # Clear the default campaign
         task.campaign.clear()

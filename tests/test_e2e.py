@@ -2,6 +2,7 @@ import os
 from abc import ABC, abstractmethod
 from functools import partial
 import pytest
+import unittest
 
 from emod_api.config import from_schema as fs
 from emod_api.interventions import outbreak as ob
@@ -41,7 +42,7 @@ def add_ep4_post(task):
 
 
 @pytest.mark.emod
-class EMODExperimentTest(ABC):
+class EMODExperimentTest():
 
     @classmethod
     @abstractmethod
@@ -167,6 +168,13 @@ class EMODExperimentTest(ABC):
                                         config_path=self.get_emod_config(),
                                         ep4_path=os.path.join(manifest.current_directory, "inputs", "ep4", "e2e"))
         base_task.set_sif(sif_path)
+        base_task.config['Enable_Demographics_Builtin'] = 1
+        base_task.config['Default_Geography_Initial_Node_Population'] = 1
+        base_task.config['Default_Geography_Torus_Size'] = 3
+        base_task.config['Incubation_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        base_task.config['Infectious_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        base_task.config['Incubation_Period_Constant'] = 1
+        base_task.config['Infectious_Period_Constant'] = 1
         builder = SimulationBuilder()
 
         # Sweep parameter "Run_Number"
@@ -190,7 +198,7 @@ class EMODExperimentTest(ABC):
 
 @pytest.mark.comps
 @pytest.mark.emod
-class TestEMODExperimentLinux(EMODExperimentTest):
+class TestEMODExperimentLinux(EMODExperimentTest, unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -206,7 +214,7 @@ class TestEMODExperimentLinux(EMODExperimentTest):
 
     @classmethod
     def get_platform(cls) -> IPlatform:
-        return Platform('SLURM')
+        return Platform('SLURMStage')
 
     @classmethod
     def get_emod_binary(cls) -> str:

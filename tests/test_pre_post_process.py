@@ -71,8 +71,6 @@ class TestEmodPrePostProcess():
         self.schema_file = manifest.schema_file
         self.config_file = os.path.join(manifest.config_folder, 'config_for_ep4.json')
         delete_existing_file(self.config_file)
-        # generate schema
-        print("trying to use schema downloaded from bamboo in 'test_download_from_bamboo.py'")
 
         # generate default config file from schema
         fs.SchemaConfigBuilder(schema_name=self.schema_file, config_out=self.config_file)
@@ -283,8 +281,3 @@ class TestEmodPrePostProcess():
             self.assertIn("dtk_in_process.py called on timestep", stdout)
             self.assertIn("printing from dtk_post_process.py", stdout)
             self.assertIn("printing from dtk_pre_process.py", stdout)
-
-
-if __name__ == "__main__":
-    import unittest
-    unittest.main()

@@ -14,15 +14,11 @@ from idmtools.core.platform_factory import Platform
 from idmtools.builders import SimulationBuilder
 
 from emodpy.emod_task import EMODTask
-from emodpy.utils import download_latest_bamboo, download_latest_schema, EradicationBambooBuilds, bamboo_api_login
 
 from io import StringIO
 from contextlib import redirect_stdout
 import json
 
-# import sys
-# file_dir = os.path.dirname(__file__)
-# sys.path.append(file_dir)
 from tests import manifest
 
 sif_path = manifest.sft_id_file
@@ -38,16 +34,12 @@ def set_param_fn(config, implicit_config_set_fns=None):
     return config
 
 
-# bamboo_api_login() only work in console
-# Please run this test from console for the first time or run 'test_download_from_bamboo.py' from console before
-# running this test
 class TestWorkflowDemographics():
     """
         Base test class to test emod_api.demographics in a workflow
     """
     @classmethod
     def define_test_environment(cls):
-        cls.plan = EradicationBambooBuilds.CI_GENERIC
         cls.eradication_path = manifest.eradication_path_win
         cls.schema_path = manifest.schema_path_win
         cls.config_file = os.path.join(manifest.config_folder, "generic_config_for_demographics_workflow.json")
@@ -69,40 +61,8 @@ class TestWorkflowDemographics():
         self.is_singularity = False
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
         print(self.case_name)
-        self.get_exe_from_bamboo()
-        self.get_schema_from_bamboo()
         self.platform = Platform(self.comps_platform)
         manifest.delete_existing_file(self.demographics_file)
-
-    def get_exe_from_bamboo(self):
-        if not os.path.isfile(self.eradication_path):
-            bamboo_api_login()
-            print(
-                f"Getting Eradication from bamboo for plan {self.plan}. Please run this script in console if this "
-                "is the first time you use bamboo_api_login()."
-            )
-            eradication_path_bamboo = download_latest_bamboo(
-                plan=self.plan,
-                scheduled_builds_only=False
-            )
-            shutil.move(eradication_path_bamboo, self.eradication_path)
-        else:
-            print(f"{self.eradication_path} already exists, no need to get it from bamboo.")
-
-    def get_schema_from_bamboo(self):
-        if not os.path.isfile(self.schema_path):
-            bamboo_api_login()
-            print(
-                f"Getting Schema.json from bamboo for plan {self.plan}. Please run this script in console if this "
-                "is the first time you use bamboo_api_login()."
-            )
-            download_latest_schema(
-                plan=self.plan,
-                scheduled_builds_only=False,
-                out_path=self.schema_path
-            )
-        else:
-            print(f"{self.schema_path} already exists, no need to get it from bamboo.")
 
     def run_exp(self, task):
         experiment = Experiment.from_task(task, name=self._testMethodName)
@@ -612,7 +572,6 @@ class TestWorkflowDemographicsWin(TestWorkflowDemographics):
     """
     @classmethod
     def define_test_environment(cls):
-        cls.plan = EradicationBambooBuilds.GENERIC_WIN
         cls.eradication_path = manifest.eradication_path_win
         cls.schema_path = manifest.schema_path_win
         cls.config_file = os.path.join(manifest.config_folder, "generic_config_for_demographics_workflow.json")
@@ -665,7 +624,6 @@ class TestWorkflowDemographicsLinux(TestWorkflowDemographics):
     """
     @classmethod
     def define_test_environment(cls):
-        cls.plan = EradicationBambooBuilds.GENERIC_LINUX
         cls.eradication_path = manifest.eradication_path_linux
         cls.schema_path = manifest.schema_path_linux
         cls.config_file = os.path.join(manifest.config_folder, "generic_config_for_demographics_workflow_l.json")

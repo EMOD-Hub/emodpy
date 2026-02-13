@@ -1,5 +1,5 @@
 import emod_common.bootstrap as dtk
-from . import manifest
+import tests.manifest as mani
 import os
 import unittest
 
@@ -7,17 +7,17 @@ import unittest
 class TestDownloadFromPackage(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        manifest.delete_existing_file(manifest.eradication_path_linux)
-        manifest.delete_existing_file(manifest.schema_path_linux)
-        dtk.setup(manifest.package_folder)
+        mani.delete_existing_file(mani.eradication_path_linux)
+        mani.delete_existing_file(mani.schema_path_linux)
+        dtk.setup(mani.package_folder)
         pass
 
     def test_eradication(self):
-        target_path = manifest.eradication_path_linux
+        target_path = mani.eradication_path_linux
         self.assertTrue(os.path.exists(target_path), msg=f"Failed to import {target_path}")
 
     def test_schema(self):
-        target_path = manifest.schema_path_linux
+        target_path = mani.schema_path_linux
         self.assertTrue(os.path.exists(target_path), msg=f"Failed to import {target_path}")
 
 

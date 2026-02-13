@@ -27,12 +27,6 @@ from emod_api import campaign as camp
 
 from tests import manifest
 
-# current_directory = os.path.dirname(os.path.realpath(__file__))
-# DEFAULT_CONFIG_PATH = os.path.join(COMMON_INPUT_PATH, "files", "config.json")
-# DEFAULT_CAMPAIGN_JSON = os.path.join(COMMON_INPUT_PATH, "files", "campaign.json")
-# DEFAULT_DEMOGRAPHICS_JSON = os.path.join(COMMON_INPUT_PATH, "files", "demographics.json")
-# DEFAULT_ERADICATION_PATH = os.path.join(COMMON_INPUT_PATH, "emod", "Eradication.exe")
-
 
 def set_param_fn(config, implicit_config_set_fns):
     """

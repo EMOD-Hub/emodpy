@@ -15,9 +15,6 @@ from emodpy.emod_task import EMODTask
 from emod_api.config import from_schema as fs
 from tests import manifest
 
-# current_directory = os.path.dirname(os.path.realpath(__file__))
-# BIN_PATH = os.path.join(current_directory, "..", "examples", "inputs", "bin")
-# INPUT_PATH = os.path.join(current_directory, "..", "examples", "serialization", "inputs")
 sif_path = manifest.sft_id_file
 
 

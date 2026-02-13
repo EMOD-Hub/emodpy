@@ -101,14 +101,11 @@ class EMODTask(ITask):
     sif_path = None # one is for slurm only
 
     def __post_init__(self):
-        from emodpy.utils import download_eradication
         super().__post_init__()
         self.executable_name = "Eradication"
         self.py_path_list.append("./Assets/python")
         if self.eradication_path is not None:
             self.executable_name = os.path.basename(self.eradication_path)
-            if urlparse(self.eradication_path).scheme in ('http', 'https'):
-                self.eradication_path = download_eradication(self.eradication_path)
             self.eradication_path = os.path.abspath(self.eradication_path)
         else:
             eradication_path = IdmConfigParser().get_option("emodpy", "eradication_path")

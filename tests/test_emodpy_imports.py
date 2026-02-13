@@ -23,7 +23,6 @@ class EmodpyImportTest():
     def test_package_emodpy(self):
         import emodpy
         self.expected_items = [
-            "bamboo_api_utils",
             "emod_campaign"
         ]
         self.verify_expected_items_present(namespace=emodpy)
@@ -56,13 +55,6 @@ class EmodpyImportTest():
         self.assertEqual(specified_campaign_name, test_campaign_specified_dict["Campaign_Name"])
         self.assertFalse(test_campaign_specified_dict["Use_Defaults"])
         pass
-
-    def test_module_emod_bamboo(self):
-        import emodpy.bamboo as e_b
-        self.expected_items = [
-            "get_model_files"
-        ]
-        self.verify_expected_items_present(namespace=e_b)
 
     def test_collections_utils(self):
         import emodpy.collections_utils as c_u
@@ -99,17 +91,3 @@ class EmodpyImportTest():
         ]
         self.verify_expected_items_present(namespace=e_t)
 
-    def test_emod_utils(self):
-        import emodpy.utils as ut
-        self.expected_items = [
-            "get_github_eradication_url",
-            "save_bamboo_credentials",
-            "bamboo_api_login",
-            "download_bamboo_artifacts",
-            "download_latest_bamboo",
-            "download_latest_eradication",
-            "download_latest_reporters",
-            "download_latest_schema",
-            "download_from_url"
-        ]
-        self.verify_expected_items_present(namespace=ut)

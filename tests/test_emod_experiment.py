@@ -22,19 +22,11 @@ from emodpy.emod_task import EMODTask, add_ep4_from_path
 
 from tests import manifest
 
-# current_directory = os.path.dirname(os.path.realpath(__file__))
-# DEFAULT_CONFIG_PATH = os.path.join(COMMON_INPUT_PATH, "files", "config.json")
-# DEFAULT_CAMPAIGN_JSON = os.path.join(COMMON_INPUT_PATH, "files", "campaign.json")
-# DEFAULT_DEMOGRAPHICS_JSON = os.path.join(COMMON_INPUT_PATH, "files", "demographics.json")
-# DEFAULT_ERADICATION_PATH = os.path.join(COMMON_INPUT_PATH, "emod", "Eradication.exe")
 
 emod_version = '2.20.0'
 num_sim = 2
 num_sim_long = 20  # to catch issue like config is not deep copied #251 and #238
 sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
-
-print("Please run 'test_download_from_bamboo.py' (run from console for the first time to login to bamboo) before "
-      "running this test")
 
 
 @pytest.mark.emod

@@ -5,13 +5,15 @@ from idmtools_platform_comps.utils.download.download import DownloadWorkItem, Co
 from idmtools.core.platform_factory import Platform
 from idmtools.entities.experiment import Experiment
 from emodpy.emod_task import EMODTask
-from emodpy.utils import EradicationBambooBuilds
-from emodpy.bamboo import get_model_files
-from examples.config_update_parameters import del_folder
 
 from tests import manifest
 
 sif_path = manifest.sft_id_file
+
+
+def del_folder(path: str):
+    if os.path.exists(path):
+        shutil.rmtree(path)
 
 
 @pytest.mark.emod
@@ -21,7 +23,6 @@ class TestSerialization():
     def setUpClass(cls) -> None:
         # cls.platform = Platform("Calculon", num_cores=2, node_group="idm_48cores", priority="Highest")
         cls.platform = Platform("SLURMStage", num_cores=2, node_group="idm_48cores", priority="Highest")
-        cls.plan = EradicationBambooBuilds.GENERIC_LINUX
 
     def setUp(self) -> None:
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
@@ -29,10 +30,6 @@ class TestSerialization():
         self.config_file = os.path.join(manifest.config_folder, 'default_config.json')
         # manifest.delete_existing_file(manifest.schema_file)
         manifest.delete_existing_file(self.config_file)
-
-        # download files needed to run sim, e.g. schema and eradication
-        if not os.path.isfile(manifest.schema_file) or (not os.path.isfile(manifest.eradication_path)):
-            get_model_files(self.plan, manifest)
 
     @pytest.mark.long
     def test_serialization(self):

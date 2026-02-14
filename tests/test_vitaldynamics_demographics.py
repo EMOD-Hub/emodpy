@@ -16,6 +16,8 @@ from idmtools.entities.experiment import Experiment
 
 from tests import manifest
 
+sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
+
 
 @pytest.mark.emod
 class VitalDynamicDemographicsTests(unittest.TestCase):
@@ -58,6 +60,10 @@ class VitalDynamicDemographicsTests(unittest.TestCase):
         config.parameters.Enable_Demographics_Reporting = 0
         config.parameters.Report_Event_Recorder_Events = ["Births", "NonDiseaseDeaths", "HappyBirthday"]
         config.parameters.Spatial_Output_Channels = ["Population", "Births"]
+        config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+        config.parameters.Incubation_Period_Constant = 2
+        config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
+        config.parameters.Infectious_Period_Constant = 3
 
         return config
 
@@ -98,7 +104,7 @@ class VitalDynamicDemographicsTests(unittest.TestCase):
                                       ep4_custom_cb=None)
         print("Adding asset dir...")
 
-        task.set_sif(manifest.sft_id_file)
+        task.set_sif(sif_path)
 
         # Create simulation sweep with builder
         builder = SimulationBuilder()

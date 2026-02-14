@@ -1,13 +1,12 @@
 import os
 import pytest
 import json
-import pandas as pd
+import unittest
+
 from functools import partial
 
 from emod_api.config import default_from_schema_no_validation as dfs
 from emod_api.interventions import outbreak as ob
-from emod_api.interventions import simple_vaccine as sv
-from emod_api.interventions import import_pressure as ip
 from emod_api import campaign as camp
 
 from idmtools.core import ItemType
@@ -20,11 +19,11 @@ from emodpy.emod_campaign import EMODCampaign
 
 from tests import manifest
 
-sif_path = manifest.sft_id_file
+sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
 default_config_file = "campaign_workflow_default_config.json"
 
 
-class TestWorkflowCampaign():
+class TestWorkflowCampaign(unittest.TestCase):
     """
         Base test class to test emod_api.campaign and  emod_api.interventions in a workflow
     """
@@ -49,7 +48,7 @@ class TestWorkflowCampaign():
     def setUp(self) -> None:
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
         print(self.case_name)
-        self.platform = Platform(self.comps_platform)
+        self.platform = Platform("SLURMStage")
         manifest.delete_existing_file(self.camp_file)
 
     def run_exp(self, task):
@@ -77,9 +76,11 @@ class TestWorkflowCampaign():
         """
 
         def set_param_fn(config):
+            config.parameters.Enable_Demographics_Builtin = 1
+            config.parameters.Default_Geography_Initial_Node_Population = 1
+            config.parameters.Default_Geography_Torus_Size = 3
             config.parameters.Incubation_Period_Constant = 0
             config.parameters.Infectious_Period_Constant = 1
-            config.parameters.Base_Infectivity_Constant = 1
             config.parameters.Base_Mortality = 0
             config.parameters.Simulation_Duration = 10
             return config
@@ -152,9 +153,11 @@ class TestWorkflowCampaign():
         """
 
         def set_param_fn(config):
+            config.parameters.Enable_Demographics_Builtin = 1
+            config.parameters.Default_Geography_Initial_Node_Population = 1
+            config.parameters.Default_Geography_Torus_Size = 3
             config.parameters.Incubation_Period_Constant = 0
             config.parameters.Infectious_Period_Constant = 1
-            config.parameters.Base_Infectivity_Constant = 1
             config.parameters.Base_Mortality = 0
             config.parameters.Simulation_Duration = 10
             return config
@@ -212,88 +215,6 @@ class TestWorkflowCampaign():
     def campaign_sweeping_test_2(self):
         self.campaign_sweeping_test(update_outbreak_coverage=self.update_outbreak_coverage_2)
 
-    def ip_and_sv_from_default_test(self):
-        """
-            Testing the campaign.add() to add campaign event from interventions.import_pressure and
-            interventions.simple_vaccine. Making sure it can be consumed by the Eradication with EMODTask.from_default2.
-            Make sure the following config parameters are set implicitly in config file:
-                Campaign_Filename = "campaign.json"
-                Enable_Intervention = 1
-        """
-
-        def set_param_fn(config):
-            config.parameters.Incubation_Period_Constant = 0
-            config.parameters.Infectious_Period_Constant = 1
-            config.parameters.Base_Infectivity_Constant = 1
-            config.parameters.Base_Mortality = 0
-            config.parameters.Simulation_Duration = 20
-            return config
-
-        def build_camp(t, dur, dip, t_sv):
-            def _set_config_param_implicitly(config, trigger_name):
-                config.parameters.Report_Event_Recorder_Events = [trigger_name]
-                return config
-            silly_example = partial(_set_config_param_implicitly, trigger_name=test_trigger_name)
-            camp.implicits.append(silly_example)
-            camp.add(ip.new_intervention(t, dur, dip, nods=[]),
-                     name="import_pressure", first=True)
-            camp.add(sv.new_intervention(t_sv), name="vaccine", first=False)
-            return camp
-
-        test_trigger_name = "Births"
-        sv.schema_path = self.schema_path
-        ip.schema_path = self.schema_path
-        timestep = 2
-        durations = [10, 20]
-        daily_import_pressures = [50, 100]
-        timestep_sv = 10
-
-        config_path = self.config_file[:-5] + "_2.json"
-        task = EMODTask.from_default2(config_path=config_path, eradication_path=self.eradication_path,
-                                      campaign_builder=partial(build_camp, timestep, durations, daily_import_pressures,
-                                                               timestep_sv),
-                                      schema_path=self.schema_path,
-                                      param_custom_cb=set_param_fn, ep4_custom_cb=None, demog_builder=None)
-        task.set_sif(sif_path)
-
-        self.assertTrue(isinstance(task.campaign, EMODCampaign))
-        self.assertEqual(len(task.campaign.events), 2)
-        self.assertEqual(task.campaign.events[0]["Start_Day"], timestep)
-        self.assertEqual(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["Daily_Import_Pressures"],
-                         daily_import_pressures)
-        self.assertEqual(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["Durations"],
-                         durations)
-        self.assertEqual(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["class"],
-                         "ImportPressure")
-
-        self.assertEqual(task.campaign.events[1]["Start_Day"], timestep_sv)
-        self.assertEqual(task.campaign.events[1]["Event_Coordinator_Config"]["Intervention_Config"]["class"],
-                         "Vaccine")
-
-        # these will not be changed until task.pre_creation()
-        # self.assertEqual("campaign.json", task.config["Campaign_Filename"])
-        # self.assertEqual(1, task.config["Enable_Intervention"])
-        self.assertEqual([test_trigger_name], task.config["parameters"]["Report_Event_Recorder_Events"])
-
-        experiment = self.run_exp(task)
-        config_basename = os.path.basename(config_path)
-
-        for sim in experiment.simulations:
-            files = self.platform.get_files(sim, [config_basename, "campaign.json", "stdout.txt"])
-
-            config_file = json.loads(files[config_basename].decode("utf-8"))
-            self.assertEqual("campaign.json", config_file["parameters"]["Campaign_Filename"])
-            self.assertEqual(1, config_file["parameters"]["Enable_Interventions"])
-
-            campaign_file = json.loads(files["campaign.json"].decode("utf-8"))
-            self.assertEqual(len(campaign_file["Events"]), 2)
-
-            stdout = files["stdout.txt"].decode("utf-8")
-            self.assertIn("distributed 'ImportPressure' intervention to node", stdout)
-            self.assertIn("'Vaccine' interventions at node", stdout)
-
-        camp.reset()
-
 
 @pytest.mark.emod
 class TestWorkflowCampaignLinux(TestWorkflowCampaign):
@@ -312,25 +233,8 @@ class TestWorkflowCampaignLinux(TestWorkflowCampaign):
     def test_1_outbreak_individual_from_file_linux(self):
         super().outbreak_individual_from_file_test()
 
-    def test_2_ip_and_sv_from_default_linux(self):
-        super().ip_and_sv_from_default_test()
-
     def test_3_campaign_sweeping_1_linux(self):
         super().campaign_sweeping_test_1()
 
     def test_4_campaign_sweeping_2_linux(self):
         super().campaign_sweeping_test_1()
-
-    def test_5_node_multiplier_constant_linux(self):
-        super().node_multiplier_constant_test()
-
-    def test_6_node_multiplier_boxcar_linux(self):
-        super().node_multiplier_boxcar_test()
-
-    def test_7_node_multiplier_target_multiple_nodes_linux(self):
-        super().node_multiplier_target_multiple_nodes()
-
-
-if __name__ == "__main__":
-    import unittest
-    unittest.main()

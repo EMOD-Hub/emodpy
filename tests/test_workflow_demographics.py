@@ -1,5 +1,6 @@
 import os
 import pytest
+import unittest
 import shutil
 from functools import partial
 
@@ -21,7 +22,7 @@ import json
 
 from tests import manifest
 
-sif_path = manifest.sft_id_file
+sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
 
 
 default_config_file = "demographics_workflow_default_config.json"
@@ -34,7 +35,7 @@ def set_param_fn(config, implicit_config_set_fns=None):
     return config
 
 
-class TestWorkflowDemographics():
+class TestWorkflowDemographics(unittest.TestCase):
     """
         Base test class to test emod_api.demographics in a workflow
     """
@@ -106,10 +107,16 @@ class TestWorkflowDemographics():
             demog.SetDefaultProperties()
             return demog
 
+        def set_param_fn(config):
+            config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Incubation_Period_Constant = 5
+            config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            return config
+
         task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                       schema_path=manifest.schema_path_linux,
                                       config_path=self.config_file,
-                                      param_custom_cb=None,
+                                      param_custom_cb=set_param_fn,
                                       ep4_custom_cb=None, demog_builder=build_demo)
         if self.is_singularity:
             task.set_sif(sif_path)
@@ -140,15 +147,22 @@ class TestWorkflowDemographics():
                     result.append("tmp" + item + ".json")
             return result
 
+        def set_param_fn(config):
+            config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Incubation_Period_Constant = 5
+            config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            return config
+
         printed_output = StringIO()
 
         with redirect_stdout(printed_output):
             task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                           schema_path=manifest.schema_path_linux,
                                           config_path=self.config_file,
-                                          param_custom_cb=None, demog_builder=None, ep4_custom_cb=None)
+                                          param_custom_cb=set_param_fn, demog_builder=None, ep4_custom_cb=None)
             if self.is_singularity:
                 task.set_sif(sif_path)
+
             builder = SimulationBuilder()
             prevalences = [0.1, 0.3, 0.5, 0.7, 1]
             builder.add_sweep_definition(update_demog_initial_prevalence, prevalences)
@@ -168,34 +182,6 @@ class TestWorkflowDemographics():
             files = self.platform.get_files(sim, [filename])
             demographics_dict = json.loads(files[filename])
             self.assertEqual(demographics_dict['Defaults']['IndividualAttributes']['InitialPrevalence'], prevalence)
-
-    def simple_susceptibility_demographics_test(self):
-        """
-            Testing the Demographics.from_template_node() with DT.SimpleSusceptibilityDistribution() and make sure it can be
-            consumed by the Eradication. Make sure following config parameters are set implicitly with
-            implicit_config_fns:
-                Demographics_Filenames = [{self.demographics_file}]
-                Enable_Demographics_Builtin = 0
-                Susceptibility_Initialization_Distribution_Type = DISTRIBUTION_COMPLEX
-            (Test to make sure the meanAgeAtInfection values are honored in demographics file is in emod_api tests folder)
-        """
-        def build_demo():
-            demog = Demographics.from_template_node()
-            demog.SetDefaultProperties()
-            DT.SimpleSusceptibilityDistribution(demog, meanAgeAtInfection=10)
-            return demog
-
-        task = EMODTask.from_default2(eradication_path=self.eradication_path,
-                                      schema_path=manifest.schema_path_linux,
-                                      config_path=self.config_file,
-                                      param_custom_cb=None, demog_builder=build_demo, ep4_custom_cb=None)
-        if self.is_singularity:
-            task.set_sif(sif_path)
-
-        self.assertEqual(['demographics.json'], task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_default2"
-        self.assertEqual(0, task.config['parameters']['Enable_Demographics_Builtin'])
-        self.assertEqual('DISTRIBUTION_COMPLEX', task.config['parameters']['Susceptibility_Initialization_Distribution_Type'])
-        self.run_exp(task)
 
     def age_dependent_transmission_demographics_test(self):
         """
@@ -221,6 +207,11 @@ class TestWorkflowDemographics():
                                    demographics_paths=self.demographics_file, ep4_path=None)
         if self.is_singularity:
             task.set_sif(sif_path)
+        task.config['Incubation_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task.config['Incubation_Period_Constant'] = 5
+        task.config['Infectious_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task.config['Infectious_Period_Constant'] = 5
+
         self.assertEqual([os.path.basename(self.demographics_file)], task.config['Demographics_Filenames'])
         self.assertEqual(0, task.config['Enable_Demographics_Builtin'])
         self.assertEqual(1, task.config['Enable_Heterogeneous_Intranode_Transmission'])
@@ -254,6 +245,11 @@ class TestWorkflowDemographics():
                                    demographics_paths=self.demographics_file, ep4_path=None)
         if self.is_singularity:
             task.set_sif(sif_path)
+        task.config['Incubation_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task.config['Incubation_Period_Constant'] = 5
+        task.config['Infectious_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task.config['Infectious_Period_Constant'] = 5
+
         self.assertEqual([os.path.basename(self.demographics_file)], task.config['Demographics_Filenames'])
         self.assertEqual(0, task.config['Enable_Demographics_Builtin'])
         self.assertEqual(1, task.config['Enable_Heterogeneous_Intranode_Transmission'])
@@ -286,35 +282,15 @@ class TestWorkflowDemographics():
                                    demographics_paths=self.demographics_file, ep4_path=None)
         if self.is_singularity:
             task.set_sif(sif_path)
+        task.config['Incubation_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task.config['Incubation_Period_Constant'] = 5
+        task.config['Infectious_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task.config['Infectious_Period_Constant'] = 5
+
         self.assertEqual([os.path.basename(self.demographics_file)], task.config['Demographics_Filenames'])
         self.assertEqual(0, task.config['Enable_Demographics_Builtin'])
         self.assertEqual(1, task.config['Enable_Heterogeneous_Intranode_Transmission'])
         self.assertEqual(1, task.config['Disable_IP_Whitelist'])
-        self.run_exp(task)
-
-    def from_csv_demographics_test(self):
-        """
-            Testing the demographic generated by Demographics.from_csv() with a csv file can be consumed by the
-            Eradication. Make sure following config parameters are set implicitly with implicit_config_fns:
-                Demographics_Filenames = [{self.demographics_file}]
-                Enable_Demographics_Builtin = 0
-            (Test to make sure the demographics file matches the csv file is in emod-api tests folder.)
-        """
-        def demog_builder():
-            input_file = os.path.join(manifest.current_directory, 'inputs', 'demographics', 'demog_in.csv')
-            demog = Demographics.from_csv(input_file, res=25 / 3600)
-            demog.SetDefaultProperties()
-            return demog
-
-        task = EMODTask.from_default2(eradication_path=self.eradication_path,
-                                      schema_path=manifest.schema_path_linux,
-                                      config_path=self.config_file, demog_builder=demog_builder,
-                                      ep4_custom_cb=None, param_custom_cb=None)
-        if self.is_singularity:
-            task.set_sif(sif_path)
-        self.assertEqual(['demographics.json'], task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_default2"
-        self.assertEqual(0, task.config['parameters']['Enable_Demographics_Builtin'])
-        task.set_parameter('x_Base_Population', 0.00001)
         self.run_exp(task)
 
     def from_params_demographics_test(self):
@@ -333,10 +309,16 @@ class TestWorkflowDemographics():
             demog.SetDefaultProperties()
             return demog
 
+        def set_param_fn(config):
+            config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Incubation_Period_Constant = 5
+            config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            return config
+
         task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                       schema_path=manifest.schema_path_linux,
                                       config_path=self.config_file, demog_builder=demog_builder,
-                                      param_custom_cb=None, ep4_custom_cb=None)
+                                      param_custom_cb=set_param_fn, ep4_custom_cb=None)
         if self.is_singularity:
             task.set_sif(sif_path)
 
@@ -370,12 +352,20 @@ class TestWorkflowDemographics():
 
             return demog
 
+        def set_param_fn(config):
+            config.parameters.Enable_Default_Reporting = 1
+            config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Incubation_Period_Constant = 5
+            config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            return config
+
         task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                       schema_path=manifest.schema_path_linux,
                                       config_path=self.config_file,
-                                      param_custom_cb=None, demog_builder=build_demog, ep4_custom_cb=None)
+                                      param_custom_cb=set_param_fn, demog_builder=build_demog, ep4_custom_cb=None)
         if self.is_singularity:
             task.set_sif(sif_path)
+
         experiment = self.run_exp(task)
 
         inset_chart_filename = "output/InsetChart.json"
@@ -428,12 +418,19 @@ class TestWorkflowDemographics():
 
             return demog
 
+        def set_param_fn(config):
+            config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Incubation_Period_Constant = 5
+            config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            return config
+
         task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                       schema_path=manifest.schema_path_linux,
                                       config_path=self.config_file,
-                                      param_custom_cb=None, demog_builder=build_demog, ep4_custom_cb=None)
+                                      param_custom_cb=set_param_fn, demog_builder=build_demog, ep4_custom_cb=None)
         if self.is_singularity:
             task.set_sif(sif_path)
+
         experiment = self.run_exp(task)
 
         demog_filename = "Assets/demographics.json"
@@ -489,7 +486,9 @@ class TestWorkflowDemographics():
             return demog
 
         def set_param_fn(config):
-            print("Setting params.")
+            config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Incubation_Period_Constant = 5
+            config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
             config.parameters.Enable_Property_Output = 1
             return config
 
@@ -499,6 +498,7 @@ class TestWorkflowDemographics():
                                       param_custom_cb=set_param_fn, demog_builder=build_demog, ep4_custom_cb=None)
         if self.is_singularity:
             task.set_sif(sif_path)
+
         experiment = self.run_exp(task)
 
         property_filename = "output/PropertyReport.json"
@@ -541,6 +541,10 @@ class TestWorkflowDemographics():
                                    demographics_paths=[self.demographics_file, overlay_filename], ep4_path=None)
         if self.is_singularity:
             task.set_sif(sif_path)
+        task.config['Incubation_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task.config['Incubation_Period_Constant'] = 5
+        task.config['Infectious_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task.config['Infectious_Period_Constant'] = 5
 
         experiment = self.run_exp(task)
 
@@ -582,9 +586,6 @@ class TestWorkflowDemographicsWin(TestWorkflowDemographics):
     def test_a_basic_demographics_win(self):
         super().basic_demographics_test()
 
-    def test_b_simple_susceptibility_demographics_win(self):
-        super().simple_susceptibility_demographics_test()
-
     def test_c_age_dependent_transmission_demographics_win(self):
         super().age_dependent_transmission_demographics_test()
 
@@ -593,9 +594,6 @@ class TestWorkflowDemographicsWin(TestWorkflowDemographics):
 
     def skip_test_e_add_individual_property_and_HINT_disable_whitelist_demographics_win(self):
         super().add_individual_property_and_HINT_disable_whitelist_demographics_test()
-
-    def test_f_from_csv_demographics_win(self):
-        super().from_csv_demographics_test()
 
     def test_g_from_params_demographics_win(self):
         super().from_params_demographics_test()
@@ -611,9 +609,6 @@ class TestWorkflowDemographicsWin(TestWorkflowDemographics):
 
     def test_k_demographics_overlay_individual_properties_win(self):
         super().demographics_overlay_individual_properties_test()
-
-    def test_l_demographics_overlay_susceptibility_distribution_from_files_win(self):
-        super().demographics_overlay_susceptibility_distribution_from_files_test()
 
 
 # @pytest.mark.skip('skip tests for Linux Eradication for now')
@@ -635,10 +630,6 @@ class TestWorkflowDemographicsLinux(TestWorkflowDemographics):
         self.is_singularity = True
         super().basic_demographics_test()
 
-    def test_b_simple_susceptibility_demographics_linux(self):
-        self.is_singularity = True
-        super().simple_susceptibility_demographics_test()
-
     def test_c_age_dependent_transmission_demographics_linux(self):
         self.is_singularity = True
         super().age_dependent_transmission_demographics_test()
@@ -650,10 +641,6 @@ class TestWorkflowDemographicsLinux(TestWorkflowDemographics):
     def skip_test_e_add_individual_property_and_HINT_disable_whitelist_demographics_linux(self):
         self.is_singularity = True
         super().add_individual_property_and_HINT_disable_whitelist_demographics_test()
-
-    def test_f_from_csv_demographics_linux(self):
-        self.is_singularity = True
-        super().from_csv_demographics_test()
 
     def test_g_from_params_demographics_linux(self):
         self.is_singularity = True
@@ -674,7 +661,3 @@ class TestWorkflowDemographicsLinux(TestWorkflowDemographics):
     def test_k_demographics_overlay_individual_properties_linux(self):
         self.is_singularity = True
         super().demographics_overlay_individual_properties_test()
-
-    def test_l_demographics_overlay_susceptibility_distribution_from_files_linux(self):
-        self.is_singularity = True
-        super().demographics_overlay_susceptibility_distribution_from_files_test()

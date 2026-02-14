@@ -15,11 +15,12 @@ from emodpy.emod_task import EMODTask
 from emod_api.config import from_schema as fs
 from tests import manifest
 
-sif_path = manifest.sft_id_file
+
+sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
 
 
 @pytest.mark.comps
-class TestExperimentSimulations():
+class TestExperimentSimulations(unittest.TestCase):
 
     def get_sir_experiment(self, case_name) -> Experiment:
         eradication_path = manifest.eradication_path_linux
@@ -50,7 +51,7 @@ class TestExperimentSimulations():
         super().setUp()
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
         print(self.case_name)
-        self.platform = Platform('SLURM')
+        self.platform = Platform('SLURMStage')
 
     def tearDown(self):
         super().tearDown()
@@ -73,6 +74,13 @@ class TestExperimentSimulations():
         task.tags = {"idmtools": "idmtools-automation", "string_tag": "test", "number_tag": 123}
         task.set_parameter("Enable_Immunity", 0)
         task.set_sif(sif_path)
+        task.config['Enable_Demographics_Builtin'] = 1
+        task.config['Default_Geography_Initial_Node_Population'] = 1
+        task.config['Default_Geography_Torus_Size'] = 3
+        task.config['Incubation_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task.config['Incubation_Period_Constant'] = 5
+        task.config['Infectious_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task.config['Infectious_Period_Constant'] = 5
 
         # User builder to create simulations
         num_sims = 3
@@ -91,6 +99,13 @@ class TestExperimentSimulations():
                                     eradication_path=eradication_path,
                                     ep4_path=manifest.ep4_path)
         task1.set_sif(sif_path)
+        task1.config['Enable_Demographics_Builtin'] = 1
+        task1.config['Default_Geography_Initial_Node_Population'] = 1
+        task1.config['Default_Geography_Torus_Size'] = 3
+        task1.config['Incubation_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task1.config['Incubation_Period_Constant'] = 5
+        task1.config['Infectious_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task1.config['Infectious_Period_Constant'] = 5
         # create another TemplatedSimulations with this task1
         ts1 = TemplatedSimulations([builder], base_task=task1)
 
@@ -192,7 +207,3 @@ class TestExperimentSimulations():
         suite.run(True, platform=self.platform)
 
         self.run_experiment_and_test_suite(self.platform, suite)
-
-
-if __name__ == '__main__':
-    unittest.main()

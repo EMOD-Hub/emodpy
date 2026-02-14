@@ -1,8 +1,8 @@
 import copy
 import json
 import os
-from abc import ABC, abstractmethod
 import pytest
+import unittest
 
 from emod_api.config import from_schema as fs
 from emod_api.interventions import outbreak as ob
@@ -30,28 +30,24 @@ sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
 
 
 @pytest.mark.emod
-class EMODExperimentTest(ABC):
+class EMODExperimentTest():
     """
     Base test class for idmtools.entities.experiment
     """
 
     @classmethod
-    @abstractmethod
     def get_emod_binary(cls) -> str:
         pass
 
     @classmethod
-    @abstractmethod
     def get_emod_schema(cls) -> str:
         pass
 
     @classmethod
-    @abstractmethod
     def get_emod_config(cls) -> str:
         pass
 
     @classmethod
-    @abstractmethod
     def get_platform(cls) -> IPlatform:
         pass
 
@@ -66,6 +62,13 @@ class EMODExperimentTest(ABC):
         """
         def set_param_fn(config):
             print("Setting params.")
+            config.parameters.Enable_Demographics_Builtin = 1
+            config.parameters.Default_Geography_Initial_Node_Population = 1
+            config.parameters.Default_Geography_Torus_Size = 3
+            config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Incubation_Period_Constant = 5
+            config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Infectious_Period_Constant = 5
             return config
 
         self.platform = Platform("SLURMStage")
@@ -100,6 +103,13 @@ class EMODExperimentTest(ABC):
 
     def singularity_test(self, my_sif_path, ep4_fn):
         def set_param_fn(config):
+            config.parameters.Enable_Demographics_Builtin = 1
+            config.parameters.Default_Geography_Initial_Node_Population = 1
+            config.parameters.Default_Geography_Torus_Size = 3
+            config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Incubation_Period_Constant = 5
+            config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Infectious_Period_Constant = 5
             print("Setting params.")
             return config
 
@@ -182,6 +192,13 @@ class EMODExperimentTest(ABC):
         """
         def set_param_fn(config):
             print("Setting params.")
+            config.parameters.Enable_Demographics_Builtin = 1
+            config.parameters.Default_Geography_Initial_Node_Population = 1
+            config.parameters.Default_Geography_Torus_Size = 3
+            config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Incubation_Period_Constant = 5
+            config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Infectious_Period_Constant = 5
             config.parameters.Simulation_Duration = 3
             return config
 
@@ -226,8 +243,6 @@ class EMODExperimentTest(ABC):
             config.parameters.Incubation_Period_Constant = 5
             config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
             config.parameters.Infectious_Period_Constant = 5
-            config.parameters.Base_Infectivity_Distribution = "CONSTANT_DISTRIBUTION"
-            config.parameters.Base_Infectivity_Constant = 1
             config.parameters.Simulation_Duration = 3
             return config
 
@@ -283,6 +298,7 @@ class EMODExperimentTest(ABC):
                                         ep4_path=None)
         base_task.set_sif(sif_path)
         base_task.set_parameter('Enable_Immunity', 0)
+
         e = Experiment(
             name=self.case_name,
             tags={"emodpy": "emodpy-automation", "string_tag": "test", "number_tag": 123}
@@ -292,7 +308,13 @@ class EMODExperimentTest(ABC):
         for i in range(num_sim_long):
             sim = copy.deepcopy(base_sim)
             sim.task.common_assets = base_task.common_assets # workaround coz copy doesn't copy common_assets anymore.
-            sim.task.set_parameter("Enable_Immunity", 0)
+            sim.task.config['Enable_Demographics_Builtin'] = 1
+            sim.task.config['Default_Geography_Initial_Node_Population'] = 1
+            sim.task.config['Default_Geography_Torus_Size'] = 3
+            sim.task.config['Incubation_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+            sim.task.config['Incubation_Period_Constant'] = 5
+            sim.task.config['Infectious_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+            sim.task.config['Infectious_Period_Constant'] = 5
             e.simulations.append(sim)
 
         with self.platform as p:
@@ -315,6 +337,15 @@ class EMODExperimentTest(ABC):
         base_task = EMODTask.from_files(eradication_path=self.get_emod_binary(), config_path=self.get_emod_config(),
                                         ep4_path=None)
         base_task.set_sif(sif_path)
+        base_task.set_parameter('Enable_Immunity', 0)
+        base_task.config['Enable_Demographics_Builtin'] = 1
+        base_task.config['Default_Geography_Initial_Node_Population'] = 1
+        base_task.config['Default_Geography_Torus_Size'] = 3
+        base_task.config['Incubation_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        base_task.config['Incubation_Period_Constant'] = 5
+        base_task.config['Infectious_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        base_task.config['Infectious_Period_Constant'] = 5
+
         builder = SimulationBuilder()
         # Sweep parameter "Run_Number"
         builder.add_sweep_definition(EMODTask.set_parameter_partial("Run_Number"), range(0, num_sim_long))
@@ -338,7 +369,7 @@ class EMODExperimentTest(ABC):
 
 @pytest.mark.comps
 @pytest.mark.emod
-class TestEMODExperimentLinux(EMODExperimentTest):
+class TestEMODExperimentLinux(EMODExperimentTest, unittest.TestCase):
     """
     Test idmtools.entities.experiment with Linux Generic Emod build
     """
@@ -357,7 +388,7 @@ class TestEMODExperimentLinux(EMODExperimentTest):
 
     @classmethod
     def get_platform(cls) -> IPlatform:
-        return Platform('SLURM')
+        return Platform('SLURMStage')
 
     @classmethod
     def get_emod_binary(cls) -> str:
@@ -379,46 +410,3 @@ class TestEMODExperimentLinux(EMODExperimentTest):
         fs.SchemaConfigBuilder(schema_name=schema_path, config_out=config_file_path)
         print(f"get_emod_config returning {config_file_path}")
         return config_file_path
-
-# try:
-
-# @pytest.mark.docker
-# @pytest.mark.emod
-# class TestLocalPlatformEMOD(ITestWithPersistence, EMODPlatformTest):
-#
-#     def setUp(self) -> None:
-#         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
-#         print(self.case_name)
-#
-#     @classmethod
-#     def setUpClass(cls) -> None:
-#         from idmtools_platform_local.infrastructure.service_manager import DockerServiceManager
-#         from idmtools_platform_local.infrastructure.docker_io import DockerIO
-#         import docker
-#         cls.do = DockerIO()
-#         cls.sdm = DockerServiceManager(docker.from_env())
-#         cls.sdm.cleanup(True, True)
-#         cls.do.cleanup(True)
-#         cls.platform: IPlatform = cls.get_platform()
-#
-#     @classmethod
-#     def tearDownClass(cls) -> None:
-#         cls.sdm.cleanup(True, True)
-#         cls.do.cleanup(True)
-#
-#     @classmethod
-#     def get_emod_experiment(cls) -> IEMODExperiment:
-#         return DockerEMODExperiment
-#
-#     @classmethod
-#     def get_platform(cls) -> IPlatform:
-#         return Platform('Local')
-#
-#     @classmethod
-#     def get_emod_binary(cls) -> str:
-#         return get_github_eradication_url(emod_version)
-
-
-if __name__ == "__main__":
-    import unittest
-    unittest.main()

@@ -1,28 +1,31 @@
 import json
 import os
 import pytest
+import unittest
+import shutil
+
 from idmtools_platform_comps.utils.download.download import DownloadWorkItem, CompressType
 from idmtools.core.platform_factory import Platform
 from idmtools.entities.experiment import Experiment
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 from emodpy.emod_task import EMODTask
-from emodpy.utils import EradicationBambooBuilds
-from emodpy.bamboo import get_model_files
-from examples.config_update_parameters import del_folder
 
 from tests import manifest
 
-sif_path = manifest.sft_id_file
+sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
+
+
+def del_folder(path: str):
+    if os.path.exists(path):
+        shutil.rmtree(path)
 
 
 @pytest.mark.emod
-class TestSerialization(ITestWithPersistence):
+class TestSerialization(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
         # cls.platform = Platform("Calculon", num_cores=2, node_group="idm_48cores", priority="Highest")
         cls.platform = Platform("SLURMStage", num_cores=2, node_group="idm_48cores", priority="Highest")
-        cls.plan = EradicationBambooBuilds.GENERIC_LINUX
 
     def setUp(self) -> None:
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
@@ -30,10 +33,6 @@ class TestSerialization(ITestWithPersistence):
         self.config_file = os.path.join(manifest.config_folder, 'default_config.json')
         # manifest.delete_existing_file(manifest.schema_file)
         manifest.delete_existing_file(self.config_file)
-
-        # download files needed to run sim, e.g. schema and eradication
-        if not os.path.isfile(manifest.schema_file) or (not os.path.isfile(manifest.eradication_path)):
-            get_model_files(self.plan, manifest)
 
     @pytest.mark.long
     def test_serialization(self):
@@ -46,13 +45,15 @@ class TestSerialization(ITestWithPersistence):
         """
 
         def set_param_base(config):
+            config.parameters.Enable_Demographics_Builtin = 1
+            config.parameters.Enable_Default_Reporting = 1
+            config.parameters.Default_Geography_Initial_Node_Population = 1
+            config.parameters.Default_Geography_Torus_Size = 3
             config.parameters.Enable_Demographics_Reporting = 1
             config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
             config.parameters.Incubation_Period_Constant = 2
             config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
             config.parameters.Infectious_Period_Constant = 3
-            config.parameters.Base_Infectivity_Distribution = "CONSTANT_DISTRIBUTION"
-            config.parameters.Base_Infectivity_Constant = 0.2
             config.parameters.Post_Infection_Acquisition_Multiplier = 0.7
             config.parameters.Post_Infection_Transmission_Multiplier = 0.4
             config.parameters.Post_Infection_Mortality_Multiplier = 0.3
@@ -108,7 +109,7 @@ class TestSerialization(ITestWithPersistence):
             include_assets=True,
             compress_type=CompressType.deflate)
 
-        dl_wi2.run(wait_on_done=True, platform=self.platform)
+        dl_wi2.run(wait_until_done=True, platform=self.platform)
 
         # Add a wait time(max = 10s) for DownloadWorkItem to finish downloading
         import time

@@ -2,27 +2,17 @@ import os
 import pytest
 import shutil
 from functools import partial
-from abc import ABC, abstractmethod
-# from sys import platform
 import json
 
 from emod_api.config import default_from_schema_no_validation as dfs
 from emod_api.config import from_schema as fs
 from emod_api.config import from_overrides as fo
 
-from emod_api.schema import get_schema as gs
-
 from idmtools.entities.experiment import Experiment
 from idmtools.builders import SimulationBuilder
 from idmtools.core.platform_factory import Platform
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 
 from emodpy.emod_task import EMODTask
-from emodpy.utils import download_latest_bamboo, download_latest_schema, EradicationBambooBuilds, bamboo_api_login
-
-# import sys
-# file_dir = os.path.dirname(__file__)
-# sys.path.append(file_dir)
 from tests import manifest
 
 sif_path = manifest.sft_id_file
@@ -37,16 +27,11 @@ def param_update(simulation, param, value):
 set_Run_Number = partial(param_update, param="Run_Number")
 
 
-# bamboo_api_login() only work in console
-# Please run this test from console for the first time or run 'test_download_from_bamboo.py' from console before
-# running this test
-class TestWorkflowConfig(ITestWithPersistence, ABC):
+class TestWorkflowConfig():
     """
         Base test class to test emod_api.config in a workflow
     """
-    @abstractmethod
     def define_test_environment(self):
-        self.plan = EradicationBambooBuilds.GENERIC_WIN
         self.eradication_path = manifest.eradication_path_win
         self.schema_path = os.path.join(manifest.config_folder, f"generic_schema_{self._testMethodName}.json")
         self.config_file = os.path.join(manifest.config_folder, f"generic_config_{self._testMethodName}.json")
@@ -58,21 +43,8 @@ class TestWorkflowConfig(ITestWithPersistence, ABC):
         self.define_test_environment()
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
         print(self.case_name)
-        self.get_exe_from_bamboo()
         self.generate_schema()
         self.platform = Platform(self.comps_platform)
-
-    def get_exe_from_bamboo(self):
-        if not os.path.isfile(self.eradication_path):
-            bamboo_api_login()
-            print(f"Getting Eradication from bamboo for plan {self.plan}.")
-            eradication_path_bamboo = download_latest_bamboo(
-                plan=self.plan,
-                scheduled_builds_only=False
-            )
-            shutil.move(eradication_path_bamboo, self.eradication_path)
-        else:
-            print(f"{self.eradication_path} already exists, no need to get from bamboo.")
 
     def generate_schema(self):
         manifest.delete_existing_file(self.schema_path)
@@ -238,7 +210,6 @@ class TestWorkflowConfigWin(TestWorkflowConfig):
         Tested with Windows version of Generic Eradication
     """
     def define_test_environment(self):
-        self.plan = EradicationBambooBuilds.GENERIC_WIN
         self.eradication_path = manifest.eradication_path_win
         self.schema_path = os.path.join(manifest.config_folder, f"generic_schema_win_{self._testMethodName}.json")
         self.config_file = os.path.join(manifest.config_folder, f"generic_config_win_{self._testMethodName}.json")
@@ -246,10 +217,9 @@ class TestWorkflowConfigWin(TestWorkflowConfig):
         self.comps_platform = 'COMPS2'
 
     def generate_schema(self):
-        print('Using schema.json downloaded from test_download_from_bamboo.py for test')
         self.schema_path = manifest.schema_path_win
         if not os.path.isfile(self.schema_path):
-            download_latest_schema(plan=self.plan, scheduled_builds_only=False, out_path=self.schema_path)
+            raise Exception("No schema")
 
     def test_1_config_from_builder_win(self):
         super().config_from_builder_test()
@@ -279,7 +249,6 @@ class TestWorkflowConfigLinux(TestWorkflowConfig):
         Tested with Linux version of Generic Eradication
     """
     def define_test_environment(self):
-        self.plan = EradicationBambooBuilds.GENERIC_LINUX
         self.eradication_path = manifest.eradication_path_linux
         self.schema_path = os.path.join(manifest.config_folder, f"generic_schema_lnx_{self._testMethodName}.json")
         self.config_file = os.path.join(manifest.config_folder, f"generic_config_lnx_{self._testMethodName}.json")
@@ -287,10 +256,9 @@ class TestWorkflowConfigLinux(TestWorkflowConfig):
         self.comps_platform = 'SLURM'
 
     def generate_schema(self):
-        print('Using schema.json downloaded from test_download_from_bamboo.py for test')
         self.schema_path = manifest.schema_path_linux
         if not os.path.isfile(self.schema_path):
-            download_latest_schema(plan=self.plan, scheduled_builds_only=False, out_path=self.schema_path)
+            raise Exception("No schema")
 
     def test_1_config_from_builder_linux(self):
         self.is_singularity = True
@@ -320,7 +288,6 @@ class TestWorkflowConfigWinALL(TestWorkflowConfig):
         Tested with Windows version of monolithic Eradication
     """
     def define_test_environment(self):
-        self.plan = EradicationBambooBuilds.GENERIC_WIN_ALL
         self.eradication_path = manifest.eradication_path_win_all
         self.schema_path = os.path.join(manifest.config_folder, f"generic_schema_win_all_{self._testMethodName}.json")
         self.config_file = os.path.join(manifest.config_folder, f"generic_config_win_all_{self._testMethodName}.json")
@@ -328,10 +295,9 @@ class TestWorkflowConfigWinALL(TestWorkflowConfig):
         self.comps_platform = 'COMPS2'
 
     def generate_schema(self):
-        print('Using schema.json downloaded from test_download_from_bamboo.py for test')
         self.schema_path = manifest.schema_path_win_all
         if not os.path.isfile(self.schema_path):
-            download_latest_schema(plan=self.plan, scheduled_builds_only=False, out_path=self.schema_path)
+            raise Exception("No schema")
 
     def test_1_config_from_builder_win_all(self):
         super().config_from_builder_test()

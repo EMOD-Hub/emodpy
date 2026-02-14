@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from functools import partial
 from logging import getLogger, DEBUG
 from typing import Union, NoReturn, Optional, Any, Dict, List, Type
-from urllib.parse import urlparse
 import pathlib
 import sqlite3  # for caching experiment data
 
@@ -101,14 +100,11 @@ class EMODTask(ITask):
     sif_path = None # one is for slurm only
 
     def __post_init__(self):
-        from emodpy.utils import download_eradication
         super().__post_init__()
         self.executable_name = "Eradication"
         self.py_path_list.append("./Assets/python")
         if self.eradication_path is not None:
             self.executable_name = os.path.basename(self.eradication_path)
-            if urlparse(self.eradication_path).scheme in ('http', 'https'):
-                self.eradication_path = download_eradication(self.eradication_path)
             self.eradication_path = os.path.abspath(self.eradication_path)
         else:
             eradication_path = IdmConfigParser().get_option("emodpy", "eradication_path")
@@ -286,7 +282,7 @@ class EMODTask(ITask):
             config_path = "config.json"
         task.config_file_name = pathlib.Path(config_path).name
 
-        # Let's do the demographics building here...  
+        # Let's do the demographics building here...
         if demog_builder:
             task.create_demog_from_callback(demog_builder)
 
@@ -385,7 +381,7 @@ class EMODTask(ITask):
         else:
             self.campaign = None
 
-        if demographics_paths: 
+        if demographics_paths:
             logger.debug(f"demographics_paths = {demographics_paths}.")
             for demog_path in [demographics_paths] if isinstance(demographics_paths, str) else demographics_paths:
                 self.demographics.add_demographics_from_file(demog_path)
@@ -510,7 +506,7 @@ class EMODTask(ITask):
             if p.startswith('slurm') or p.startswith('file') or p.startswith('process'):
                 self.sif_path = path_to_sif
             else:
-                raise ValueError( f"platform of type {p} not valid for using SIF." )
+                raise ValueError(f"platform of type {p} not valid for using SIF.")
         else:
             # check if file is a SIF or an ID.
             if path_to_sif.endswith(".id"):
@@ -552,7 +548,7 @@ class EMODTask(ITask):
 
     def _enforce_non_schema_coherence(self):
         """
-        This function enforces business logic that can't be encoded in the schema. 
+        This function enforces business logic that can't be encoded in the schema.
         Rules:
         1) if >starttime + Sim_Duration < min_sim_endtime => ERROR
         """
@@ -669,7 +665,7 @@ class EMODTask(ITask):
         if name in config:
             config[name] = value
         else:
-            raise ValueError( f"parameter '{name}' not in schema." )
+            raise ValueError(f"parameter '{name}' not in schema.")
 
         return {name: value}
 
@@ -782,9 +778,9 @@ class EMODTask(ITask):
                         poi[odf] = output
             all_results.append(poi)
         if len(all_results) == 0:
-            raise ValueError( f"Failed to find any tag metadata for this experiment ({exp_id})." )
+            raise ValueError(f"Failed to find any tag metadata for this experiment ({exp_id}).")
         try:
-            os.makedirs( str( exp_id ), exist_ok=True )
+            os.makedirs(str(exp_id), exist_ok=True)
             con = sqlite3.connect(db)
         except Exception as ex:
             print(f"Exception {ex} while trying to open db file {db}.")

@@ -1,18 +1,16 @@
 import os
 import unittest
-import xmlrunner
 import pytest
 from idmtools.assets.file_list import FileList
 from idmtools.core.platform_factory import Platform
 from idmtools_platform_comps.ssmt_work_items.comps_workitems import SSMTWorkItem
 from COMPS.Data.WorkItem import WorkItem, RelationType
 from COMPS.Data import QueryCriteria, AssetCollection
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 
 
 @pytest.mark.ssmt
 @pytest.mark.comps
-class ClimateGenerationTest(ITestWithPersistence):
+class ClimateGenerationTest():
 
     def setUp(self):
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
@@ -129,7 +127,3 @@ class ClimateGenerationTest(ITestWithPersistence):
             barr_out = wi.retrieve_output_file_info([os.path.join('out', paths)])
 
         print(barr_out)
-
-
-if __name__ == "__main__":
-    unittest.main(testRunner=xmlrunner.XMLTestRunner(output='reports'))

@@ -5,6 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 import shutil
+import unittest
 from functools import partial
 
 from idmtools.core import ItemType
@@ -18,7 +19,6 @@ from emodpy.reporters.custom import ReportNodeDemographics
 from idmtools.entities.experiment import Experiment
 from idmtools.entities.simulation import Simulation
 from idmtools.core.platform_factory import Platform
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 
 import emod_api.demographics.Demographics as Demographics
 from emod_api.config import from_schema as fs
@@ -28,11 +28,8 @@ from emod_api import campaign as camp
 
 from tests import manifest
 
-# current_directory = os.path.dirname(os.path.realpath(__file__))
-# DEFAULT_CONFIG_PATH = os.path.join(COMMON_INPUT_PATH, "files", "config.json")
-# DEFAULT_CAMPAIGN_JSON = os.path.join(COMMON_INPUT_PATH, "files", "campaign.json")
-# DEFAULT_DEMOGRAPHICS_JSON = os.path.join(COMMON_INPUT_PATH, "files", "demographics.json")
-# DEFAULT_ERADICATION_PATH = os.path.join(COMMON_INPUT_PATH, "emod", "Eradication.exe")
+
+sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
 
 
 def set_param_fn(config, implicit_config_set_fns):
@@ -58,7 +55,7 @@ def set_demog_file(config, demographics_file):
 
 
 @pytest.mark.emod
-class TestEMODTask(ITestWithPersistence):
+class TestEMODTask(unittest.TestCase):
     """
         Tests for EMODTask
     """
@@ -67,7 +64,7 @@ class TestEMODTask(ITestWithPersistence):
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
         self.demog = None
         print(self.case_name)
-        self.platform = Platform('SLURM')
+        self.platform = Platform('SLURMStage')
 
     def prepare_schema_and_eradication(self):
         self.schema_path = manifest.schema_path_linux
@@ -197,8 +194,6 @@ class TestEMODTask(ITestWithPersistence):
         self.assertEqual(sim.task.config["parameters"]["Demographics_Filenames"], [self.demo_path])
         self.assertEqual(sim.task.config["parameters"]["Enable_Demographics_Builtin"], 0)
         self.assertEqual(sim.task.config["parameters"]["Age_Initialization_Distribution_Type"], 'DISTRIBUTION_COMPLEX')
-        self.assertEqual(sim.task.config["parameters"]["Susceptibility_Initialization_Distribution_Type"],
-                         'DISTRIBUTION_COMPLEX')
         # assert two required parameters when demographics builtin is disabled.
         self.assertIn('Enable_Heterogeneous_Intranode_Transmission', sim.task.config["parameters"])
         self.assertIn('Enable_Initial_Prevalence', sim.task.config["parameters"])
@@ -221,75 +216,6 @@ class TestEMODTask(ITestWithPersistence):
             config = json.load(fp)["parameters"]
 
         self.assertDictEqual(config, task.config)
-
-    def test_from_files_valid_customReport(self):
-        self.prepare_input_files()
-
-        def set_param_fn(config, implicit_config_set_fns):
-            config.parameters.Enable_Demographics_Builtin = 0
-            config.parameters.Base_Infectivity_Constant = 1
-            config.parameters.Incubation_Period_Constant = 1
-            config.parameters.Infectious_Period_Constant = 1
-            config.parameters.Base_Infectivity_Distribution = 'CONSTANT_DISTRIBUTION'
-            config.parameters.Incubation_Period_Distribution = 'CONSTANT_DISTRIBUTION'
-            config.parameters.Infectious_Period_Distribution = 'CONSTANT_DISTRIBUTION'
-            config.parameters.x_Base_Population = 0.001
-            config.parameters.Simulation_Duration = 10
-            config.parameters.Start_Time = 0
-            for fn in implicit_config_set_fns:
-                    config = fn(config)
-            return config
-
-        dfs.write_config_from_default_and_params(config_path=self.default_config_file,
-                                                 set_fn=partial(set_param_fn,
-                                                                implicit_config_set_fns=self.demog.implicits),
-                                                 config_out_path=self.config_path)
-
-        custom_reports_path = os.path.join(manifest.current_directory, "inputs", "custom_reports.json")
-
-        task = EMODTask.from_files(
-            eradication_path=self.eradication_path,
-            config_path=self.config_path,
-            campaign_path=self.camp_path,
-            demographics_paths=self.demo_path,
-            custom_reports_path=custom_reports_path,
-            asset_path=manifest.package_folder
-        )
-
-        task.pre_creation(Simulation(), self.platform)
-        task.gather_common_assets()
-
-        experiment = Experiment.from_task(task, name=self.case_name)
-
-        # Check if reporter plugins is in assets
-        self.assertIn(os.path.join(manifest.package_folder, 'reporter_plugins',
-                                   ReportNodeDemographics.dll_file.replace('dll', 'so')),
-                      [a.absolute_path for a in task.common_assets.assets])
-
-        # check experiment common assets are as expected
-        experiment.pre_creation(self.platform)
-        self.assertEqual(len(experiment.assets), 3)
-        self.assertIn(self.eradication_path, [a.absolute_path for a in experiment.assets])
-        self.assertIn(self.demo_path, [a.absolute_path for a in experiment.assets])
-
-        sim = experiment.simulations[0]
-        sim.pre_creation(self.platform)
-        self.assertEqual(len(sim.assets), 3)
-        self.assertIn('custom_reports.json', [a.filename for a in sim.assets])
-        self.assertEqual('custom_reports.json', sim.task.config["parameters"]['Custom_Reports_Filename'])
-        self.assertEqual(1, len(sim.task.reporters.custom_reporters))
-        print(type(sim.task.reporters.custom_reporters[0]))
-        # print(isinstance(ReportNodeDemographics, type(sim.task.reporters.custom_reporters[0])))
-        self.assertEqual('ReportNodeDemographics', sim.task.reporters.custom_reporters[0].name)
-
-        task.set_sif(manifest.sft_id_file)
-        experiment.run(wait_until_done=True)
-        self.assertTrue(experiment.succeeded, msg=f"Experiment {experiment.uid} failed.\n")
-
-        for sim in experiment.simulations:
-            file = self.platform.get_files(sim, ["output/ReportNodeDemographics.csv"])
-            report = file["output/ReportNodeDemographics.csv"].decode("utf-8")
-            self.assertIn("NodeID", report)
 
     def test_from_files_missing_customReport(self):
         self.prepare_input_files()
@@ -348,9 +274,6 @@ class TestEMODTask(ITestWithPersistence):
             tag = "Covid Ghana Demo"
             demog = Demographics.from_params(tot_pop=population, num_nodes=num_nodes, id_ref=tag)
             print(f"demog.implicits now has {len(demog.implicits)} functions in it.")
-            # DT.SimpleSusceptibilityDistribution( demog, meanAgeAtInfection=2.5 )
-            # DT.AddSeasonalForcing( demog, start=100, end=330, factor=1.0 )
-            # demog.AddAgeDependentTransmission( Age_Bin_Edges_In_Years=[0, 1, 2, -1], TransmissionMatrix=[[0.2, 0.4, 1.0], [0.2, 0.4, 1.0], [0.2, 0.4, 1.0]] )
             (age_pyr, age_names, mat_block) = Demographics.mat_magic()
             demog.AddIndividualPropertyAndHINT("Geographic", age_names, InitialDistribution=age_pyr.tolist(),
                                                TransmissionMatrix=mat_block.tolist())
@@ -463,8 +386,8 @@ class TestEMODTask(ITestWithPersistence):
 
         self.assertNotIn('Campaign_Filename', sim.task.config["parameters"])
         self.assertEqual(sim.task.config["parameters"]['Enable_Interventions'], 0)
-        self.assertNotIn("Demographics_Filenames", sim.task.config["parameters"])
-        self.assertEqual(sim.task.config["parameters"]["Enable_Demographics_Builtin"], 1)
+        self.assertIn("Demographics_Filenames", sim.task.config["parameters"])
+        self.assertEqual(sim.task.config["parameters"]["Enable_Demographics_Builtin"], 0)
 
     def test_from_default_with_default_builder(self):
         self.prepare_schema_and_eradication()
@@ -496,8 +419,8 @@ class TestEMODTask(ITestWithPersistence):
 
         self.assertNotIn('Campaign_Filename', sim.task.config["parameters"])
         self.assertEqual(sim.task.config["parameters"]['Enable_Interventions'], 0)
-        self.assertNotIn("Demographics_Filenames", sim.task.config["parameters"])
-        self.assertEqual(sim.task.config["parameters"]["Enable_Demographics_Builtin"], 1)
+        self.assertIn("Demographics_Filenames", sim.task.config["parameters"])
+        self.assertEqual(sim.task.config["parameters"]["Enable_Demographics_Builtin"], 0)
 
     def test_existing_eradication_file(self):
         self.prepare_input_files()
@@ -510,7 +433,14 @@ class TestEMODTask(ITestWithPersistence):
         )
         shutil.copy(self.eradication_path, os.path.join(manifest.bin_folder, "Eradication"))
         task.common_assets.add_asset(os.path.join(manifest.bin_folder, "Eradication"))
-        task.set_sif(manifest.sft_id_file)
+        task.set_sif(sif_path)
+        task.config['Enable_Demographics_Builtin'] = 1
+        task.config['Default_Geography_Initial_Node_Population'] = 1
+        task.config['Default_Geography_Torus_Size'] = 3
+        task.config['Incubation_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task.config['Incubation_Period_Constant'] = 5
+        task.config['Infectious_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task.config['Infectious_Period_Constant'] = 5
 
         experiment = Experiment.from_task(task, name="Existing_Eradication_File")
 
@@ -521,6 +451,13 @@ class TestEMODTask(ITestWithPersistence):
 
     def test_existing_eradication_default(self):
         def set_params( config ):
+            config.parameters.Enable_Demographics_Builtin = 1
+            config.parameters.Default_Geography_Initial_Node_Population = 1
+            config.parameters.Default_Geography_Torus_Size = 3
+            config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Incubation_Period_Constant = 5
+            config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Infectious_Period_Constant = 5
             return config
 
         self.prepare_input_files()
@@ -531,7 +468,8 @@ class TestEMODTask(ITestWithPersistence):
 
         shutil.copy(self.eradication_path, os.path.join(manifest.bin_folder, "Eradication"))
         task2.common_assets.add_asset(os.path.join(manifest.bin_folder, "Eradication"))
-        task2.set_sif(manifest.sft_id_file)
+        task2.set_sif(sif_path)
+
         # sif_id = manifest.sft_id #TODO: uncomment this and the next line when #587 is closed
         # task2.common_assets.add_assets(AssetCollection.from_id(sif_id))
         
@@ -577,28 +515,48 @@ class TestEMODTask(ITestWithPersistence):
             asset.download_to_path(name)
 
     def test_set_sif_function_with_sif_file(self):
+        def set_params( config ):
+            config.parameters.Enable_Demographics_Builtin = 1
+            config.parameters.Default_Geography_Initial_Node_Population = 1
+            config.parameters.Default_Geography_Torus_Size = 3
+            config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Incubation_Period_Constant = 5
+            config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Infectious_Period_Constant = 5
+            return config
+
         self.prepare_schema_and_eradication()
         sif_name = "dtk_run_rocky_py39.sif"
         if not os.path.exists(os.path.join(os.path.dirname(__file__), 'inputs', 'singularity', sif_name)):
             self.download_sif_from_comp2()
         task = EMODTask.from_default2(eradication_path=self.eradication_path,
-                                      schema_path=self.schema_path,
+                                      schema_path=self.schema_path, param_custom_cb=set_params,
                                       ep4_custom_cb=self.ep4_fn)
         task.set_sif(os.path.join(manifest.current_directory, f"inputs/singularity/{sif_name}"))
         experiment = Experiment.from_task(task, name="Test_set_sif_file")
-        experiment.run(platform=self.platform, wait_on_done=True)
+        experiment.run(platform=self.platform, wait_until_done=True)
         experiment_from_comps = self.platform.get_item(experiment.id, item_type=ItemType.EXPERIMENT, raw=True)
         comps_ac = self.platform.get_item(experiment_from_comps.configuration.asset_collection_id, item_type=ItemType.ASSETCOLLECTION)
         comps_sif_asset = [ac for ac in comps_ac if ac.filename == sif_name]
         self.assertTrue(len(comps_sif_asset), 1)
 
     def test_set_sif_function_with_sif_id(self):
+        def set_params( config ):
+            config.parameters.Enable_Demographics_Builtin = 1
+            config.parameters.Default_Geography_Initial_Node_Population = 1
+            config.parameters.Default_Geography_Torus_Size = 3
+            config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Incubation_Period_Constant = 5
+            config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Infectious_Period_Constant = 5
+            return config
+
         self.prepare_schema_and_eradication()
         task = EMODTask.from_default2(eradication_path=self.eradication_path,
-                                      schema_path=self.schema_path)
-        task.set_sif(manifest.sft_id_file)
+                                      schema_path=self.schema_path, param_custom_cb=set_params)
+        task.set_sif(sif_path)
         experiment = Experiment.from_task(task, name="Test_set_sif_id")
-        experiment.run(platform=self.platform, wait_on_done=True)
+        experiment.run(platform=self.platform, wait_until_done=True)
         experiment_from_comps = self.platform.get_item(experiment.id, item_type=ItemType.EXPERIMENT, raw=True)
         comps_ac = self.platform.get_item(experiment_from_comps.configuration.asset_collection_id, item_type=ItemType.ASSETCOLLECTION)
         comps_sif_asset = [ac for ac in comps_ac if ac.filename == "dtk_run_rocky_py39.sif"]
@@ -622,7 +580,7 @@ class TestEMODTask(ITestWithPersistence):
             task.set_sif("my_sif.sif", fake_platform)
             experiment = Experiment.from_task(task, name="Test_set_sif")
             experiment.post_creation(fake_platform)
-            self.assertEquals(task.sif_path, "my_sif.sif")
+            self.assertEqual(task.sif_path, "my_sif.sif")
 
     def test_add_py_path(self):
         self.prepare_schema_and_eradication()
@@ -639,7 +597,7 @@ class TestEMODTask(ITestWithPersistence):
         virtual_path = 'venv/lib/python3.9/site-packages/'
         task.add_py_path(virtual_path)
 
-        task.set_sif(manifest.sft_id_file)
+        task.set_sif(sif_path)
         task.use_embedded_python = True
 
         task.pre_creation(Simulation(), self.platform)

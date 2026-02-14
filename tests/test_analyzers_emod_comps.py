@@ -1,8 +1,8 @@
 import json
 import os
-
 import pandas as pd
 import pytest
+
 from idmtools.analysis.add_analyzer import AddAnalyzer
 from idmtools.analysis.analyze_manager import AnalyzeManager
 from idmtools.analysis.csv_analyzer import CSVAnalyzer
@@ -12,26 +12,51 @@ from idmtools.builders import SimulationBuilder
 from idmtools.core import ItemType
 from idmtools.core.platform_factory import Platform
 from idmtools.entities.experiment import Experiment
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
-from idmtools_test.utils.utils import del_file, del_folder
-
 from emodpy.analyzers.population_analyzer import PopulationAnalyzer
 from emodpy.analyzers.timeseries_analyzer import TimeseriesAnalyzer
 from emodpy.defaults import EMODSir
 from emodpy.emod_task import EMODTask
 
-current_directory = os.path.dirname(os.path.realpath(__file__))
-BIN_PATH = os.path.join(current_directory, "..", "examples", "inputs", "bin")
-INPUT_PATH = os.path.join(current_directory, "..", "examples", "serialization", "inputs")
+import emod_common.bootstrap as dtk
+import tests.manifest as mani
+
+
+def del_file(filename: str, dir: str = None):
+    if dir:
+        filepath = os.path.join(dir, filename)
+    else:
+        filepath = os.path.join(os.path.curdir, filename)
+
+    if os.path.exists(filepath):
+        print(filepath)
+        os.remove(filepath)
+
+
+def del_folder(path: str):
+    if os.path.exists(path):
+        shutil.rmtree(path)
 
 
 @pytest.mark.comps
 @pytest.mark.analysis
 @pytest.skip(reason="Need these tests to use the right constructor #593", allow_module_level=True)
-class TestAnalyzeManagerEmodComps(ITestWithPersistence):
+class TestAnalyzeManagerEmodComps():
+
+    @classmethod
+    def setUpClass(cls):
+        cls.platform = Platform('COMPS2')
+        cls.generate_experiment(cls)
+
+        mani.delete_existing_file(mani.eradication_path_linux)
+        mani.delete_existing_file(mani.schema_path_linux)
+        dtk.setup(mani.package_folder)
+
+    def setUp(self) -> None:
+        self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
+        print(self.case_name)
 
     def generate_experiment(self) -> Experiment:
-        base_task = EMODTask.from_default(default=EMODSir(), eradication_path=os.path.join(BIN_PATH, "Eradication.exe"))
+        base_task = EMODTask.from_default(default=EMODSir(), eradication_path=mani.eradication_path_linux)
         base_task.set_parameter("Enable_Immunity", 0)
         # User builder to create simulations
         num_sims = 3
@@ -45,15 +70,6 @@ class TestAnalyzeManagerEmodComps(ITestWithPersistence):
         self.platform.run_items(experiment)
         self.platform.wait_till_done(experiment)
         self.exp_id = experiment.uid
-
-    @classmethod
-    def setUpClass(cls):
-        cls.platform = Platform('COMPS2')
-        cls.generate_experiment(cls)
-
-    def setUp(self) -> None:
-        self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
-        print(self.case_name)
 
     @pytest.mark.long
     def test_add_analyzer(self):

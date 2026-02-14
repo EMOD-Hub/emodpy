@@ -1,14 +1,15 @@
 import json
 import os
-
 import pytest
+
 from idmtools.core.platform_factory import Platform
 from idmtools.entities.experiment import Experiment
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 
 from emodpy.defaults import EMODSir
 from emodpy.emod_task import EMODTask
-from examples.serialization.globals import BIN_PATH
+
+import emod_common.bootstrap as dtk
+import tests.manifest as mani
 
 
 def simple_vaccine(start_day, initial_effect, name="SimpleVaccine1"):
@@ -96,16 +97,20 @@ def immunity_blood_test(base_sensitivity, positive_threshold_acquisitionimmunity
 
 @pytest.mark.comps
 @pytest.skip(reason="Need these tests to use the right constructor #593", allow_module_level=True)
-class TestAddCampaignFromScript(ITestWithPersistence):
+class TestAddCampaignFromScript():
 
     def setUp(self) -> None:
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
         self.platform = Platform('COMPS2')
         print(self.case_name)
 
+        mani.delete_existing_file(mani.eradication_path_linux)
+        mani.delete_existing_file(mani.schema_path_linux)
+        dtk.setup(mani.package_folder)
+
     def test_add_campaign_from_script(self):
         # create EMODTask from default
-        task = EMODTask.from_default(default=EMODSir(), eradication_path=os.path.join(BIN_PATH, "Eradication.exe"))
+        task = EMODTask.from_default(default=EMODSir(), eradication_path=mani.eradication_path_linux)
 
         # Clear the default campaign
         task.campaign.clear()

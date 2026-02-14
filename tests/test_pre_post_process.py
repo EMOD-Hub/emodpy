@@ -3,6 +3,7 @@ import os
 import sys
 import shutil
 import pytest
+import unittest
 
 from emod_api.config import from_schema as fs
 
@@ -10,13 +11,13 @@ from idmtools.assets import Asset
 from idmtools.entities.experiment import Experiment
 from idmtools.entities.simulation import Simulation
 from idmtools.core.platform_factory import Platform
-from idmtools_test.utils.itest_with_persistence import ITestWithPersistence
 
 from emodpy.emod_task import EMODTask
 from emodpy.emod_task import add_ep4_from_path
 from tests import manifest
 
 eradication_path = manifest.eradication_path_linux
+sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
 
 sim_duration = 10  # in years
 num_seeds = 1
@@ -58,13 +59,13 @@ def delete_existing_file(file):
 
 
 @pytest.mark.emod
-class TestEmodPrePostProcess(ITestWithPersistence):
+class TestEmodPrePostProcess(unittest.TestCase):
     """
         To test dtk_pre_process and dtk_pre_process through EMODTask
     """
     @classmethod
     def setUpClass(cls) -> None:
-        cls.platform = Platform("SLURM")
+        cls.platform = Platform("SLURMStage")
 
     def setUp(self) -> None:
         self.case_name = os.path.basename(__file__) + "--" + self._testMethodName
@@ -72,8 +73,6 @@ class TestEmodPrePostProcess(ITestWithPersistence):
         self.schema_file = manifest.schema_file
         self.config_file = os.path.join(manifest.config_folder, 'config_for_ep4.json')
         delete_existing_file(self.config_file)
-        # generate schema
-        print("trying to use schema downloaded from bamboo in 'test_download_from_bamboo.py'")
 
         # generate default config file from schema
         fs.SchemaConfigBuilder(schema_name=self.schema_file, config_out=self.config_file)
@@ -86,12 +85,13 @@ class TestEmodPrePostProcess(ITestWithPersistence):
             Test ep4_custom_cb to add a pre_process script to EMODTask.from_default2()
         """
         def set_param_fn(config):
+            config.parameters.Enable_Demographics_Builtin = 1
+            config.parameters.Default_Geography_Initial_Node_Population = 1
+            config.parameters.Default_Geography_Torus_Size = 3
             config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
             config.parameters.Incubation_Period_Constant = 5
             config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
             config.parameters.Infectious_Period_Constant = 5
-            config.parameters.Base_Infectivity_Distribution = "CONSTANT_DISTRIBUTION"
-            config.parameters.Base_Infectivity_Constant = 1
             config.parameters.Simulation_Duration = 100
             return config
 
@@ -117,7 +117,7 @@ class TestEmodPrePostProcess(ITestWithPersistence):
         task = EMODTask.from_default2(config_path=self.config_file, eradication_path=eradication_path,
                                       campaign_builder=build_camp, schema_path=self.schema_file,
                                       param_custom_cb=set_param_fn, ep4_custom_cb=add_ep4_pre_2)
-        task.set_sif(manifest.sft_id_file)
+        task.set_sif(sif_path)
 
         # Create experiment from template
         experiment = Experiment.from_task(task, name=self.case_name)
@@ -136,12 +136,14 @@ class TestEmodPrePostProcess(ITestWithPersistence):
             Test ep4_custom_cb to add a post_process script to EMODTask.from_default2()
         """
         def set_param_fn(config):
+            config.parameters.Enable_Default_Reporting = 1
+            config.parameters.Enable_Demographics_Builtin = 1
+            config.parameters.Default_Geography_Initial_Node_Population = 1
+            config.parameters.Default_Geography_Torus_Size = 3
             config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
             config.parameters.Incubation_Period_Constant = 5
             config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
             config.parameters.Infectious_Period_Constant = 5
-            config.parameters.Base_Infectivity_Distribution = "CONSTANT_DISTRIBUTION"
-            config.parameters.Base_Infectivity_Constant = 1
             config.parameters.Simulation_Duration = 100
             return config
 
@@ -167,7 +169,7 @@ class TestEmodPrePostProcess(ITestWithPersistence):
         task = EMODTask.from_default2(config_path=self.config_file, eradication_path=eradication_path,
                                       campaign_builder=build_camp, schema_path=self.schema_file,
                                       param_custom_cb=set_param_fn, ep4_custom_cb=add_ep4_post)
-        task.set_sif(manifest.sft_id_file)
+        task.set_sif(sif_path)
         # Create experiment from template
         experiment = Experiment.from_task(task, name=self.case_name)
 
@@ -187,7 +189,7 @@ class TestEmodPrePostProcess(ITestWithPersistence):
         pyscript_path = os.path.join(manifest.current_directory, 'inputs', 'ep4')
 
         add_ep4_from_path(task, pyscript_path)
-        task.set_sif(manifest.sft_id_file)
+        task.set_sif(sif_path)
         task.use_embedded_python = True
 
         task.pre_creation(Simulation(), self.platform)
@@ -224,7 +226,7 @@ class TestEmodPrePostProcess(ITestWithPersistence):
 
         add_ep4_from_path(task, tmp_path)
         task.use_embedded_python = True
-        task.set_sif(manifest.sft_id_file)
+        task.set_sif(sif_path)
 
         task.pre_creation(Simulation(), self.platform)
         task.gather_common_assets()
@@ -254,7 +256,7 @@ class TestEmodPrePostProcess(ITestWithPersistence):
         task.gather_common_assets()
 
         experiment = Experiment.from_task(task, name=self.case_name)
-        task.set_sif(manifest.sft_id_file)
+        task.set_sif(sif_path)
         task.gather_common_assets()
 
         self.assertEqual(task.eradication_path, eradication_path)
@@ -270,7 +272,15 @@ class TestEmodPrePostProcess(ITestWithPersistence):
             Test ep4_path to add pre/in/post process scripts to EMODTask.from_files()
         """
         task = EMODTask.from_files(config_path=self.config_file, eradication_path=eradication_path, ep4_path=manifest.ep4_path)
-        task.set_sif(manifest.sft_id_file)
+        task.set_sif(sif_path)
+        task.config['Enable_Demographics_Builtin'] = 1
+        task.config['Default_Geography_Initial_Node_Population'] = 1
+        task.config['Default_Geography_Torus_Size'] = 3
+        task.config['Incubation_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task.config['Incubation_Period_Constant'] = 5
+        task.config['Infectious_Period_Distribution'] = "CONSTANT_DISTRIBUTION"
+        task.config['Infectious_Period_Constant'] = 5
+
         # Create experiment from template
         experiment = Experiment.from_task(task, name=self.case_name)
 
@@ -284,8 +294,3 @@ class TestEmodPrePostProcess(ITestWithPersistence):
             self.assertIn("dtk_in_process.py called on timestep", stdout)
             self.assertIn("printing from dtk_post_process.py", stdout)
             self.assertIn("printing from dtk_pre_process.py", stdout)
-
-
-if __name__ == "__main__":
-    import unittest
-    unittest.main()

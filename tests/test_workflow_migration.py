@@ -1,7 +1,8 @@
-from os import listdir
+import os
 import pathlib
 
 import pytest
+import unittest
 import shutil
 import json
 
@@ -24,7 +25,7 @@ import emod_api.demographics.Demographics as Demographics
 import tempfile
 from tests import manifest
 
-sif_path = manifest.sft_id_file
+sif_path = os.path.join(manifest.current_directory, "stage_sif.id")
 """
 Tests Migration object from emod_api and makes sure it's consumable by Eradication and
 checks that the correct files are produced when setting custom:
@@ -33,8 +34,6 @@ checks that the correct files are produced when setting custom:
 3. Gravity model:
 4. Synth pop
 """
-
-current_directory = pathlib.Path.cwd()
 
 MIGRATION_TYPE_ENUMS = {1: "local",
                         2: "air",
@@ -51,6 +50,8 @@ MIGRATION_PATTERN = {
 
 def set_param_fn(config, duration, migration_pattern_parameters=None):
     config.parameters.Simulation_Duration = duration
+    config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+    config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
     if migration_pattern_parameters:
         config.parameters.Migration_Pattern = migration_pattern_parameters[0]
         if migration_pattern_parameters[0] == MIGRATION_PATTERN[2]:
@@ -68,13 +69,13 @@ def get_output_filenames(migration_type, filenames):
 
 
 @pytest.mark.emod
-class TestMigration():
+class TestMigration(unittest.TestCase):
     @classmethod
     def define_test_environment(cls):
         cls.eradication_path = manifest.eradication_path_linux
         cls.schema_path = manifest.schema_path_linux
         cls.config_file = pathlib.Path(manifest.config_folder, "generic_config_for_migration_workflow_l.json")
-        cls.comps_platform = 'SLURM'
+        cls.comps_platform = 'SLURMStage'
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -283,6 +284,8 @@ class TestMigration():
 
         def set_param_fn(config):
             # Population & agent size
+            config.parameters.Incubation_Period_Distribution = "CONSTANT_DISTRIBUTION"
+            config.parameters.Infectious_Period_Distribution = "CONSTANT_DISTRIBUTION"
             config.parameters.x_Base_Population = 0.1
             config.parameters.Simulation_Duration = 365
             config.parameters.Minimum_End_Time = 90
@@ -310,7 +313,7 @@ class TestMigration():
             task = EMODTask.from_default2(eradication_path=self.eradication_path,
                                           schema_path=manifest.schema_path_linux,
                                           config_path=self.config_file,
-                                          param_custom_cb=None, demog_builder=None, ep4_custom_cb=None)
+                                          param_custom_cb=set_param_fn, demog_builder=None, ep4_custom_cb=None)
             if self.is_singularity:
                 task.set_sif(sif_path)
             builder = SimulationBuilder()
@@ -333,12 +336,12 @@ class TestMigration():
                 task.get_file_from_comps(exp_id=experiment.uid, filename=f)
 
             self.assertTrue(experiment_directory_path.is_dir())
-            experiment_directory_contents = listdir(experiment_directory_path)
+            experiment_directory_contents = os.listdir(experiment_directory_path)
             self.assertEqual(len(experiment_directory_contents), len(experiment.simulations))
 
             sim_directory_path = pathlib.Path(str(experiment.uid), str(experiment.simulations[0].uid))
             self.assertTrue(sim_directory_path.is_dir())
-            sim_directory_contents = listdir(sim_directory_path)
+            sim_directory_contents = os.listdir(sim_directory_path)
             self.assertEqual(len(sim_directory_contents), len(files_to_fetch))
             for f in files_to_fetch:
                 self.assertIn(f, sim_directory_contents)
@@ -540,8 +543,3 @@ class TestMigration():
         self.platform.run_items(experiment)
         self.platform.wait_till_done(experiment)
         self.assertTrue(experiment.succeeded, "expected experiment succeeded")
-
-
-if __name__ == '__main__':
-    import unittest
-    unittest.main()

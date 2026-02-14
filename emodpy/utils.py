@@ -1,12 +1,5 @@
-import hashlib
-import os
-import stat
-from pathlib import Path
-from sys import exit
-from enum import Enum, Flag, auto
-from getpass import getpass
+from enum import Enum
 from logging import getLogger
-import requests
 
 
 logger = getLogger(__name__)

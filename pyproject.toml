@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "emodpy"
-version = "3.1.0"
+version = "3.1.1"
 description = "Core tools for modeling using EMOD"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -68,7 +68,7 @@ emodpy = "emodpy_cli.cli.schema:emodpy"
 find = {include = ["emodpy*"]}
 
 [tool.bumpversion]
-current_version = "3.1.0"
+current_version = "3.1.1"
 commit = true
 
 [[tool.bumpversion.files]]

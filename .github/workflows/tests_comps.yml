@@ -41,7 +41,7 @@ jobs:
           python -m pip install .[test]
       - name: Login to COMPS2
         run: |
-          python .github/scripts/create_auth_token_args.py --username ${{ secrets.COMPS_USER }} --password ${{ secrets.COMPS_PASSWORD }}
+          python .github/python/create_auth_token_args.py --username ${{ secrets.COMPS_USER }} --password ${{ secrets.COMPS_PASSWORD }}
         env:
           COMPS_USER: ${{ secrets.COMPS_USER }}
           COMPS_PASSWORD: ${{ secrets.COMPS_PASSWORD }}

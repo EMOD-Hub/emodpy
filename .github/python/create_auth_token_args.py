@@ -2,8 +2,6 @@ import argparse
 from COMPS import Client
 from COMPS.CredentialPrompt import CredentialPrompt
 
-__comps_client_version = 10
-
 
 class StaticCredentialPrompt(CredentialPrompt):
     def __init__(self, comps_url, username, password):
@@ -36,5 +34,4 @@ if __name__ == '__main__':
 
     compshost = args.comps_url
 
-    Client.login(compshost, StaticCredentialPrompt(comps_url=args.comps_url, username=args.username,
-                                                   password=args.password))
+    Client.login(compshost, StaticCredentialPrompt(comps_url=args.comps_url, username=args.username, password=args.password))

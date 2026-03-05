@@ -1,17 +1,11 @@
-import json
-import unittest
-from pathlib import Path
-import sys
-
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
-import manifest
-import helpers
-import os
-from COMPS.Client import logger as comps_logger
-comps_logger.disabled = True
 import pytest
-import time
+import json
+import os
+import unittest
+
+from tests import manifest
+from tests import helpers
+
 from idmtools.core.platform_factory import Platform
 from idmtools.entities.experiment import Experiment
 from emodpy.emod_task import EMODTask, Reporters, logger as idmtools_logger
@@ -36,6 +30,9 @@ from emodpy.reporters.common import (ReportFilter,
                                      ReportInfectionDuration,
                                      DemographicsReport,
                                      PropertyReport)
+
+from COMPS.Client import logger as comps_logger
+comps_logger.disabled = True
 
 
 class TestReportersCommon(unittest.TestCase):
@@ -110,20 +107,20 @@ class TestReportersCommon(unittest.TestCase):
             return reporters
 
         task = self.create_final_task(reporters=build_reports)
-        assert(task.config.parameters.Report_Event_Recorder==1)
-        assert(task.config.parameters.Custom_Reports_Filename=="")
-        assert(task.config.parameters.Report_Event_Recorder_Individual_Properties==self.individual_properties)
-        assert(task.config.parameters.Report_Event_Recorder_PropertyChange_IP_Key_Of_Interest==self.random_string1)
-        assert(task.config.parameters.Report_Event_Recorder_Events==self.event_list)
-        assert(task.config.parameters.Report_Event_Recorder_Ignore_Events_In_List==0)
-        assert(task.config.parameters.Report_Event_Recorder_Start_Day==0)
-        assert(task.config.parameters.Report_Event_Recorder_End_Day==MAX_FLOAT)
-        assert(task.config.parameters.Report_Event_Recorder_Node_IDs_Of_Interest==[])
-        assert(task.config.parameters.Report_Event_Recorder_Must_Have_IP_Key_Value=="")
-        assert(task.config.parameters.Report_Event_Recorder_Must_Have_Intervention=="")
-        assert(getattr(task.config, "Report_Event_Recorder_Filename_Suffix", None) is None)
-        assert(task.config.parameters.Report_Event_Recorder_Min_Age_Years==0)
-        assert(task.config.parameters.Report_Event_Recorder_Max_Age_Years==MAX_AGE_YEARS_EMOD)
+        assert (task.config.parameters.Report_Event_Recorder == 1)
+        assert (task.config.parameters.Custom_Reports_Filename == "")
+        assert (task.config.parameters.Report_Event_Recorder_Individual_Properties == self.individual_properties)
+        assert (task.config.parameters.Report_Event_Recorder_PropertyChange_IP_Key_Of_Interest == self.random_string1)
+        assert (task.config.parameters.Report_Event_Recorder_Events == self.event_list)
+        assert (task.config.parameters.Report_Event_Recorder_Ignore_Events_In_List == 0)
+        assert (task.config.parameters.Report_Event_Recorder_Start_Day == 0)
+        assert (task.config.parameters.Report_Event_Recorder_End_Day == MAX_FLOAT)
+        assert (task.config.parameters.Report_Event_Recorder_Node_IDs_Of_Interest == [])
+        assert (task.config.parameters.Report_Event_Recorder_Must_Have_IP_Key_Value == "")
+        assert (task.config.parameters.Report_Event_Recorder_Must_Have_Intervention == "")
+        assert (getattr(task.config, "Report_Event_Recorder_Filename_Suffix", None) is None)
+        assert (task.config.parameters.Report_Event_Recorder_Min_Age_Years == 0)
+        assert (task.config.parameters.Report_Event_Recorder_Max_Age_Years == MAX_AGE_YEARS_EMOD)
 
     @pytest.mark.unit
     def test_report_event_recorder_no_filter_custom(self):
@@ -135,10 +132,10 @@ class TestReportersCommon(unittest.TestCase):
             return reporters
 
         task = self.create_final_task(reporters=build_reports)
-        assert(task.config.parameters.Report_Event_Recorder==1)
-        assert(task.config.parameters.Custom_Reports_Filename=="")
-        assert(task.config.parameters.Report_Event_Recorder_Individual_Properties==[])
-        assert(task.config.parameters.Report_Event_Recorder_PropertyChange_IP_Key_Of_Interest=="")
+        assert (task.config.parameters.Report_Event_Recorder == 1)
+        assert (task.config.parameters.Custom_Reports_Filename == "")
+        assert (task.config.parameters.Report_Event_Recorder_Individual_Properties == [])
+        assert (task.config.parameters.Report_Event_Recorder_PropertyChange_IP_Key_Of_Interest == "")
 
     @pytest.mark.unit
     def test_report_event_recorder_filter(self):  # also tests ReportFilter for config-based reports
@@ -158,18 +155,18 @@ class TestReportersCommon(unittest.TestCase):
 
         task = self.create_final_task(build_reports)
         # verifying that the settings made it to the config
-        assert(task.config.parameters.Report_Event_Recorder_Individual_Properties==self.individual_properties)
-        assert(task.config.parameters.Report_Event_Recorder_PropertyChange_IP_Key_Of_Interest==self.property_change_ip_to_record)
-        assert(task.config.parameters.Report_Event_Recorder_Events==self.event_list)
-        assert(task.config.parameters.Report_Event_Recorder_Ignore_Events_In_List==0)
-        assert(task.config.parameters.Report_Event_Recorder_Start_Day==self.start_day)
-        assert(task.config.parameters.Report_Event_Recorder_End_Day==self.end_day)
-        assert(task.config.parameters.Report_Event_Recorder_Node_IDs_Of_Interest==self.node_ids)
-        assert(task.config.parameters.Report_Event_Recorder_Must_Have_IP_Key_Value==self.must_have_ip_key_value)
-        assert(task.config.parameters.Report_Event_Recorder_Must_Have_Intervention==self.must_have_intervention)
-        assert(getattr(task.config, "Report_Event_Recorder_Filename_Suffix", None) is None)
-        assert(task.config.parameters.Report_Event_Recorder_Min_Age_Years==self.min_age_years)
-        assert(task.config.parameters.Report_Event_Recorder_Max_Age_Years==self.max_age_years)
+        assert (task.config.parameters.Report_Event_Recorder_Individual_Properties == self.individual_properties)
+        assert (task.config.parameters.Report_Event_Recorder_PropertyChange_IP_Key_Of_Interest == self.property_change_ip_to_record)
+        assert (task.config.parameters.Report_Event_Recorder_Events == self.event_list)
+        assert (task.config.parameters.Report_Event_Recorder_Ignore_Events_In_List == 0)
+        assert (task.config.parameters.Report_Event_Recorder_Start_Day == self.start_day)
+        assert (task.config.parameters.Report_Event_Recorder_End_Day == self.end_day)
+        assert (task.config.parameters.Report_Event_Recorder_Node_IDs_Of_Interest == self.node_ids)
+        assert (task.config.parameters.Report_Event_Recorder_Must_Have_IP_Key_Value == self.must_have_ip_key_value)
+        assert (task.config.parameters.Report_Event_Recorder_Must_Have_Intervention == self.must_have_intervention)
+        assert (getattr(task.config, "Report_Event_Recorder_Filename_Suffix", None) is None)
+        assert (task.config.parameters.Report_Event_Recorder_Min_Age_Years == self.min_age_years)
+        assert (task.config.parameters.Report_Event_Recorder_Max_Age_Years == self.max_age_years)
 
     @pytest.mark.unit
     def test_report_event_recorder_filter2(self):  # also tests ReportFilter for config-based reports
@@ -189,116 +186,116 @@ class TestReportersCommon(unittest.TestCase):
 
         task = self.create_final_task(build_reports)
         # verifying that the settings made it to the config
-        assert(task.config.parameters.Report_Event_Recorder_Individual_Properties==self.individual_properties)
-        assert(task.config.parameters.Report_Event_Recorder_PropertyChange_IP_Key_Of_Interest==self.property_change_ip_to_record)
-        assert(task.config.parameters.Report_Event_Recorder_Events==self.event_list)
-        assert(task.config.parameters.Report_Event_Recorder_Ignore_Events_In_List==0)
-        assert(task.config.parameters.Report_Event_Recorder_Start_Day==self.start_day)
-        assert(task.config.parameters.Report_Event_Recorder_End_Day==self.end_day)
-        assert(task.config.parameters.Report_Event_Recorder_Node_IDs_Of_Interest==self.node_ids)
-        assert(task.config.parameters.Report_Event_Recorder_Must_Have_IP_Key_Value=="")
-        assert(task.config.parameters.Report_Event_Recorder_Must_Have_Intervention=="")
-        assert(getattr(task.config, "Report_Event_Recorder_Filename_Suffix", None) is None)
-        assert(task.config.parameters.Report_Event_Recorder_Min_Age_Years==self.min_age_years)
-        assert(task.config.parameters.Report_Event_Recorder_Max_Age_Years==self.max_age_years)
+        assert (task.config.parameters.Report_Event_Recorder_Individual_Properties == self.individual_properties)
+        assert (task.config.parameters.Report_Event_Recorder_PropertyChange_IP_Key_Of_Interest == self.property_change_ip_to_record)
+        assert (task.config.parameters.Report_Event_Recorder_Events == self.event_list)
+        assert (task.config.parameters.Report_Event_Recorder_Ignore_Events_In_List == 0)
+        assert (task.config.parameters.Report_Event_Recorder_Start_Day == self.start_day)
+        assert (task.config.parameters.Report_Event_Recorder_End_Day == self.end_day)
+        assert (task.config.parameters.Report_Event_Recorder_Node_IDs_Of_Interest == self.node_ids)
+        assert (task.config.parameters.Report_Event_Recorder_Must_Have_IP_Key_Value == "")
+        assert (task.config.parameters.Report_Event_Recorder_Must_Have_Intervention == "")
+        assert (getattr(task.config, "Report_Event_Recorder_Filename_Suffix", None) is None)
+        assert (task.config.parameters.Report_Event_Recorder_Min_Age_Years == self.min_age_years)
+        assert (task.config.parameters.Report_Event_Recorder_Max_Age_Years == self.max_age_years)
 
     @pytest.mark.unit
     def test_report_event_recorder_error_checking(self):
         with pytest.raises(ValueError) as e_info:
             ReportEventRecorder(self.reporter, event_list=[])
-        assert("event_list must be a list of strings" in str(e_info))
+        assert ("event_list must be a list of strings" in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportEventRecorder(self.reporter, event_list=[""])
-        assert("event_list must be a list of non-empty strings" in str(e_info))
+        assert ("event_list must be a list of non-empty strings" in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportEventRecorder(self.reporter, event_list=self.event_list,
                                 individual_properties=["test", ""])
-        assert("individual_properties must be a list of non-empty strings" in str(e_info))
+        assert ("individual_properties must be a list of non-empty strings" in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportEventRecorder(self.reporter, event_list=self.event_list,
                                 individual_properties=self.individual_properties,
                                 property_change_ip_to_record=self.property_change_ip_to_record,
                                 report_filter=ReportFilter(start_year=self.start_year))
-        assert("start_year is not a valid parameter for Report_Event_Recorder" in str(e_info))
+        assert ("start_year is not a valid parameter for Report_Event_Recorder" in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportEventRecorder(self.reporter, event_list=self.event_list,
                                 individual_properties=self.individual_properties,
                                 property_change_ip_to_record=self.property_change_ip_to_record,
                                 report_filter=ReportFilter(end_year=self.end_year))
-        assert("end_year is not a valid parameter for Report_Event_Recorder" in str(e_info))
+        assert ("end_year is not a valid parameter for Report_Event_Recorder" in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportEventRecorder(self.reporter, event_list=self.event_list,
                                 individual_properties=self.individual_properties,
                                 property_change_ip_to_record=self.property_change_ip_to_record,
                                 report_filter=ReportFilter(filename_suffix=self.random_string5))
-        assert("filename_suffix is not a valid parameter for Report_Event_Recorder" in str(e_info))
+        assert ("filename_suffix is not a valid parameter for Report_Event_Recorder" in str(e_info))
 
     @pytest.mark.unit
     def test_report_filter_error_checking(self):
         with pytest.raises(ValueError) as e_info:
             ReportFilter(start_day=self.end_day, end_day=self.start_day)
-        assert(f"start_day = {self.end_day} must less than end_day = {self.start_day}." in str(e_info))
+        assert (f"start_day = {self.end_day} must less than end_day = {self.start_day}." in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportFilter(start_year=self.end_year, end_year=self.start_year)
-        assert(f"start_year = {self.end_year} must less than end_year = {self.start_year}." in str(e_info))
+        assert (f"start_year = {self.end_year} must less than end_year = {self.start_year}." in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportFilter(min_age_years=self.max_age_years, max_age_years=self.min_age_years)
-        assert(f"min_age_years = {self.max_age_years} must less than max_age_years = {self.min_age_years}." in str(e_info))
+        assert (f"min_age_years = {self.max_age_years} must less than max_age_years = {self.min_age_years}." in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportFilter(start_day=-4)
-        assert("start_day must be a float greater than or equal to 0, got value = -4." in str(e_info))
+        assert ("start_day must be a float greater than or equal to 0, got value = -4." in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportFilter(end_day=-4)
-        assert("end_day must be a float greater than or equal to 0, got value = -4." in str(e_info))
+        assert ("end_day must be a float greater than or equal to 0, got value = -4." in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportFilter(start_year=1200.5)
-        assert("start_year must be a float greater than or equal to 1900, got value = 1200.5." in str(e_info))
+        assert ("start_year must be a float greater than or equal to 1900, got value = 1200.5." in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportFilter(start_year=2500)
-        assert("start_year must be a float less than or equal to 2200, got value = 2500." in str(e_info))
+        assert ("start_year must be a float less than or equal to 2200, got value = 2500." in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportFilter(end_year=1200)
-        assert("end_year must be a float greater than or equal to 1900, got value = 1200." in str(e_info))
+        assert ("end_year must be a float greater than or equal to 1900, got value = 1200." in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportFilter(end_year=2202)
-        assert("end_year must be a float less than or equal to 2200, got value = 2202." in str(e_info))
+        assert ("end_year must be a float less than or equal to 2200, got value = 2202." in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportFilter(node_ids=[1200, 123.5])
-        assert("node_ids must be a list integers > 1 and 123.5 is not, but is float" in str(e_info))
+        assert ("node_ids must be a list integers > 1 and 123.5 is not, but is float" in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportFilter(node_ids=[1200, 0])
-        assert("node_ids must be a list of positive integers, but it contains 0." in str(e_info))
+        assert ("node_ids must be a list of positive integers, but it contains 0." in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportFilter(min_age_years=-1)
-        assert("min_age_years must be a float greater than or equal to 0, got value = -1." in str(e_info))
+        assert ("min_age_years must be a float greater than or equal to 0, got value = -1." in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportFilter(min_age_years=14687)
-        assert("min_age_years must be a float less than or equal to 1000, got value = 14687" in str(e_info))
+        assert ("min_age_years must be a float less than or equal to 1000, got value = 14687" in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportFilter(max_age_years=-2)
-        assert("max_age_years must be a float greater than or equal to 0, got value = -2." in str(e_info))
+        assert ("max_age_years must be a float greater than or equal to 0, got value = -2." in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportFilter(max_age_years=2039)
-        assert("max_age_years must be a float less than or equal to 1000, got value = 2039." in str(e_info))
+        assert ("max_age_years must be a float less than or equal to 1000, got value = 2039." in str(e_info))
 
     @pytest.mark.unit
     def test_multiple_config_reports(self):
@@ -322,23 +319,23 @@ class TestReportersCommon(unittest.TestCase):
 
         task = self.create_final_task(build_reports)
         # verifying that the settings made it to the config
-        assert(task.config.parameters.Report_Event_Recorder_Individual_Properties==self.individual_properties)
-        assert(task.config.parameters.Report_Event_Recorder_PropertyChange_IP_Key_Of_Interest==self.property_change_ip_to_record)
-        assert(task.config.parameters.Report_Event_Recorder_Events==self.event_list)
-        assert(task.config.parameters.Report_Event_Recorder_Ignore_Events_In_List==0)
-        assert(task.config.parameters.Report_Event_Recorder_Start_Day==self.start_day)
-        assert(task.config.parameters.Report_Event_Recorder_End_Day==self.end_day)
-        assert(task.config.parameters.Report_Event_Recorder_Node_IDs_Of_Interest==self.node_ids)
-        assert(task.config.parameters.Report_Event_Recorder_Must_Have_IP_Key_Value==self.must_have_ip_key_value)
-        assert(task.config.parameters.Report_Event_Recorder_Must_Have_Intervention==self.must_have_intervention)
-        assert(getattr(task.config, "Report_Event_Recorder_Filename_Suffix", None) is None)
-        assert(task.config.parameters.Report_Event_Recorder_Min_Age_Years==self.min_age_years)
-        assert(task.config.parameters.Report_Event_Recorder_Max_Age_Years==self.max_age_years)
-        assert(task.config.parameters.Custom_Reports_Filename=="")
-        assert(task.config.parameters.Report_Node_Event_Recorder_Events==self.event_list)
-        assert(task.config.parameters.Report_Node_Event_Recorder_Ignore_Events_In_List==0)
-        assert(task.config.parameters.Report_Node_Event_Recorder_Node_Properties==[self.random_string1, self.random_string2])
-        assert(task.config.parameters.Report_Node_Event_Recorder_Stats_By_IPs==self.individual_properties)
+        assert (task.config.parameters.Report_Event_Recorder_Individual_Properties == self.individual_properties)
+        assert (task.config.parameters.Report_Event_Recorder_PropertyChange_IP_Key_Of_Interest == self.property_change_ip_to_record)
+        assert (task.config.parameters.Report_Event_Recorder_Events == self.event_list)
+        assert (task.config.parameters.Report_Event_Recorder_Ignore_Events_In_List == 0)
+        assert (task.config.parameters.Report_Event_Recorder_Start_Day == self.start_day)
+        assert (task.config.parameters.Report_Event_Recorder_End_Day == self.end_day)
+        assert (task.config.parameters.Report_Event_Recorder_Node_IDs_Of_Interest == self.node_ids)
+        assert (task.config.parameters.Report_Event_Recorder_Must_Have_IP_Key_Value == self.must_have_ip_key_value)
+        assert (task.config.parameters.Report_Event_Recorder_Must_Have_Intervention == self.must_have_intervention)
+        assert (getattr(task.config, "Report_Event_Recorder_Filename_Suffix", None) is None)
+        assert (task.config.parameters.Report_Event_Recorder_Min_Age_Years == self.min_age_years)
+        assert (task.config.parameters.Report_Event_Recorder_Max_Age_Years == self.max_age_years)
+        assert (task.config.parameters.Custom_Reports_Filename == "")
+        assert (task.config.parameters.Report_Node_Event_Recorder_Events == self.event_list)
+        assert (task.config.parameters.Report_Node_Event_Recorder_Ignore_Events_In_List == 0)
+        assert (task.config.parameters.Report_Node_Event_Recorder_Node_Properties == [self.random_string1, self.random_string2])
+        assert (task.config.parameters.Report_Node_Event_Recorder_Stats_By_IPs == self.individual_properties)
 
     @pytest.mark.unit
     def test_report_node_event_recorder_custom(self):
@@ -350,12 +347,12 @@ class TestReportersCommon(unittest.TestCase):
             return reporters
 
         task = self.create_final_task(build_reports)
-        assert(task.config.parameters.Custom_Reports_Filename=="")
-        assert(task.config.parameters.Report_Node_Event_Recorder==1)
-        assert(task.config.parameters.Report_Node_Event_Recorder_Events==self.event_list)
-        assert(task.config.parameters.Report_Node_Event_Recorder_Ignore_Events_In_List==0)
-        assert(task.config.parameters.Report_Node_Event_Recorder_Node_Properties==[self.random_string1, self.random_string2])
-        assert(task.config.parameters.Report_Node_Event_Recorder_Stats_By_IPs==self.individual_properties)
+        assert (task.config.parameters.Custom_Reports_Filename == "")
+        assert (task.config.parameters.Report_Node_Event_Recorder == 1)
+        assert (task.config.parameters.Report_Node_Event_Recorder_Events == self.event_list)
+        assert (task.config.parameters.Report_Node_Event_Recorder_Ignore_Events_In_List == 0)
+        assert (task.config.parameters.Report_Node_Event_Recorder_Node_Properties == [self.random_string1, self.random_string2])
+        assert (task.config.parameters.Report_Node_Event_Recorder_Stats_By_IPs == self.individual_properties)
 
     @pytest.mark.unit
     def test_report_node_event_recorder_custom2(self):
@@ -367,9 +364,9 @@ class TestReportersCommon(unittest.TestCase):
             return reporters
 
         task = self.create_final_task(build_reports)
-        assert(task.config.parameters.Custom_Reports_Filename=="")
-        assert(task.config.parameters.Report_Node_Event_Recorder_Node_Properties==[])
-        assert(task.config.parameters.Report_Node_Event_Recorder_Stats_By_IPs==[])
+        assert (task.config.parameters.Custom_Reports_Filename == "")
+        assert (task.config.parameters.Report_Node_Event_Recorder_Node_Properties == [])
+        assert (task.config.parameters.Report_Node_Event_Recorder_Stats_By_IPs == [])
 
     @pytest.mark.unit
     def test_report_node_event_recorder_default(self):
@@ -379,31 +376,31 @@ class TestReportersCommon(unittest.TestCase):
             return reporters
 
         task = self.create_final_task(build_reports)
-        assert(task.config.parameters.Custom_Reports_Filename=="")
-        assert(task.config.parameters.Report_Node_Event_Recorder_Events==self.event_list)
-        assert(task.config.parameters.Report_Node_Event_Recorder_Ignore_Events_In_List==0)
-        assert(task.config.parameters.Report_Node_Event_Recorder_Node_Properties==[])
-        assert(task.config.parameters.Report_Node_Event_Recorder_Stats_By_IPs==[])
+        assert (task.config.parameters.Custom_Reports_Filename == "")
+        assert (task.config.parameters.Report_Node_Event_Recorder_Events == self.event_list)
+        assert (task.config.parameters.Report_Node_Event_Recorder_Ignore_Events_In_List == 0)
+        assert (task.config.parameters.Report_Node_Event_Recorder_Node_Properties == [])
+        assert (task.config.parameters.Report_Node_Event_Recorder_Stats_By_IPs == [])
 
     @pytest.mark.unit
     def test_report_node_event_recorder_error_checking(self):
         with pytest.raises(ValueError) as e_info:
             ReportNodeEventRecorder(reporters_object=self.reporter, event_list=[])
-        assert("event_list must be a list of strings" in str(e_info))
+        assert ("event_list must be a list of strings" in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportNodeEventRecorder(reporters_object=self.reporter, event_list=[""])
-        assert("event_list must be a list of non-empty strings" in str(e_info))
+        assert ("event_list must be a list of non-empty strings" in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportNodeEventRecorder(reporters_object=self.reporter, event_list=self.event_list,
                                     node_properties_to_record=[""])
-        assert("node_properties_to_record must be a list of non-empty strings" in str(e_info))
+        assert ("node_properties_to_record must be a list of non-empty strings" in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportNodeEventRecorder(reporters_object=self.reporter, event_list=self.event_list,
                                     stats_by_ips=[""])
-        assert("stats_by_ips must be a list of non-empty strings" in str(e_info))
+        assert ("stats_by_ips must be a list of non-empty strings" in str(e_info))
 
     @pytest.mark.unit
     def test_report_coordinator_event_recorder_default(self):
@@ -413,19 +410,19 @@ class TestReportersCommon(unittest.TestCase):
             return reporters
 
         task = self.create_final_task(build_reports)
-        assert(task.config.parameters.Report_Coordinator_Event_Recorder==1)
-        assert(task.config.parameters.Report_Coordinator_Event_Recorder_Events==self.event_list)
-        assert(task.config.parameters.Report_Coordinator_Event_Recorder_Ignore_Events_In_List==0)
+        assert (task.config.parameters.Report_Coordinator_Event_Recorder == 1)
+        assert (task.config.parameters.Report_Coordinator_Event_Recorder_Events == self.event_list)
+        assert (task.config.parameters.Report_Coordinator_Event_Recorder_Ignore_Events_In_List == 0)
 
     @pytest.mark.unit
     def test_report_coordinator_event_recorder_error_checking(self):
         with pytest.raises(ValueError) as e_info:
             ReportCoordinatorEventRecorder(reporters_object=self.reporter, event_list=[])
-        assert("event_list must be a list of strings" in str(e_info))
+        assert ("event_list must be a list of strings" in str(e_info))
 
         with pytest.raises(ValueError) as e_info:
             ReportCoordinatorEventRecorder(reporters_object=self.reporter, event_list=[""])
-        assert("event_list must be a list of non-empty strings" in str(e_info))
+        assert ("event_list must be a list of non-empty strings" in str(e_info))
 
     @pytest.mark.unit
     def test_report_surveillance_event_recorder_custom(self):
@@ -436,9 +433,9 @@ class TestReportersCommon(unittest.TestCase):
             return reporters
 
         task = self.create_final_task(build_reports)
-        assert(task.config.parameters.Report_Surveillance_Event_Recorder_Events==self.event_list)
-        assert(task.config.parameters.Report_Surveillance_Event_Recorder_Ignore_Events_In_List==0)
-        assert(task.config.parameters.Report_Surveillance_Event_Recorder_Stats_By_IPs==self.individual_properties)
+        assert (task.config.parameters.Report_Surveillance_Event_Recorder_Events == self.event_list)
+        assert (task.config.parameters.Report_Surveillance_Event_Recorder_Ignore_Events_In_List == 0)
+        assert (task.config.parameters.Report_Surveillance_Event_Recorder_Stats_By_IPs == self.individual_properties)
 
     @pytest.mark.unit
     def test_report_surveillance_event_recorder_default(self):
@@ -448,30 +445,27 @@ class TestReportersCommon(unittest.TestCase):
             return reporters
 
         task = self.create_final_task(build_reports)
-        self.assertEqual(task.config.parameters.Custom_Reports_Filename, "")
-        self.assertEqual(task.config.parameters.Report_Surveillance_Event_Recorder, 1)
-        self.assertEqual(task.config.parameters.Report_Surveillance_Event_Recorder_Events, self.event_list)
-        self.assertEqual(task.config.parameters.Report_Surveillance_Event_Recorder_Ignore_Events_In_List, 0)
-        self.assertEqual(task.config.parameters.Report_Surveillance_Event_Recorder_Stats_By_IPs, [])
+        assert (task.config.parameters.Custom_Reports_Filename == "")
+        assert (task.config.parameters.Report_Surveillance_Event_Recorder == 1)
+        assert (task.config.parameters.Report_Surveillance_Event_Recorder_Events == self.event_list)
+        assert (task.config.parameters.Report_Surveillance_Event_Recorder_Ignore_Events_In_List == 0)
+        assert (task.config.parameters.Report_Surveillance_Event_Recorder_Stats_By_IPs == [])
 
     @pytest.mark.unit
     def test_report_surveillance_event_recorder_error_checking(self):
         with self.assertRaises(ValueError) as context:
             ReportSurveillanceEventRecorder(self.reporter,
                                             event_list=[])
-        self.assertTrue("event_list must be a list of strings" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("event_list must be a list of strings" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportSurveillanceEventRecorder(self.reporter,
                                             event_list=[""])
-        self.assertTrue("event_list must be a list of non-empty strings" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("event_list must be a list of non-empty strings" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportSurveillanceEventRecorder(self.reporter,
                                             event_list=self.event_list,
                                             stats_by_ips=[""])
-        self.assertTrue("stats_by_ips must be a list of non-empty strings" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("stats_by_ips must be a list of non-empty strings" in str(context.exception))
 
     @pytest.mark.unit
     def test_spatial_report(self):
@@ -491,14 +485,12 @@ class TestReportersCommon(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             SpatialReport(self.reporter,
                           spatial_output_channels=[SpatialReportChannels.Births, "boop"])
-        self.assertTrue("Please use the SpatialReportChannels enum to define the channels."
-                        " Invalid channels: ['boop']" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("Please use the SpatialReportChannels enum to define the channels."
+                " Invalid channels: ['boop']" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             SpatialReport(self.reporter,
                           spatial_output_channels=[])
-        self.assertTrue("Please define spatial_output_channels" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("Please define spatial_output_channels" in str(context.exception))
 
     @pytest.mark.unit
     def test_inset_chart_default(self):
@@ -547,13 +539,11 @@ class TestReportersCommon(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             InsetChart(self.reporter,
                        has_ip=[""])
-        self.assertTrue("has_ip must be a list of non-empty strings" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("has_ip must be a list of non-empty strings" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             InsetChart(self.reporter,
                        has_interventions=[""])
-        self.assertTrue("has_interventions must be a list of non-empty strings" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("has_interventions must be a list of non-empty strings" in str(context.exception))
 
     @pytest.mark.unit
     def test_demographics_report(self):
@@ -659,25 +649,21 @@ class TestReportersCommon(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             ReportEventCounter(self.reporter,
                                event_list=[])
-        self.assertTrue("event_list must be a list of strings" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("event_list must be a list of strings" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportEventCounter(self.reporter,
                                event_list=[""])
-        self.assertTrue("event_list must be a list of non-empty strings" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("event_list must be a list of non-empty strings" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportEventCounter(self.reporter,
                                event_list=self.event_list,
                                report_filter=ReportFilter(start_year=1921))
-        self.assertTrue("start_year is not a valid parameter for ReportEventCounter" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("start_year is not a valid parameter for ReportEventCounter" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportEventCounter(self.reporter,
                                event_list=self.event_list,
                                report_filter=ReportFilter(end_year=1921))
-        self.assertTrue("end_year is not a valid parameter for ReportEventCounter" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("end_year is not a valid parameter for ReportEventCounter" in str(context.exception))
 
     @pytest.mark.unit
     def test_report_simulation_stats(self):
@@ -737,13 +723,11 @@ class TestReportersCommon(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             ReportNodeDemographics(self.reporter,
                                    age_bins=[23.3, 5])
-        self.assertTrue("age_bins's bins must be in ascending order" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("age_bins's bins must be in ascending order" in str(context.exception))
         with self.assertRaises(TypeError) as context:
             ReportNodeDemographics(self.reporter,
                                    age_bins=[23, "hello"])
-        self.assertTrue("Each bin must be either int or float, got str for age_bins index 1" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("Each bin must be either int or float, got str for age_bins index 1" in str(context.exception))
 
     @pytest.mark.unit
     def test_report_human_migration_tracking(self):
@@ -788,19 +772,15 @@ class TestReportersCommon(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             ReportPluginAgeAtInfectionHistogram(reporters_object=self.reporter,
                                                 age_bin_upper_edges=[23.3, 5])
-        self.assertTrue("age_bin_upper_edges's bins must be in ascending order" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("age_bin_upper_edges's bins must be in ascending order" in str(context.exception))
         with self.assertRaises(TypeError) as context:
             ReportPluginAgeAtInfectionHistogram(reporters_object=self.reporter,
                                                 age_bin_upper_edges=[23, "hello"])
-        self.assertTrue(
-            "Each bin must be either int or float, got str for age_bin_upper_edges index " in str(context.exception),
-            msg=str(context.exception))
+        assert ("Each bin must be either int or float, got str for age_bin_upper_edges index " in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportPluginAgeAtInfectionHistogram(reporters_object=self.reporter,
                                                 reporting_interval=-1)
-        self.assertTrue("greater than or equal to " in str(context.exception),
-                        msg=str(context.exception))
+        assert ("greater than or equal to " in str(context.exception))
 
     @pytest.mark.unit
     def test_sql_report_default(self):
@@ -842,43 +822,35 @@ class TestReportersCommon(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             SqlReport(reporters_object=self.reporter,
                       report_filter=ReportFilter(start_year=self.start_year))
-        self.assertTrue("start_year is not a valid parameter for SqlReport" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("start_year is not a valid parameter for SqlReport" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             SqlReport(reporters_object=self.reporter,
                       report_filter=ReportFilter(end_year=self.end_year))
-        self.assertTrue("end_year is not a valid parameter for SqlReport" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("end_year is not a valid parameter for SqlReport" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             SqlReport(reporters_object=self.reporter,
                       report_filter=ReportFilter(filename_suffix=self.random_string4))
-        self.assertTrue("filename_suffix is not a valid parameter for SqlReport" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("filename_suffix is not a valid parameter for SqlReport" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             SqlReport(reporters_object=self.reporter,
                       report_filter=ReportFilter(node_ids=self.node_ids))
-        self.assertTrue("node_ids is not a valid parameter for SqlReport" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("node_ids is not a valid parameter for SqlReport" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             SqlReport(reporters_object=self.reporter,
                       report_filter=ReportFilter(max_age_years=self.max_age_years))
-        self.assertTrue("max_age_years is not a valid parameter for SqlReport" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("max_age_years is not a valid parameter for SqlReport" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             SqlReport(reporters_object=self.reporter,
                       report_filter=ReportFilter(min_age_years=self.min_age_years))
-        self.assertTrue("min_age_years is not a valid parameter for SqlReport" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("min_age_years is not a valid parameter for SqlReport" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             SqlReport(reporters_object=self.reporter,
                       report_filter=ReportFilter(must_have_ip_key_value=self.must_have_ip_key_value))
-        self.assertTrue("must_have_ip_key_value is not a valid parameter for SqlReport" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("must_have_ip_key_value is not a valid parameter for SqlReport" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             SqlReport(reporters_object=self.reporter,
                       report_filter=ReportFilter(must_have_intervention=self.must_have_intervention))
-        self.assertTrue("must_have_intervention is not a valid parameter for SqlReport" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("must_have_intervention is not a valid parameter for SqlReport" in str(context.exception))
 
     @pytest.mark.unit
     def test_report_plugin_age_at_infection(self):
@@ -921,45 +893,35 @@ class TestReportersCommon(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             ReportDrugStatus(reporters_object=self.reporter,
                              report_filter=ReportFilter(start_year=self.start_year))
-        self.assertTrue("start_year is not a valid parameter for ReportDrugStatus" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("start_year is not a valid parameter for ReportDrugStatus" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportDrugStatus(reporters_object=self.reporter,
                              report_filter=ReportFilter(end_year=self.end_year))
-        self.assertTrue("end_year is not a valid parameter for ReportDrugStatus" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("end_year is not a valid parameter for ReportDrugStatus" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportDrugStatus(reporters_object=self.reporter,
                              report_filter=ReportFilter(filename_suffix=self.random_string4))
-        self.assertTrue("filename_suffix is not a valid parameter for ReportDrugStatus" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("filename_suffix is not a valid parameter for ReportDrugStatus" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportDrugStatus(reporters_object=self.reporter,
                              report_filter=ReportFilter(node_ids=self.node_ids))
-        self.assertTrue("node_ids is not a valid parameter for ReportDrugStatus" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("node_ids is not a valid parameter for ReportDrugStatus" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportDrugStatus(reporters_object=self.reporter,
                              report_filter=ReportFilter(max_age_years=self.max_age_years))
-        self.assertTrue("max_age_years is not a valid parameter for ReportDrugStatus" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("max_age_years is not a valid parameter for ReportDrugStatus" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportDrugStatus(reporters_object=self.reporter,
                              report_filter=ReportFilter(min_age_years=self.min_age_years))
-        self.assertTrue("min_age_years is not a valid parameter for ReportDrugStatus" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("min_age_years is not a valid parameter for ReportDrugStatus" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportDrugStatus(reporters_object=self.reporter,
                              report_filter=ReportFilter(must_have_ip_key_value=self.must_have_ip_key_value))
-        self.assertTrue(
-            "must_have_ip_key_value is not a valid parameter for ReportDrugStatus" in str(context.exception),
-            msg=str(context.exception))
+        assert ("must_have_ip_key_value is not a valid parameter for ReportDrugStatus" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportDrugStatus(reporters_object=self.reporter,
                              report_filter=ReportFilter(must_have_intervention=self.must_have_intervention))
-        self.assertTrue(
-            "must_have_intervention is not a valid parameter for ReportDrugStatus" in str(context.exception),
-            msg=str(context.exception))
+        assert ("must_have_intervention is not a valid parameter for ReportDrugStatus" in str(context.exception))
 
     @pytest.mark.unit
     def test_report_infection_duration_default(self):
@@ -992,46 +954,35 @@ class TestReportersCommon(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             ReportInfectionDuration(reporters_object=self.reporter,
                                     report_filter=ReportFilter(start_year=self.start_year))
-        self.assertTrue("start_year is not a valid parameter for ReportInfectionDuration" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("start_year is not a valid parameter for ReportInfectionDuration" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportInfectionDuration(reporters_object=self.reporter,
                                     report_filter=ReportFilter(end_year=self.end_year))
-        self.assertTrue("end_year is not a valid parameter for ReportInfectionDuration" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("end_year is not a valid parameter for ReportInfectionDuration" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportInfectionDuration(reporters_object=self.reporter,
                                     report_filter=ReportFilter(filename_suffix=self.random_string4))
-        self.assertTrue(
-            "filename_suffix is not a valid parameter for ReportInfectionDuration" in str(context.exception),
-            msg=str(context.exception))
+        assert ("filename_suffix is not a valid parameter for ReportInfectionDuration" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportInfectionDuration(reporters_object=self.reporter,
                                     report_filter=ReportFilter(node_ids=self.node_ids))
-        self.assertTrue("node_ids is not a valid parameter for ReportInfectionDuration" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("node_ids is not a valid parameter for ReportInfectionDuration" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportInfectionDuration(reporters_object=self.reporter,
                                     report_filter=ReportFilter(max_age_years=self.max_age_years))
-        self.assertTrue("max_age_years is not a valid parameter for ReportInfectionDuration" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("max_age_years is not a valid parameter for ReportInfectionDuration" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportInfectionDuration(reporters_object=self.reporter,
                                     report_filter=ReportFilter(min_age_years=self.min_age_years))
-        self.assertTrue("min_age_years is not a valid parameter for ReportInfectionDuration" in str(context.exception),
-                        msg=str(context.exception))
+        assert ("min_age_years is not a valid parameter for ReportInfectionDuration" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportInfectionDuration(reporters_object=self.reporter,
                                     report_filter=ReportFilter(must_have_ip_key_value=self.must_have_ip_key_value))
-        self.assertTrue(
-            "must_have_ip_key_value is not a valid parameter for ReportInfectionDuration" in str(context.exception),
-            msg=str(context.exception))
+        assert ("must_have_ip_key_value is not a valid parameter for ReportInfectionDuration" in str(context.exception))
         with self.assertRaises(ValueError) as context:
             ReportInfectionDuration(reporters_object=self.reporter,
                                     report_filter=ReportFilter(must_have_intervention=self.must_have_intervention))
-        self.assertTrue(
-            "must_have_intervention is not a valid parameter for ReportInfectionDuration" in str(context.exception),
-            msg=str(context.exception))
+        assert ("must_have_intervention is not a valid parameter for ReportInfectionDuration" in str(context.exception))
 
     @pytest.mark.unit
     def test_multiple_of_builtin_report(self):
@@ -1062,8 +1013,8 @@ class TestReportersCommon(unittest.TestCase):
             return reporters
 
         with pytest.raises(Exception) as e_info:
-            task = self.create_final_task(build_reports, builtin=True)
-        assert("Reporter InsetChart is a ConfigReporter type and cannot be added more than once and there is already one of these in the list."
+            self.create_final_task(build_reports, builtin=True)
+        assert ("Reporter InsetChart is a ConfigReporter type and cannot be added more than once and there is already one of these in the list."
                "Please update to add only one InsetChart to the Reporters object." in str(e_info))
 
     @pytest.mark.container
@@ -1132,7 +1083,7 @@ class TestReportersCommon(unittest.TestCase):
         # The last step is to call run() on the ExperimentManager to run the simulations.
         experiment.run(wait_until_done=True, platform=platform)
 
-        assert(experiment.succeeded)
+        assert (experiment.succeeded)
 
         this_sim = experiment.simulations[0]
 
@@ -1149,13 +1100,11 @@ class TestReportersCommon(unittest.TestCase):
 
         # this will error out if any of the files are missing
         all_good = True
-        exception = ""
         try:
             platform.get_files(this_sim, files=expected_files_with_path)
-        except Exception as e:
+        except Exception:
             all_good = False
-            exception = e
-        assert(all_good)
+        assert (all_good)
 
 
 @pytest.mark.skip(reason="Skipping because reports in Generic-Ongoing EMOD meaningfully different")

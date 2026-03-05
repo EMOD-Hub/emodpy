@@ -11,13 +11,9 @@ from idmtools.entities.experiment import Experiment
 from idmtools.entities.simulation import Simulation
 from idmtools_platform_comps.utils.singularity_build import SingularityBuildWorkItem
 from emodpy.emod_task import EMODTask, logger
-from pathlib import Path
-import sys
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
 
-import manifest
-import helpers
+from tests import manifest
+from tests import helpers
 
 
 class TestEMODExperiment:
@@ -28,7 +24,6 @@ class TestEMODExperiment:
     num_sim_long = 20
     original_working_dir = manifest.test_directory_absolute_path
     environment_block = None
-
 
     def setup_custom_params(self):
         self.builders = helpers.BuildersCommon
@@ -74,7 +69,6 @@ class TestEMODExperimentCOMPS(TestEMODExperiment):
         files = self.platform.get_files(sim, ["stdout.txt"])
         stdout = files["stdout.txt"].decode("utf-8")
         assert "EMOD Disease Transmission Kernel" in stdout
-
 
     @pytest.mark.comps
     def test_experiment_from_task_with_singularity_from_local_file(self):
@@ -135,7 +129,6 @@ class TestEMODExperimentContainer(TestEMODExperiment):
         exp_obj.run(wait_until_done=True, platform=self.platform)
         assert exp_obj.succeeded
 
-
     @pytest.mark.container
     def test_experiment_from_task_with_task_from_default_param_custom_cb(self):
         # https://github.com/InstituteforDiseaseModeling/emodpy-old/issues/288
@@ -162,7 +155,6 @@ class TestEMODExperimentContainer(TestEMODExperiment):
         config_parameters = json.loads(files["config.json"])['parameters']
         assert config_parameters["Simulation_Duration"] == 7
 
-
     @pytest.mark.container
     def test_experiment_from_builder_with_task_from_default(self):
         """
@@ -188,7 +180,6 @@ class TestEMODExperimentContainer(TestEMODExperiment):
             files = self.platform.get_files(sim, ["config.json"])
             config_parameters = json.loads(files["config.json"])['parameters']
             assert config_parameters["Run_Number"] == sim.tags["Run_Number"]
-
 
     @pytest.mark.container
     def test_simulations_manual_builder_with_task_from_file(self):
@@ -224,7 +215,6 @@ class TestEMODExperimentContainer(TestEMODExperiment):
         #     files = self.platform.get_files(sim, ["config.json"])
         #     config_parameters = json.loads(files["config.json"])['parameters']
         #     self.assertEqual(config_parameters["Run_Number"], i)
-
 
     @pytest.mark.container
     def test_simulations_manual_builder_with_task_from_file_workaround(self):
@@ -264,7 +254,6 @@ class TestEMODExperimentContainer(TestEMODExperiment):
             run_numbers.append(config_parameters["Run_Number"])
 
         assert set(run_numbers) == set(list(range(self.num_sim_long)))
-
 
     @pytest.mark.container
     def test_experiment_from_builder_with_task_from_file(self):

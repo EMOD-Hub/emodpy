@@ -1,21 +1,18 @@
 import json
 import os
-import sys
-import shutil
+
 import pytest
-import time
-from pathlib import Path
 
 from idmtools.entities.experiment import Experiment
 from idmtools.core.platform_factory import Platform
 from emodpy.emod_task import EMODTask, logger
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
-import manifest
-import helpers
+
+from tests import manifest
+from tests import helpers
 
 sim_duration = 10  # in years
 num_seeds = 1
+
 
 def param_update(simulation, param, value):
     return simulation.set_parameter(param, value)
@@ -52,7 +49,7 @@ class TestSerialization():
 
     def test_serialization(self):
         """
-        1) Run simulation, save serialized population           
+        1) Run simulation, save serialized population
 
         2) Run starting from population saved in 1)
             - Download state-*.dtk files from 1)
@@ -98,12 +95,12 @@ class TestSerialization():
 
         sim = self.experiment.simulations[0]
         self.platform.get_files(sim, files=['output/state-00010.dtk',
-                                                    'output/InsetChart.json'], output=self.test_folder)
+                                            'output/InsetChart.json'], output=self.test_folder)
 
         serialized_files = os.path.join(self.test_folder, sim.id, "output")
-        assert(os.path.isdir(serialized_files))
-        assert(os.path.isfile(os.path.join(serialized_files, 'state-00010.dtk')))
-        assert(os.path.isfile(os.path.join(serialized_files, 'InsetChart.json')))
+        assert (os.path.isdir(serialized_files))
+        assert (os.path.isfile(os.path.join(serialized_files, 'state-00010.dtk')))
+        assert (os.path.isfile(os.path.join(serialized_files, 'InsetChart.json')))
 
         # 2) Create new experiment and sim with previous serialized file
         task2 = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
@@ -114,7 +111,7 @@ class TestSerialization():
         task2.common_assets.add_directory(assets_directory=serialized_files)
         experiment2 = Experiment.from_task(task=task2, name=self.case_name + " reaload serialization")
         experiment2.run(wait_until_done=True, platform=self.platform)
-        assert(experiment2.succeeded)
+        assert (experiment2.succeeded)
 
         files = self.platform.get_files(experiment2.simulations[0], ["output/InsetChart.json"])
         path = os.path.join(serialized_files, "InsetChart.json")
@@ -124,7 +121,7 @@ class TestSerialization():
             del experiment1_inset["DateTime"]  # different, remove
             del experiment2_inset["DateTime"]
 
-        assert(experiment1_inset==experiment2_inset)
+        assert (experiment1_inset == experiment2_inset)
 
 
 @pytest.mark.container

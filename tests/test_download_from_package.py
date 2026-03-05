@@ -1,10 +1,7 @@
-from pathlib import Path
-import sys
 import pytest
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
-import manifest
-import helpers
+
+from tests import helpers
+
 import os
 
 import emod_common.bootstrap as common_bootstrap
@@ -34,11 +31,10 @@ class TestDownloadFromPackage():
 
     def test_eradication_and_schema(self):
         for bootstrap in [common_bootstrap, generic_bootstrap, hiv_bootstrap, malaria_bootstrap]:
-            module = bootstrap.__name__.split('.')[0]
             bootstrap.setup(self.test_folder)
             target_path_schema = os.path.join(self.test_folder, "schema.json")
             target_path_eradication = os.path.join(self.test_folder, "Eradication")
-            assert(os.path.exists(target_path_schema))
-            assert(os.path.exists(target_path_eradication))
+            assert (os.path.exists(target_path_schema))
+            assert (os.path.exists(target_path_eradication))
             helpers.delete_existing_file(target_path_schema)
             helpers.delete_existing_file(target_path_eradication)

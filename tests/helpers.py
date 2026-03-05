@@ -12,11 +12,9 @@ from emodpy.reporters.common import ReportEventCounter, ReportFilter, ReportEven
 import emodpy.campaign.waning_config as waning_config
 from emodpy.utils import emod_enum
 from emod_api.config import default_from_schema_no_validation as dfs
-from pathlib import Path
-import sys
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
-import manifest
+
+from tests import manifest
+
 from COMPS.Client import logger as comps_logger
 comps_logger.disabled = True
 

@@ -7,12 +7,8 @@ from idmtools.entities.experiment import Experiment
 from idmtools.core.platform_factory import Platform
 from idmtools.builders import SimulationBuilder
 
-from pathlib import Path
-import sys
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
-import manifest
-import helpers
+from tests import manifest
+from tests import helpers
 
 """
 Svetlana's notes:
@@ -20,6 +16,7 @@ I think this could use more tests. I would add a test for the following:
 - using task.set_parameters() to do sweeps when using from_files() and from_defaults() methods
 - verify that when get_config_from_default_and_params gets parameters not in schema, it raises a nice error
 """
+
 
 @pytest.mark.container
 class TestWorkflowConfig():
@@ -62,7 +59,7 @@ class TestWorkflowConfig():
         experiment = Experiment.from_builder(builder, task, name=self.case_name)
         self.platform.run_items(experiment)
         self.platform.wait_till_done(experiment)
-        assert(experiment.succeeded)
+        assert (experiment.succeeded)
         return experiment
 
     def config_builder_builtin_demographics(self, config):

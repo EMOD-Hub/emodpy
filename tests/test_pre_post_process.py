@@ -1,21 +1,14 @@
-import json
 import os
-import sys
-import shutil
 import pytest
-import time
 
 from idmtools.entities.experiment import Experiment
 from idmtools.entities.simulation import Simulation
 from idmtools.core.platform_factory import Platform
 
 from emodpy.emod_task import EMODTask, logger
-from pathlib import Path
-import sys
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
-import manifest
-import helpers
+
+from tests import manifest
+from tests import helpers
 
 
 def param_update(simulation, param, value):
@@ -76,10 +69,10 @@ class TestEmodPrePostProcess():
 
         self.platform.run_items(experiment)
         self.platform.wait_till_done(experiment)
-        assert(experiment.succeeded)
+        assert (experiment.succeeded)
         for sim in experiment.simulations:
             files = self.platform.get_files(sim, ["stdout.txt"])
-            assert("printing from dtk_post_process.py" in files["stdout.txt"].decode("utf-8"))
+            assert ("printing from dtk_post_process.py" in files["stdout.txt"].decode("utf-8"))
 
     def test_all_embedded_python_from_default(self):
         task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
@@ -94,18 +87,18 @@ class TestEmodPrePostProcess():
 
         task.gather_common_assets()
 
-        assert(task.eradication_path==self.builders.eradication_path)
-        assert(self.builders.eradication_path in [a.absolute_path for a in task.common_assets.assets])
-        assert(task.use_embedded_python)
+        assert (task.eradication_path == self.builders.eradication_path)
+        assert (self.builders.eradication_path in [a.absolute_path for a in task.common_assets.assets])
+        assert (task.use_embedded_python)
 
         # check experiment common assets are as expected - ContainerPlatform doesn't have a SIF
         experiment.pre_creation(self.platform)
         assets_exp = 4 if manifest.container_platform_name == "Container" else 5
-        assert(len(experiment.assets)==assets_exp)
-        assert(self.builders.eradication_path in [a.absolute_path for a in experiment.assets])
-        assert(os.path.join(self.embedded_python_folder, 'dtk_pre_process.py') in [a.absolute_path for a in experiment.assets])
-        assert(os.path.join(self.embedded_python_folder, 'dtk_in_process.py') in [a.absolute_path for a in experiment.assets])
-        assert(os.path.join(self.embedded_python_folder, 'dtk_post_process.py') in [a.absolute_path for a in experiment.assets])
+        assert (len(experiment.assets) == assets_exp)
+        assert (self.builders.eradication_path in [a.absolute_path for a in experiment.assets])
+        assert (os.path.join(self.embedded_python_folder, 'dtk_pre_process.py') in [a.absolute_path for a in experiment.assets])
+        assert (os.path.join(self.embedded_python_folder, 'dtk_in_process.py') in [a.absolute_path for a in experiment.assets])
+        assert (os.path.join(self.embedded_python_folder, 'dtk_post_process.py') in [a.absolute_path for a in experiment.assets])
 
     def test_one_embedded_python_from_default(self):
         task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
@@ -120,16 +113,16 @@ class TestEmodPrePostProcess():
 
         task.gather_common_assets()
 
-        assert(task.eradication_path==self.builders.eradication_path)
-        assert(self.builders.eradication_path in [a.absolute_path for a in task.common_assets.assets])
-        assert(task.use_embedded_python)
+        assert (task.eradication_path == self.builders.eradication_path)
+        assert (self.builders.eradication_path in [a.absolute_path for a in task.common_assets.assets])
+        assert (task.use_embedded_python)
 
         # check experiment common assets are as expected - ContainerPlatform doesn't have a SIF
         experiment.pre_creation(self.platform)
         assets_exp = 3 if manifest.container_platform_name == "Container" else 4
-        assert(len(experiment.assets)==assets_exp)
-        assert(self.builders.eradication_path in[a.absolute_path for a in experiment.assets])
-        assert(os.path.join(self.embedded_python_folder, 'dtk_post_process.py') in [a.absolute_path for a in experiment.assets])
+        assert (len(experiment.assets) == assets_exp)
+        assert (self.builders.eradication_path in [a.absolute_path for a in experiment.assets])
+        assert (os.path.join(self.embedded_python_folder, 'dtk_post_process.py') in [a.absolute_path for a in experiment.assets])
 
     def test_with_default_embedded_python_from_default(self):
         task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
@@ -141,14 +134,14 @@ class TestEmodPrePostProcess():
         experiment = Experiment.from_task(task, name=self.case_name)
         task.gather_common_assets()
 
-        assert(task.eradication_path==self.builders.eradication_path)
-        assert(self.builders.eradication_path in [a.absolute_path for a in task.common_assets.assets])
-        assert(task.use_embedded_python==False)
+        assert (task.eradication_path == self.builders.eradication_path)
+        assert (self.builders.eradication_path in [a.absolute_path for a in task.common_assets.assets])
+        assert (not task.use_embedded_python)
 
         # check experiment common assets are as expected - ContainerPlatform doesn't have a SIF
         experiment.pre_creation(self.platform)
         assets_exp = 1 if manifest.container_platform_name == "Container" else 2
-        assert(len(experiment.assets)==assets_exp)
+        assert (len(experiment.assets) == assets_exp)
 
     def test_emod_process_from_file(self):
         """
@@ -165,14 +158,14 @@ class TestEmodPrePostProcess():
 
         self.platform.run_items(experiment)
         self.platform.wait_till_done(experiment)
-        assert(experiment.succeeded)
+        assert (experiment.succeeded)
 
         for sim in experiment.simulations:
             file = self.platform.get_files(sim, ["stdout.txt"])
             stdout = file["stdout.txt"].decode("utf-8")
-            assert("dtk_in_process.py called on timestep" in stdout)
-            assert("printing from dtk_post_process.py" in stdout)
-            assert("printing from dtk_pre_process.py" in stdout)
+            assert ("dtk_in_process.py called on timestep" in stdout)
+            assert ("printing from dtk_post_process.py" in stdout)
+            assert ("printing from dtk_pre_process.py" in stdout)
 
 
 @pytest.mark.container

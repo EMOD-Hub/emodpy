@@ -2,14 +2,11 @@ import os
 from functools import partial
 import unittest
 import pytest
-import time
 from emod_api.config import default_from_schema_no_validation as dfs
 from emodpy.demographics.demographics import Demographics
-import emod_api.demographics.demographics as Demographics_api
 from emod_api.demographics.node import Node
 from emod_api.demographics.overlay_node import OverlayNode
-from emod_api.demographics.properties_and_attributes import IndividualAttributes, IndividualProperty, \
-    IndividualProperties, NodeAttributes
+from emod_api.demographics.properties_and_attributes import IndividualAttributes, IndividualProperty, IndividualProperties, NodeAttributes
 
 from idmtools.entities.experiment import Experiment
 from idmtools.core.platform_factory import Platform
@@ -19,13 +16,8 @@ from emodpy.emod_task import EMODTask, logger
 
 import json
 
-from pathlib import Path
-import sys
-
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
-import manifest
-import helpers
+from tests import manifest
+from tests import helpers
 
 
 def set_param_fn(config, implicit_config_set_fns=None):
@@ -70,7 +62,7 @@ class TestWorkflowDemographics(unittest.TestCase):
             experiment.run(platform=plat)
             plat.wait_till_done(experiment, refresh_interval=1)
 
-        assert(experiment.succeeded)
+        assert (experiment.succeeded)
         return experiment
 
     def set_param_fn(self, config, implicit_config_set_fns=None):
@@ -95,8 +87,8 @@ class TestWorkflowDemographics(unittest.TestCase):
                                       config_builder=self.builders.config_builder,
                                       demographics_builder=self.builders.demographics_builder)
 
-        assert(['demographics.json']==task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_defaults"
-        assert(0==task.config['parameters']['Enable_Demographics_Builtin'])
+        assert (['demographics.json'] == task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_defaults"
+        assert (0 == task.config['parameters']['Enable_Demographics_Builtin'])
         self.run_exp(task)
 
     def test_demographic_sweep(self):
@@ -121,8 +113,8 @@ class TestWorkflowDemographics(unittest.TestCase):
 
         experiment = Experiment.from_builder(builder, task, name=self.case_name)
         experiment.run(platform=self.platform, wait_until_done=True)
-        assert(experiment.succeeded)
-        assert(len(experiment.simulations)==len(ages))
+        assert (experiment.succeeded)
+        assert (len(experiment.simulations) == len(ages))
 
         for sim, prevalence in zip(experiment.simulations, ages):
             config = self.platform.get_files(sim, ["config.json"])
@@ -131,9 +123,9 @@ class TestWorkflowDemographics(unittest.TestCase):
             demog_filename = config_dict["parameters"]["Demographics_Filenames"][0]
             demog_file = self.platform.get_files(sim, [demog_filename])
             demographics_dict = json.loads(demog_file[demog_filename])
-            assert(demographics_dict['Defaults']['IndividualAttributes']['AgeDistribution1']==prevalence)
-            assert(demographics_dict['Defaults']['IndividualAttributes']['AgeDistribution2']==0)
-            assert(demographics_dict['Defaults']['IndividualAttributes']['AgeDistributionFlag']==0)
+            assert (demographics_dict['Defaults']['IndividualAttributes']['AgeDistribution1'] == prevalence)
+            assert (demographics_dict['Defaults']['IndividualAttributes']['AgeDistribution2'] == 0)
+            assert (demographics_dict['Defaults']['IndividualAttributes']['AgeDistributionFlag'] == 0)
 
     def test_complex_susceptibility_demographics(self):
         """
@@ -164,9 +156,9 @@ class TestWorkflowDemographics(unittest.TestCase):
                                       demographics_builder=build_demographics,
                                       config_builder=self.builders.config_builder)
 
-        assert(['demographics.json']==task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_default"
-        assert(0==task.config['parameters']['Enable_Demographics_Builtin'])
-        assert('DISTRIBUTION_COMPLEX'==task.config['parameters']['Susceptibility_Initialization_Distribution_Type'])
+        assert (['demographics.json'] == task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_default"
+        assert (0 == task.config['parameters']['Enable_Demographics_Builtin'])
+        assert ('DISTRIBUTION_COMPLEX' == task.config['parameters']['Susceptibility_Initialization_Distribution_Type'])
         self.run_exp(task)
 
     def test_add_individual_property_demographics(self):
@@ -196,8 +188,8 @@ class TestWorkflowDemographics(unittest.TestCase):
                                       demographics_builder=demog_builder,
                                       config_builder=self.builders.config_builder)
 
-        assert([os.path.basename("demographics.json")]==task.config.parameters['Demographics_Filenames'])
-        assert(0==task.config.parameters['Enable_Demographics_Builtin'])
+        assert ([os.path.basename("demographics.json")] == task.config.parameters['Demographics_Filenames'])
+        assert (0 == task.config.parameters['Enable_Demographics_Builtin'])
         self.run_exp(task)
 
     def test_from_csv_demographics(self):
@@ -218,8 +210,8 @@ class TestWorkflowDemographics(unittest.TestCase):
                                       schema_path=self.builders.schema_path,
                                       demographics_builder=demog_builder,
                                       config_builder=self.builders.config_builder)
-        assert(['demographics.json']==task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_default"
-        assert(0==task.config['parameters']['Enable_Demographics_Builtin'])
+        assert (['demographics.json'] == task.config['parameters']['Demographics_Filenames'])  # checking that it's using demog file from "from_default"
+        assert (0 == task.config['parameters']['Enable_Demographics_Builtin'])
         task.set_parameter('x_Base_Population', 0.00001)
         self.run_exp(task)
 
@@ -265,12 +257,12 @@ class TestWorkflowDemographics(unittest.TestCase):
             self.assertEqual(inset_chart['Channels']['Statistical Population']['Data'][0], 100 * 2)
 
             demographics = json.loads(files[demog_filename])
-            assert(demographics['Nodes'][0]["NodeAttributes"]['Latitude']==1)
-            assert(demographics['Nodes'][1]["NodeAttributes"]['Latitude']==0)
-            assert(demographics['Nodes'][0]["NodeAttributes"]['Longitude']==0)
-            assert(demographics['Nodes'][1]["NodeAttributes"]['Longitude']==1)
-            assert(demographics['Nodes'][0]["NodeAttributes"]['FacilityName']=="Test NodeAttributes1")
-            assert(demographics['Nodes'][1]["NodeAttributes"]['FacilityName']=="Test NodeAttributes2")
+            assert (demographics['Nodes'][0]["NodeAttributes"]['Latitude'] == 1)
+            assert (demographics['Nodes'][1]["NodeAttributes"]['Latitude'] == 0)
+            assert (demographics['Nodes'][0]["NodeAttributes"]['Longitude'] == 0)
+            assert (demographics['Nodes'][1]["NodeAttributes"]['Longitude'] == 1)
+            assert (demographics['Nodes'][0]["NodeAttributes"]['FacilityName'] == "Test NodeAttributes1")
+            assert (demographics['Nodes'][1]["NodeAttributes"]['FacilityName'] == "Test NodeAttributes2")
 
     def test_demographics_overlay_individual_attributes(self):
         """
@@ -287,10 +279,8 @@ class TestWorkflowDemographics(unittest.TestCase):
                                                            age_distribution2=3650)
             node_attributes = NodeAttributes(initial_population=100, latitude=0, longitude=1)
             default_node = Node(lat=0, lon=0, pop=1000, forced_id=0)
-            nodes = [Node(lat=0, lon=1, pop=100, individual_attributes=individual_attributes_1, forced_id=1,
-                               node_attributes=node_attributes),
-                     Node(lat=0, lon=1, pop=100, individual_attributes=individual_attributes_2, forced_id=2,
-                               node_attributes=node_attributes)]
+            nodes = [Node(lat=0, lon=1, pop=100, individual_attributes=individual_attributes_1, forced_id=1, node_attributes=node_attributes),
+                     Node(lat=0, lon=1, pop=100, individual_attributes=individual_attributes_2, forced_id=2, node_attributes=node_attributes)]
             demog = Demographics(nodes=nodes, default_node=default_node)
             overlay_nodes = []
             new_individual_attributes = IndividualAttributes(age_distribution_flag=0,
@@ -314,12 +304,12 @@ class TestWorkflowDemographics(unittest.TestCase):
         for sim in experiment.simulations:
             files = self.platform.get_files(sim, [demog_filename])
             demographics = json.loads(files[demog_filename])
-            assert(demographics['Nodes'][0]["IndividualAttributes"]['AgeDistributionFlag']==0)
-            assert(demographics['Nodes'][1]["IndividualAttributes"]['AgeDistributionFlag']==0)
-            assert(demographics['Nodes'][0]["IndividualAttributes"]['AgeDistribution1']==300)
-            assert(demographics['Nodes'][1]["IndividualAttributes"]['AgeDistribution1']==300)
-            assert(demographics['Nodes'][0]["IndividualAttributes"]['AgeDistribution2']==600)
-            assert(demographics['Nodes'][1]["IndividualAttributes"]['AgeDistribution2']==600)
+            assert (demographics['Nodes'][0]["IndividualAttributes"]['AgeDistributionFlag'] == 0)
+            assert (demographics['Nodes'][1]["IndividualAttributes"]['AgeDistributionFlag'] == 0)
+            assert (demographics['Nodes'][0]["IndividualAttributes"]['AgeDistribution1'] == 300)
+            assert (demographics['Nodes'][1]["IndividualAttributes"]['AgeDistribution1'] == 300)
+            assert (demographics['Nodes'][0]["IndividualAttributes"]['AgeDistribution2'] == 600)
+            assert (demographics['Nodes'][1]["IndividualAttributes"]['AgeDistribution2'] == 600)
 
     def test_demographics_overlay_individual_properties(self):
         """
@@ -424,12 +414,12 @@ class TestWorkflowDemographics(unittest.TestCase):
         for sim in experiment.simulations:
             files = self.platform.get_files(sim, [demog_filename, demog_overlay_filename])
             demographics = json.loads(files[demog_filename])
-            assert(demographics['Defaults']['IndividualAttributes']=={})
+            assert (demographics['Defaults']['IndividualAttributes'] == {})
             demographics_overlay = json.loads(files[demog_overlay_filename])
             sus_dist = demographics_overlay['Defaults']['IndividualAttributes']["SusceptibilityDistribution"]
-            assert(sus_dist["DistributionValues"]==[4380, 7300])
-            assert(sus_dist["ResultValues"]==[0.2, 0.3])
-            assert(sus_dist["ResultScaleFactor"]==1)
+            assert (sus_dist["DistributionValues"] == [4380, 7300])
+            assert (sus_dist["ResultValues"] == [0.2, 0.3])
+            assert (sus_dist["ResultScaleFactor"] == 1)
 
 
 @pytest.mark.container

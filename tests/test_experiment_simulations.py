@@ -19,14 +19,8 @@ from idmtools.entities.experiment import Experiment
 from idmtools.entities.simulation import Simulation
 from idmtools.core.platform_factory import Platform
 
-from pathlib import Path
-import sys
-
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
-
-import manifest
-import helpers
+from tests import manifest
+from tests import helpers
 
 
 class TestExperimentSimulations:

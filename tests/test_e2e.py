@@ -1,17 +1,14 @@
+import pytest
 import os
 from functools import partial
-import pytest
-import time
+
 from idmtools.builders import SimulationBuilder
 from idmtools.core.platform_factory import Platform
 from idmtools.entities.experiment import Experiment
 from emodpy.emod_task import EMODTask, logger
-from pathlib import Path
-import sys
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
-import manifest
-import helpers
+
+from tests import manifest
+from tests import helpers
 
 
 def param_update_task(simulation, param, value):
@@ -44,7 +41,6 @@ class TestE2E():
         os.chdir(self.original_working_dir)
         helpers.close_logger(logger.parent)
 
-
     def test_from_default_with_misc_features_error(self):
         num_sim = 2
         task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
@@ -70,9 +66,9 @@ class TestE2E():
             self.experiment.run(platform=self.platform)
             self.platform.wait_till_done(self.experiment, refresh_interval=1)
 
-            assert(self.experiment.succeeded)
+            assert (self.experiment.succeeded)
 
-        assert(" 'numeric_values' not a valid parameter based on schema." in str(e_info))
+        assert (" 'numeric_values' not a valid parameter based on schema." in str(e_info))
 
     def test_from_default_with_misc_features(self):
         num_sim = 2
@@ -95,7 +91,7 @@ class TestE2E():
                                                         "number_tag": 123})
         self.experiment.run(platform=self.platform)
         self.platform.wait_till_done(self.experiment, refresh_interval=1)
-        assert(self.experiment.succeeded)
+        assert (self.experiment.succeeded)
 
     def test_from_files_with_misc_features(self):
         num_sim_long = 2
@@ -116,7 +112,7 @@ class TestE2E():
                                                         "string_tag": "test", "number_tag": 123})
         self.experiment.run(platform=self.platform)
         self.platform.wait_till_done(self.experiment, refresh_interval=1)
-        assert(self.experiment.succeeded)
+        assert (self.experiment.succeeded)
 
 
 @pytest.mark.container
@@ -139,7 +135,7 @@ class TestE2EGeneric(TestE2E):
                                                         "number_tag": 123})
         self.experiment.run(platform=self.platform)
         self.platform.wait_till_done(self.experiment, refresh_interval=1)
-        assert(self.experiment.succeeded)
+        assert (self.experiment.succeeded)
 
     def test_from_files_with_misc_features(self):
         # without custom_reports.json for generic
@@ -160,4 +156,4 @@ class TestE2EGeneric(TestE2E):
                                                         "string_tag": "test", "number_tag": 123})
         self.experiment.run(platform=self.platform)
         self.platform.wait_till_done(self.experiment, refresh_interval=1)
-        assert(self.experiment.succeeded)
+        assert (self.experiment.succeeded)

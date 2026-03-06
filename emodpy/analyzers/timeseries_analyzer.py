@@ -4,9 +4,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from idmtools.analysis.analyze_manager import AnalyzeManager
-from idmtools.core import ItemType
-from idmtools.core.platform_factory import Platform
 from idmtools.entities import IAnalyzer
 
 
@@ -103,15 +100,3 @@ class TimeseriesAnalyzer(IAnalyzer):
         plt.legend()
         # plt.show()
         plt.savefig(os.path.join(output_dir, 'timeseries.png'))
-
-
-if __name__ == "__main__":
-    platform = Platform('COMPS2')
-
-    exp_id = '8a7ff62a-fe7f-ea11-a2bf-f0921c167862'  # comps2 exp_id
-
-    filenames = ['output/InsetChart.json']
-    analyzers = [TimeseriesAnalyzer(filenames=filenames)]
-
-    manager = AnalyzeManager(platform=platform, ids=[(exp_id, ItemType.EXPERIMENT)], analyzers=analyzers)
-    manager.analyze()

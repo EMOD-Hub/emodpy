@@ -38,15 +38,3 @@ class PopulationAnalyzer(BaseAnalyzer):
             ax.plot(pop)
         ax.legend([str(s.uid) for s in all_data.keys()])
         fig.savefig(os.path.join(output_dir, "population.png"))
-
-
-# uncomment following lines with idmtools analyzer
-# if __name__ == "__main__":
-#     platform = Platform('COMPS2')
-#
-#     filenames = ['output/InsetChart.json']
-#     analyzers = [PopulationAnalyzer(working_dir=".")]
-#
-#     exp_id = '8bb8ae8f-793c-ea11-a2be-f0921c167861'  # comps2 exp_id
-#     manager = AnalyzeManager(platform=platform, ids=[(exp_id, ItemType.EXPERIMENT)], analyzers=analyzers)
-#     manager.analyze()

@@ -11,6 +11,7 @@ from emodpy.utils.distributions import UniformDistribution
 
 from emodpy.demographics.demographics import Demographics
 
+
 @pytest.mark.unit
 class TestDemographics(unittest.TestCase):
     def setUp(self) -> None:

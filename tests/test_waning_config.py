@@ -1,13 +1,8 @@
-import unittest
 import pytest
-from pathlib import Path
-import sys
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
 import emod_api.campaign as campaign
+
 from emodpy.campaign.common import ValueMap
-from emodpy.campaign.waning_config import Box, BoxExponential, Combo, Constant, Exponential, MapLinear, MapLinearAge, \
-    MapLinearSeasonal, MapPiecewise, RandomBox
+from emodpy.campaign.waning_config import Box, BoxExponential, Combo, Constant, Exponential, MapLinear, MapLinearAge, MapLinearSeasonal, MapPiecewise, RandomBox
 from base_test import TestHIV, TestMalaria, BaseTestClass
 
 

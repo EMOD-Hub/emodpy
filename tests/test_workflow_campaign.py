@@ -1,7 +1,6 @@
 import itertools
 import json
 import os
-import time
 import pytest
 from emodpy.emod_task import logger
 from functools import partial
@@ -23,18 +22,16 @@ import emodpy.campaign.waning_config as waning_config
 
 from emodpy.utils.distributions import ConstantDistribution
 
-from pathlib import Path
-import sys
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
-import manifest
-import helpers
+from tests import manifest
+from tests import helpers
+
 
 @pytest.mark.container
 class TestWorkflowCampaign():
     """
         Tests for EMODTask
     """
+
     def setup_custom_params(self):
         self.builders = helpers.BuildersCommon
 
@@ -48,7 +45,8 @@ class TestWorkflowCampaign():
         self.task: EMODTask
         self.experiment: Experiment
         self.test_folder = helpers.make_test_directory(self.case_name)
-        self.platform = Platform(manifest.container_platform_name, job_directory=self.test_folder)
+        self.platform = Platform(manifest.container_platform_name, job_directory=self.test_folder,
+                                 docker_image=manifest.container_platform_image, num_retries=0)
         self.setup_custom_params()
 
         # Run test
@@ -61,7 +59,7 @@ class TestWorkflowCampaign():
     def run_exp(self, task):
         experiment = Experiment.from_task(task, name=self.case_name)
         experiment.run(platform=self.platform, wait_until_done=True)
-        assert(experiment.succeeded)
+        assert (experiment.succeeded)
 
         print(f"Experiment {experiment.uid} succeeded.")
         return experiment
@@ -94,11 +92,11 @@ class TestWorkflowCampaign():
         task = EMODTask.from_files(config_path=self.builders.config_file_basic,
                                    eradication_path=self.builders.eradication_path,
                                    campaign_path="campaign.json")
-        assert(isinstance(task.campaign, EMODCampaign))
-        assert(len(task.campaign.events)==1)
-        assert(task.campaign.events[0]["Start_Day"]==2)
-        assert(task.campaign.events[0]["Event_Coordinator_Config"]["Demographic_Coverage"]==0.97)
-        assert(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["class"]=="SimpleVaccine")
+        assert (isinstance(task.campaign, EMODCampaign))
+        assert (len(task.campaign.events) == 1)
+        assert (task.campaign.events[0]["Start_Day"] == 2)
+        assert (task.campaign.events[0]["Event_Coordinator_Config"]["Demographic_Coverage"] == 0.97)
+        assert (task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["class"] == "SimpleVaccine")
 
         experiment = self.run_exp(task)
 
@@ -106,17 +104,17 @@ class TestWorkflowCampaign():
             files = self.platform.get_files(sim, ["config.json", "campaign.json", "stdout.txt"])
 
             config_file = json.loads(files["config.json"].decode("utf-8"))
-            assert("campaign.json"==config_file["parameters"]["Campaign_Filename"])
-            assert(1==config_file["parameters"]["Enable_Interventions"])
+            assert ("campaign.json" == config_file["parameters"]["Campaign_Filename"])
+            assert (1 == config_file["parameters"]["Enable_Interventions"])
 
             campaign_file = json.loads(files["campaign.json"].decode("utf-8"))
             campaign_file.pop("Campaign_Name")
             with open(self.builders.campaign_file, "r") as camp_file:
                 campaign_file_from_disk = json.load(camp_file)
-            assert(campaign_file==campaign_file_from_disk)
+            assert (campaign_file == campaign_file_from_disk)
 
             stdout = files["stdout.txt"].decode("utf-8")
-            assert("'Vaccine' interventions at node" in stdout)
+            assert ("'Vaccine' interventions at node" in stdout)
 
     def campaign_sweeping_test(self, update_coverage):
         """
@@ -134,34 +132,33 @@ class TestWorkflowCampaign():
 
         builder = SimulationBuilder()
         coverages = [0.1, 0.5]
-        builder.add_sweep_definition(update_coverage,  coverages)
+        builder.add_sweep_definition(update_coverage, coverages)
         experiment = Experiment.from_builder(builder, task, name=self.case_name)
         experiment.run(platform=self.platform, wait_until_done=True)
 
-        assert(experiment.succeeded)
+        assert (experiment.succeeded)
 
         # num of simulations should be the same as the length of sweeping parameters
         for sim, coverage in zip(experiment.simulations, coverages):
-            files = self.platform.get_files(sim, [f"config.json", "campaign.json",
-                                                  "stdout.txt"])
+            files = self.platform.get_files(sim, ["config.json", "campaign.json", "stdout.txt"])
 
-            config_file = json.loads(files[f"config.json"].decode("utf-8"))
-            assert("campaign.json"==config_file["parameters"]["Campaign_Filename"])
-            assert(1==config_file["parameters"]["Enable_Interventions"])
+            config_file = json.loads(files["config.json"].decode("utf-8"))
+            assert ("campaign.json" == config_file["parameters"]["Campaign_Filename"])
+            assert (1 == config_file["parameters"]["Enable_Interventions"])
 
             # verify that Demographic_Coverage is updated with builder.add_sweep_definition() and Start_Day should
             # not changed
             campaign_file = json.loads(files["campaign.json"].decode("utf-8"))
-            assert(len(campaign_file["Events"])==1)
-            assert(campaign_file["Events"][0]["Event_Coordinator_Config"]["Demographic_Coverage"]==coverage)
-            assert(campaign_file["Events"][0]["Event_Coordinator_Config"]["Intervention_Config"]["class"]=="SimpleVaccine")
+            assert (len(campaign_file["Events"]) == 1)
+            assert (campaign_file["Events"][0]["Event_Coordinator_Config"]["Demographic_Coverage"] == coverage)
+            assert (campaign_file["Events"][0]["Event_Coordinator_Config"]["Intervention_Config"]["class"] == "SimpleVaccine")
 
             # verify simulation tag
-            assert("Demographic_Coverage" in sim.tags)
-            assert(sim.tags["Demographic_Coverage"]==coverage)
+            assert ("Demographic_Coverage" in sim.tags)
+            assert (sim.tags["Demographic_Coverage"] == coverage)
 
             stdout = files["stdout.txt"].decode("utf-8")
-            assert("'Vaccine' interventions at node" in stdout)
+            assert ("'Vaccine' interventions at node" in stdout)
 
     def test_campaign_sweeping_test_1(self):
         def update_vaccine_coverage(simulation, coverage):
@@ -176,7 +173,7 @@ class TestWorkflowCampaign():
 
     def test_campaign_sweeping_test_2(self):
         def update_vaccine_coverage(simulation, coverage):
-            sweep_vaccine_coverage = partial(self.builders.campaign_builder,  demographic_coverage=coverage)
+            sweep_vaccine_coverage = partial(self.builders.campaign_builder, demographic_coverage=coverage)
             simulation.task.create_campaign_from_callback(sweep_vaccine_coverage)
             return {"Demographic_Coverage": coverage}  # optional, for tag in Comps
 
@@ -195,6 +192,7 @@ class TestWorkflowCampaign():
         vaccine_box_duration = 57
 
         config_name = "config.json"
+
         def config_builder_builtin(config):
             config = self.builders.config_builder(config)
             config.parameters.Enable_Demographics_Builtin = 1
@@ -208,25 +206,25 @@ class TestWorkflowCampaign():
                                       schema_path=self.builders.schema_path,
                                       config_builder=config_builder_builtin)
 
-        assert(isinstance(task.campaign, EMODCampaign))
-        assert(len(task.campaign.events)==1)
-        assert(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["Vaccine_Take"]==vaccine_take)
-        assert(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["Waning_Config"]["Box_Duration"]==vaccine_box_duration)
-        assert(task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["class"]=="SimpleVaccine")
+        assert (isinstance(task.campaign, EMODCampaign))
+        assert (len(task.campaign.events) == 1)
+        assert (task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["Vaccine_Take"] == vaccine_take)
+        assert (task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["Waning_Config"]["Box_Duration"] == vaccine_box_duration)
+        assert (task.campaign.events[0]["Event_Coordinator_Config"]["Intervention_Config"]["class"] == "SimpleVaccine")
 
         experiment = self.run_exp(task)
         sim = experiment.simulations[0]
         files = self.platform.get_files(sim, [config_name, "campaign.json", "stdout.txt"])
 
         config_file = json.loads(files[config_name].decode("utf-8"))
-        assert("campaign.json"==config_file["parameters"]["Campaign_Filename"])
-        assert(1==config_file["parameters"]["Enable_Interventions"])
+        assert ("campaign.json" == config_file["parameters"]["Campaign_Filename"])
+        assert (1 == config_file["parameters"]["Enable_Interventions"])
 
         campaign_file = json.loads(files["campaign.json"].decode("utf-8"))
-        assert(len(campaign_file["Events"])==1)
+        assert (len(campaign_file["Events"]) == 1)
 
         stdout = files["stdout.txt"].decode("utf-8")
-        assert("'Vaccine' interventions at node" in stdout)
+        assert ("'Vaccine' interventions at node" in stdout)
 
     def test_scheduled_and_triggered_from_defaults(self):
         """
@@ -260,6 +258,7 @@ class TestWorkflowCampaign():
         timestep_be = 3
 
         config_name = "config.json"
+
         def config_builder_builtin(config):
             config = self.builders.config_builder(config)
             config.parameters.Enable_Demographics_Builtin = 1
@@ -273,28 +272,24 @@ class TestWorkflowCampaign():
                                       schema_path=self.builders.schema_path,
                                       config_builder=config_builder_builtin,
                                       report_builder=partial(build_reporter, trigger_name=test_trigger_name))
-        assert(isinstance(task.campaign, EMODCampaign))
-        assert(len(task.campaign.events)==2)
-        assert(task.campaign.events[0]['Start_Day']==timestep_be)
-        assert(task.campaign.events[0]['Event_Coordinator_Config']['Intervention_Config']['class']=='DelayedIntervention')
-        assert(task.campaign.events[0]['Event_Coordinator_Config']['Intervention_Config']['Delay_Period_Constant']==1)
+        assert (isinstance(task.campaign, EMODCampaign))
+        assert (len(task.campaign.events) == 2)
+        assert (task.campaign.events[0]['Start_Day'] == timestep_be)
+        assert (task.campaign.events[0]['Event_Coordinator_Config']['Intervention_Config']['class'] == 'DelayedIntervention')
+        assert (task.campaign.events[0]['Event_Coordinator_Config']['Intervention_Config']['Delay_Period_Constant'] == 1)
 
-        actual_interventions = task.campaign.events[0]['Event_Coordinator_Config']['Intervention_Config'][
-            'Actual_IndividualIntervention_Configs']
-        assert(len(actual_interventions)==2)
-        assert(actual_interventions[0]['class']=='BroadcastEvent')
-        assert(actual_interventions[0]['Broadcast_Event']=='GP_EVENT_000')
-        assert(actual_interventions[1]['class']=='BroadcastEvent')
-        assert(actual_interventions[1]['Broadcast_Event']=='GP_EVENT_001')
-        assert(task.campaign.events[1]['Start_Day']==timestep)
-        assert(task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config']['class']=='NodeLevelHealthTriggeredIV')
-        assert(task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config'][
-                             'Actual_NodeIntervention_Config']['class']=="ImportPressure")
-        assert(task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config']['Trigger_Condition_List']==["GP_EVENT_000"])
-        assert(task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config'][
-               'Actual_NodeIntervention_Config']['Daily_Import_Pressures']==daily_import_pressures)
-        assert(task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config'][
-               'Actual_NodeIntervention_Config']['Durations']==durations)
+        actual_interventions = task.campaign.events[0]['Event_Coordinator_Config']['Intervention_Config']['Actual_IndividualIntervention_Configs']
+        assert (len(actual_interventions) == 2)
+        assert (actual_interventions[0]['class'] == 'BroadcastEvent')
+        assert (actual_interventions[0]['Broadcast_Event'] == 'GP_EVENT_000')
+        assert (actual_interventions[1]['class'] == 'BroadcastEvent')
+        assert (actual_interventions[1]['Broadcast_Event'] == 'GP_EVENT_001')
+        assert (task.campaign.events[1]['Start_Day'] == timestep)
+        assert (task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config']['class'] == 'NodeLevelHealthTriggeredIV')
+        assert (task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config']['Actual_NodeIntervention_Config']['class'] == "ImportPressure")
+        assert (task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config']['Trigger_Condition_List'] == ["GP_EVENT_000"])
+        assert (task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config']['Actual_NodeIntervention_Config']['Daily_Import_Pressures'] == daily_import_pressures)
+        assert (task.campaign.events[1]['Event_Coordinator_Config']['Intervention_Config']['Actual_NodeIntervention_Config']['Durations'] == durations)
 
         experiment = self.run_exp(task)
 
@@ -302,15 +297,15 @@ class TestWorkflowCampaign():
             files = self.platform.get_files(sim, [config_name, "campaign.json", "stdout.txt"])
 
             config_file = json.loads(files[config_name].decode("utf-8"))
-            assert("campaign.json"==config_file["parameters"]["Campaign_Filename"])
-            assert(1==config_file["parameters"]["Enable_Interventions"])
-            assert([test_trigger_name]==config_file["parameters"]["Report_Event_Recorder_Events"])
+            assert ("campaign.json" == config_file["parameters"]["Campaign_Filename"])
+            assert (1 == config_file["parameters"]["Enable_Interventions"])
+            assert ([test_trigger_name] == config_file["parameters"]["Report_Event_Recorder_Events"])
             campaign_file = json.loads(files["campaign.json"].decode("utf-8"))
-            assert(len(campaign_file["Events"])==2)
+            assert (len(campaign_file["Events"]) == 2)
 
             stdout = files["stdout.txt"].decode("utf-8")
-            assert("Distributed 'ImportPressure' intervention to node 1" in stdout)
-            assert("'DelayedIntervention' interventions at node" in stdout)
+            assert ("Distributed 'ImportPressure' intervention to node 1" in stdout)
+            assert ("'DelayedIntervention' interventions at node" in stdout)
 
     def test_campaign_and_demographics_sweep(self):
         """
@@ -344,12 +339,6 @@ class TestWorkflowCampaign():
                                       demographics_builder=None)
 
         builder = SimulationBuilder()
-        # this will sweep over the entire parameter space in a cross-product fashion
-        # you will get 2x3x2 simulations
-        aliens_distribution_sweep = [[0, 0, 1], [0.5, 0.5, 0]],
-        initial_population_sweep = [1000, 700, 200],
-        vaccine_coverage_sweep = [0.3, 0.5]
-
         builder.add_multiple_parameter_sweep_definition(
             update_demographics_and_campaign,
             dict(
@@ -361,8 +350,8 @@ class TestWorkflowCampaign():
         experiment = Experiment.from_builder(builder, task, name=self.case_name)
         experiment.run(platform=self.platform, wait_until_done=True)
 
-        assert(experiment.succeeded)
-        assert(len(experiment.simulations)==12)
+        assert (experiment.succeeded)
+        assert (len(experiment.simulations) == 12)
         expected_combos = list(itertools.product([[0, 0, 1], [0.5, 0.5, 0]], [1000, 700, 200],
                                                  [0.3, 0.5]))
         # num of simulations should be the same as the length of sweeping parameters
@@ -370,13 +359,13 @@ class TestWorkflowCampaign():
         for sim in experiment.simulations:
             files = self.platform.get_files(sim, ["config.json", "campaign.json", "stdout.txt"])
             config_file = json.loads(files["config.json"].decode("utf-8"))
-            assert("campaign.json"==config_file["parameters"]["Campaign_Filename"])
-            assert(1==config_file["parameters"]["Enable_Interventions"])
+            assert ("campaign.json" == config_file["parameters"]["Campaign_Filename"])
+            assert (1 == config_file["parameters"]["Enable_Interventions"])
 
             campaign_file = json.loads(files["campaign.json"].decode("utf-8"))
-            assert(len(campaign_file["Events"])==1)
+            assert (len(campaign_file["Events"]) == 1)
             coverage = campaign_file["Events"][0]["Event_Coordinator_Config"]["Demographic_Coverage"]
-            assert(campaign_file["Events"][0]["Event_Coordinator_Config"]["Intervention_Config"]["class"]=="SimpleVaccine")
+            assert (campaign_file["Events"][0]["Event_Coordinator_Config"]["Intervention_Config"]["class"] == "SimpleVaccine")
 
             # get demographics file
             demographics_filename = config_file["parameters"]["Demographics_Filenames"][0]
@@ -386,18 +375,18 @@ class TestWorkflowCampaign():
             initial_population = demographics_file["Nodes"][0]["NodeAttributes"]["InitialPopulation"]
 
             # verify simulation tag
-            assert("vaccine_coverage" in sim.tags)
-            assert(sim.tags["vaccine_coverage"]==coverage)
-            assert("initial_population" in sim.tags)
-            assert(sim.tags["initial_population"]==initial_population)
-            assert("aliens_distribution" in sim.tags)
-            assert(sim.tags["aliens_distribution"]==aliens_distribution)
+            assert ("vaccine_coverage" in sim.tags)
+            assert (sim.tags["vaccine_coverage"] == coverage)
+            assert ("initial_population" in sim.tags)
+            assert (sim.tags["initial_population"] == initial_population)
+            assert ("aliens_distribution" in sim.tags)
+            assert (sim.tags["aliens_distribution"] == aliens_distribution)
             actual_combos.append((aliens_distribution, initial_population, coverage))
 
             stdout = files["stdout.txt"].decode("utf-8")
-            assert("'Vaccine' interventions at node" in stdout)
+            assert ("'Vaccine' interventions at node" in stdout)
 
-        assert(expected_combos==actual_combos)
+        assert (expected_combos == actual_combos)
 
     def test_campaign_no_sweep_others_sweep(self):
         """
@@ -439,22 +428,22 @@ class TestWorkflowCampaign():
         experiment = Experiment.from_builder(builder, task, name=self.case_name)
         experiment.run(platform=self.platform, wait_until_done=True)
 
-        assert(experiment.succeeded)
-        assert(len(experiment.simulations)==6)
+        assert (experiment.succeeded)
+        assert (len(experiment.simulations) == 6)
         expected_combos = list(itertools.product([[0, 0, 1], [0.5, 0.5, 0]], [1000, 700, 200]))
         # num of simulations should be the same as the length of sweeping parameters
         actual_combos = []
         for sim in experiment.simulations:
             files = self.platform.get_files(sim, ["config.json", "campaign.json", "stdout.txt"])
             config_file = json.loads(files["config.json"].decode("utf-8"))
-            assert("campaign.json"==config_file["parameters"]["Campaign_Filename"])
-            assert(1==config_file["parameters"]["Enable_Interventions"])
+            assert ("campaign.json" == config_file["parameters"]["Campaign_Filename"])
+            assert (1 == config_file["parameters"]["Enable_Interventions"])
 
             campaign_file = json.loads(files["campaign.json"].decode("utf-8"))
-            assert(len(campaign_file["Events"])==1)
+            assert (len(campaign_file["Events"]) == 1)
             coverage = campaign_file["Events"][0]["Event_Coordinator_Config"]["Demographic_Coverage"]
-            assert(campaign_file["Events"][0]["Event_Coordinator_Config"]["Intervention_Config"]["class"]=="SimpleVaccine")
-            assert(coverage==0.97)
+            assert (campaign_file["Events"][0]["Event_Coordinator_Config"]["Intervention_Config"]["class"] == "SimpleVaccine")
+            assert (coverage == 0.97)
 
             # get demographics file
             demographics_filename = config_file["parameters"]["Demographics_Filenames"][0]
@@ -464,16 +453,16 @@ class TestWorkflowCampaign():
             initial_population = demographics_file["Nodes"][0]["NodeAttributes"]["InitialPopulation"]
 
             # verify simulation tag
-            assert("initial_population" in sim.tags)
-            assert(sim.tags["initial_population"]==initial_population)
-            assert("aliens_distribution" in sim.tags)
-            assert(sim.tags["aliens_distribution"]==aliens_distribution)
+            assert ("initial_population" in sim.tags)
+            assert (sim.tags["initial_population"] == initial_population)
+            assert ("aliens_distribution" in sim.tags)
+            assert (sim.tags["aliens_distribution"] == aliens_distribution)
             actual_combos.append((aliens_distribution, initial_population))
 
             stdout = files["stdout.txt"].decode("utf-8")
-            assert("'Vaccine' interventions at node" in stdout)
+            assert ("'Vaccine' interventions at node" in stdout)
 
-        assert(expected_combos==actual_combos)
+        assert (expected_combos == actual_combos)
 
 
 @pytest.mark.container

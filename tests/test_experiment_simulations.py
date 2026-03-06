@@ -19,14 +19,8 @@ from idmtools.entities.experiment import Experiment
 from idmtools.entities.simulation import Simulation
 from idmtools.core.platform_factory import Platform
 
-from pathlib import Path
-import sys
-
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
-
-import manifest
-import helpers
+from tests import manifest
+from tests import helpers
 
 
 class TestExperimentSimulations:
@@ -63,7 +57,8 @@ class TestExperimentSimulations:
         self.case_name = request.node.name
         os.chdir(self.original_working_dir)
         self.test_folder = helpers.make_test_directory(self.case_name)  # Moves to failed test directory
-        self.platform = Platform(manifest.container_platform_name, num_retries=0, job_directory=self.test_folder)
+        self.platform = Platform(manifest.container_platform_name, job_directory=self.test_folder,
+                                 docker_image=manifest.container_platform_image, num_retries=0)
 
         self.setup_custom_params()
 

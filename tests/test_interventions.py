@@ -1,4 +1,6 @@
 import os.path
+import pytest
+
 from emodpy.campaign.base_intervention import IndividualIntervention, NodeIntervention
 from emodpy.campaign.individual_intervention import (BroadcastEvent, BroadcastEventToOtherNodes,
                                                      ControlledVaccine, DelayedIntervention, IVCalendar, IndividualImmunityChanger,
@@ -7,7 +9,7 @@ from emodpy.campaign.individual_intervention import (BroadcastEvent, BroadcastEv
                                                      OutbreakIndividual, PropertyValueChanger, SimpleBoosterVaccine,
                                                      _SimpleDiagnostic, _SimpleHealthSeekingBehavior, SimpleVaccine,
                                                      StandardDiagnostic)
-from emodpy.campaign.node_intervention import (MultiNodeInterventionDistributor, _NodeLevelHealthTriggeredIV, _BirthTriggeredIV,
+from emodpy.campaign.node_intervention import (MultiNodeInterventionDistributor, _NodeLevelHealthTriggeredIV,
                                                _BroadcastCoordinatorEventFromNode, BroadcastNodeEvent, ImportPressure,
                                                MigrateFamily, NodePropertyValueChanger, Outbreak)
 from emodpy.utils.emod_enum import NodeSelectionType, VaccineType, EventOrConfig
@@ -19,16 +21,10 @@ from emodpy.utils.distributions import (ExponentialDistribution, PoissonDistribu
 from emodpy.utils.targeting_config import IsPregnant
 from emod_api import campaign as api_campaign
 
-from pathlib import Path
-import sys
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
-import manifest
-import helpers
-import pytest
+from tests import manifest
 
 
-@ pytest.mark.unit
+@pytest.mark.unit
 class TestIndividualIntervention():
     if not os.path.isfile(manifest.hiv_eradication_path):
         import emod_hiv.bootstrap as dtk
@@ -55,7 +51,7 @@ class TestIndividualIntervention():
         This method test the initialization of the Intervention class.
         Each subtest classes should override this function for its own.
         """
-        assert(self.intervention_dict['class']==self.intervention_class_name)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
     def assert_common_parameters(self,
@@ -67,15 +63,15 @@ class TestIndividualIntervention():
                                  new_property_value=None):
 
         if cost is not None:
-            assert(intervention_dict.Cost_To_Consumer==cost)
+            assert (intervention_dict.Cost_To_Consumer == cost)
         if disqualifying_properties is not None:
-            assert(intervention_dict.Disqualifying_Properties==disqualifying_properties)
+            assert (intervention_dict.Disqualifying_Properties == disqualifying_properties)
         if dont_allow_duplicates is not None:
-            assert(intervention_dict.Dont_Allow_Duplicates==dont_allow_duplicates)
+            assert (intervention_dict.Dont_Allow_Duplicates == dont_allow_duplicates)
         if intervention_name is not None:
-            assert(intervention_dict.Intervention_Name==intervention_name)
+            assert (intervention_dict.Intervention_Name == intervention_name)
         if new_property_value is not None:
-            assert(intervention_dict.New_Property_Value==new_property_value)
+            assert (intervention_dict.New_Property_Value == new_property_value)
 
     def test_set_cost(self):
         """
@@ -84,7 +80,7 @@ class TestIndividualIntervention():
         """
         cost = 10.0
         self.intervention._set_cost(cost)
-        assert(self.intervention_dict.Cost_To_Consumer==cost)
+        assert (self.intervention_dict.Cost_To_Consumer == cost)
 
     def test_set_disqualifying_properties(self):
         """
@@ -93,10 +89,10 @@ class TestIndividualIntervention():
         """
         disqualifying_properties = ['age:30']
         self.intervention._set_disqualifying_properties(disqualifying_properties)
-        assert(self.intervention_dict.Disqualifying_Properties==disqualifying_properties)
+        assert (self.intervention_dict.Disqualifying_Properties == disqualifying_properties)
         disqualifying_properties_2 = [' age : 30 ']
         self.intervention._set_disqualifying_properties(disqualifying_properties_2)
-        assert(self.intervention_dict.Disqualifying_Properties==disqualifying_properties)
+        assert (self.intervention_dict.Disqualifying_Properties == disqualifying_properties)
 
     def test_set_dont_allow_duplicates(self):
         """
@@ -104,7 +100,7 @@ class TestIndividualIntervention():
         Each subtest classes will run this test automatically unless it's overridden.
         """
         self.intervention._set_dont_allow_duplicates(True)
-        assert(self.intervention_dict.Dont_Allow_Duplicates)
+        assert (self.intervention_dict.Dont_Allow_Duplicates)
 
     def test_set_intervention_name(self):
         """
@@ -113,21 +109,20 @@ class TestIndividualIntervention():
         """
         intervention_name = 'TestName'
         self.intervention._set_intervention_name(intervention_name)
-        assert(self.intervention_dict.Intervention_Name==intervention_name)
+        assert (self.intervention_dict.Intervention_Name == intervention_name)
 
     def test_get_intervention_name(self):
         """
         This method test the get_intervention_name method of the IndividualIntervention class.
         Each subtest classes will run this test automatically unless it's overridden.
         """
-        assert(self.intervention.get_intervention_name()==self.custom_intervention_name)
+        assert (self.intervention.get_intervention_name() == self.custom_intervention_name)
 
     def assert_get_intervention_name(self):
         """
         This method test the Warning raised when the intervention name is not a valid parameter, it only runs when it's explicitly called.
         """
         pytest.warns(Warning, self.intervention.get_intervention_name)
-
 
     def test_set_new_property_value(self):
         """
@@ -136,10 +131,10 @@ class TestIndividualIntervention():
         """
         new_property_value = 'Risk:High'
         self.intervention._set_new_property_value(new_property_value)
-        assert(self.intervention_dict.New_Property_Value==new_property_value)
+        assert (self.intervention_dict.New_Property_Value == new_property_value)
         new_property_value_2 = ' Risk : High '
         self.intervention._set_new_property_value(new_property_value_2)
-        assert(self.intervention_dict.New_Property_Value==new_property_value)
+        assert (self.intervention_dict.New_Property_Value == new_property_value)
 
     def assert_set_cost(self):
         """
@@ -148,7 +143,7 @@ class TestIndividualIntervention():
         cost = 10.0
         with pytest.raises(Exception) as e_info:
             self.intervention._set_cost(cost)
-        assert('not a valid parameter' in str(e_info))
+        assert ('not a valid parameter' in str(e_info))
 
     def assert_set_disqualifying_properties(self):
         """
@@ -157,7 +152,7 @@ class TestIndividualIntervention():
         disqualifying_properties = ['age:30']
         with pytest.raises(Exception) as e_info:
             self.intervention._set_disqualifying_properties(disqualifying_properties)
-        assert('not a valid parameter' in str(e_info))
+        assert ('not a valid parameter' in str(e_info))
 
     def assert_set_dont_allow_duplicates(self):
         """
@@ -165,7 +160,7 @@ class TestIndividualIntervention():
         """
         with pytest.raises(Exception) as e_info:
             self.intervention._set_dont_allow_duplicates(True)
-        assert('not a valid parameter' in str(e_info))
+        assert ('not a valid parameter' in str(e_info))
 
     def assert_set_intervention_name(self):
         """
@@ -174,7 +169,7 @@ class TestIndividualIntervention():
         intervention_name = 'TestName'
         with pytest.raises(Exception) as e_info:
             self.intervention._set_intervention_name(intervention_name)
-        assert('not a valid parameter' in str(e_info))
+        assert ('not a valid parameter' in str(e_info))
 
     def assert_set_new_property_value(self):
         """
@@ -183,7 +178,7 @@ class TestIndividualIntervention():
         new_property_value = 'Risk:High'
         with pytest.raises(Exception) as e_info:
             self.intervention._set_new_property_value(new_property_value)
-        assert('not a valid parameter' in str(e_info))
+        assert ('not a valid parameter' in str(e_info))
 
 
 @pytest.mark.unit
@@ -202,19 +197,19 @@ class TestBroadcastEvent(TestIndividualIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_name)
-        assert(self.intervention_dict.Broadcast_Event==self.broadcast_event)
-        self.assert_common_parameters(self.intervention_dict,None, ['age:20'], True, 'TestName', 'Risk:High')
+        assert (self.intervention_dict['class'] == self.intervention_name)
+        assert (self.intervention_dict.Broadcast_Event == self.broadcast_event)
+        self.assert_common_parameters(self.intervention_dict, None, ['age:20'], True, 'TestName', 'Risk:High')
 
     def test_no_commom_parameters(self):
         intervention = BroadcastEvent(self.campaign, self.broadcast_event)
         intervention_dict = intervention.to_schema_dict()
-        assert(intervention_dict['class']==self.intervention_name)
-        assert(intervention_dict.Broadcast_Event==self.broadcast_event)
-        assert(intervention_dict.Disqualifying_Properties==[])
-        assert(not intervention_dict.Dont_Allow_Duplicates)
-        assert(intervention_dict.Intervention_Name==self.intervention_name)
-        assert(intervention_dict.New_Property_Value=='')
+        assert (intervention_dict['class'] == self.intervention_name)
+        assert (intervention_dict.Broadcast_Event == self.broadcast_event)
+        assert (intervention_dict.Disqualifying_Properties == [])
+        assert (not intervention_dict.Dont_Allow_Duplicates)
+        assert (intervention_dict.Intervention_Name == self.intervention_name)
+        assert (intervention_dict.New_Property_Value == '')
 
     def test_set_cost(self):
         self.assert_set_cost()
@@ -241,11 +236,11 @@ class TestBroadcastEventToOtherNodes(TestIndividualIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']=='BroadcastEventToOtherNodes')
-        assert(self.intervention_dict.Event_Trigger==self.broadcast_event)
-        assert(self.intervention_dict.Node_Selection_Type==NodeSelectionType.DISTANCE_ONLY.value)
-        assert(self.intervention_dict.Max_Distance_To_Other_Nodes_Km==100)
-        assert(self.intervention_dict.Include_My_Node)
+        assert (self.intervention_dict['class'] == 'BroadcastEventToOtherNodes')
+        assert (self.intervention_dict.Event_Trigger == self.broadcast_event)
+        assert (self.intervention_dict.Node_Selection_Type == NodeSelectionType.DISTANCE_ONLY.value)
+        assert (self.intervention_dict.Max_Distance_To_Other_Nodes_Km == 100)
+        assert (self.intervention_dict.Include_My_Node)
         self.assert_common_parameters(self.intervention_dict, None, ['age:20'], True, 'TestName', 'Risk:High')
 
     def test_init_Migration(self):
@@ -253,10 +248,10 @@ class TestBroadcastEventToOtherNodes(TestIndividualIntervention):
                                                   node_selection_type=NodeSelectionType.MIGRATION_NODES_ONLY,
                                                   include_my_node=False)
         intervention_dict = intervention.to_schema_dict()
-        assert(intervention_dict['class']==self.intervention_name)
-        assert(intervention_dict.Event_Trigger==self.broadcast_event)
-        assert(intervention_dict.Node_Selection_Type==NodeSelectionType.MIGRATION_NODES_ONLY.value)
-        assert(not intervention_dict.Include_My_Node)
+        assert (intervention_dict['class'] == self.intervention_name)
+        assert (intervention_dict.Event_Trigger == self.broadcast_event)
+        assert (intervention_dict.Node_Selection_Type == NodeSelectionType.MIGRATION_NODES_ONLY.value)
+        assert (not intervention_dict.Include_My_Node)
 
     def test_set_cost(self):
         self.assert_set_cost()
@@ -282,16 +277,16 @@ class TestControlledVaccine(TestIndividualIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Waning_Config=={'Box_Duration': 50,
-                                                      'Initial_Effect': 0.3,
-                                                      'class': 'WaningEffectBox'})
-        assert(self.intervention_dict.Vaccine_Type==VaccineType.AcquisitionBlocking.value)
-        assert(self.intervention_dict.Vaccine_Take==0.9)
-        assert(self.intervention_dict.Expired_Event_Trigger=='Vaccine_expired')
-        assert(not self.intervention_dict.Efficacy_Is_Multiplicative)
-        assert(self.intervention_dict.Duration_To_Wait_Before_Revaccination==365)
-        assert(self.intervention_dict.Distributed_Event_Trigger=='Vaccine_distributed')
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Waning_Config == {'Box_Duration': 50,
+                                                         'Initial_Effect': 0.3,
+                                                         'class': 'WaningEffectBox'})
+        assert (self.intervention_dict.Vaccine_Type == VaccineType.AcquisitionBlocking.value)
+        assert (self.intervention_dict.Vaccine_Take == 0.9)
+        assert (self.intervention_dict.Expired_Event_Trigger == 'Vaccine_expired')
+        assert (not self.intervention_dict.Efficacy_Is_Multiplicative)
+        assert (self.intervention_dict.Duration_To_Wait_Before_Revaccination == 365)
+        assert (self.intervention_dict.Distributed_Event_Trigger == 'Vaccine_distributed')
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
@@ -314,12 +309,12 @@ class TestDelayedIntervention(TestIndividualIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(len(self.intervention_dict.Actual_IndividualIntervention_Configs)==1)
-        assert(self.intervention_dict.Actual_IndividualIntervention_Configs[0]['class']=='BroadcastEvent')
-        assert(self.intervention_dict.Delay_Period_Distribution=='EXPONENTIAL_DISTRIBUTION')
-        assert(self.intervention_dict.Delay_Period_Exponential==180)
-        assert(self.intervention_dict.Coverage==1.0)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (len(self.intervention_dict.Actual_IndividualIntervention_Configs) == 1)
+        assert (self.intervention_dict.Actual_IndividualIntervention_Configs[0]['class'] == 'BroadcastEvent')
+        assert (self.intervention_dict.Delay_Period_Distribution == 'EXPONENTIAL_DISTRIBUTION')
+        assert (self.intervention_dict.Delay_Period_Exponential == 180)
+        assert (self.intervention_dict.Coverage == 1.0)
         self.assert_common_parameters(self.intervention_dict, None, ['age:20'], True, 'TestName', 'Risk:High')
 
     def test_constant_delay(self):
@@ -328,12 +323,12 @@ class TestDelayedIntervention(TestIndividualIntervention):
                                            intervention_to_distribute_at_delay_completion=[inv_to_distribute],
                                            delay_period_distribution=ConstantDistribution(365))
         intervention_dict = intervention.to_schema_dict()
-        assert(intervention_dict['class']==self.intervention_class_name)
-        assert(len(intervention_dict.Actual_IndividualIntervention_Configs)==1)
-        assert(intervention_dict.Actual_IndividualIntervention_Configs[0]['class']=='BroadcastEvent')
-        assert(intervention_dict.Delay_Period_Distribution=='CONSTANT_DISTRIBUTION')
-        assert(intervention_dict.Delay_Period_Constant==365)
-        assert(intervention_dict.Coverage==1.0)
+        assert (intervention_dict['class'] == self.intervention_class_name)
+        assert (len(intervention_dict.Actual_IndividualIntervention_Configs) == 1)
+        assert (intervention_dict.Actual_IndividualIntervention_Configs[0]['class'] == 'BroadcastEvent')
+        assert (intervention_dict.Delay_Period_Distribution == 'CONSTANT_DISTRIBUTION')
+        assert (intervention_dict.Delay_Period_Constant == 365)
+        assert (intervention_dict.Coverage == 1.0)
 
     def test_uniform_delay(self):
         inv_to_distribute = BroadcastEvent(self.campaign, 'TestEvent')
@@ -341,11 +336,11 @@ class TestDelayedIntervention(TestIndividualIntervention):
                                            intervention_to_distribute_at_delay_completion=inv_to_distribute,
                                            delay_period_distribution=UniformDistribution(180, 365))
         intervention_dict = intervention.to_schema_dict()
-        assert(len(intervention_dict.Actual_IndividualIntervention_Configs)==1)
-        assert(intervention_dict.Actual_IndividualIntervention_Configs[0]['class']=='BroadcastEvent')
-        assert(intervention_dict.Delay_Period_Distribution=='UNIFORM_DISTRIBUTION')
-        assert(intervention_dict.Delay_Period_Min==180)
-        assert(intervention_dict.Delay_Period_Max==365)
+        assert (len(intervention_dict.Actual_IndividualIntervention_Configs) == 1)
+        assert (intervention_dict.Actual_IndividualIntervention_Configs[0]['class'] == 'BroadcastEvent')
+        assert (intervention_dict.Delay_Period_Distribution == 'UNIFORM_DISTRIBUTION')
+        assert (intervention_dict.Delay_Period_Min == 180)
+        assert (intervention_dict.Delay_Period_Max == 365)
 
     def test_lognormal_delay(self):
         inv_to_distribute = BroadcastEvent(self.campaign, 'TestEvent')
@@ -353,9 +348,9 @@ class TestDelayedIntervention(TestIndividualIntervention):
                                            intervention_to_distribute_at_delay_completion=[inv_to_distribute],
                                            delay_period_distribution=LogNormalDistribution(180, 0.5))
         intervention_dict = intervention.to_schema_dict()
-        assert(intervention_dict.Delay_Period_Distribution=='LOG_NORMAL_DISTRIBUTION')
-        assert(intervention_dict.Delay_Period_Log_Normal_Mu==180)
-        assert(intervention_dict.Delay_Period_Log_Normal_Sigma==0.5)
+        assert (intervention_dict.Delay_Period_Distribution == 'LOG_NORMAL_DISTRIBUTION')
+        assert (intervention_dict.Delay_Period_Log_Normal_Mu == 180)
+        assert (intervention_dict.Delay_Period_Log_Normal_Sigma == 0.5)
 
     def test_gaussian_delay(self):
         inv_to_distribute = BroadcastEvent(self.campaign, 'TestEvent')
@@ -363,9 +358,9 @@ class TestDelayedIntervention(TestIndividualIntervention):
                                            intervention_to_distribute_at_delay_completion=[inv_to_distribute],
                                            delay_period_distribution=GaussianDistribution(180, 0.5))
         intervention_dict = intervention.to_schema_dict()
-        assert(intervention_dict.Delay_Period_Distribution=='GAUSSIAN_DISTRIBUTION')
-        assert(intervention_dict.Delay_Period_Gaussian_Mean==180)
-        assert(intervention_dict.Delay_Period_Gaussian_Std_Dev==0.5)
+        assert (intervention_dict.Delay_Period_Distribution == 'GAUSSIAN_DISTRIBUTION')
+        assert (intervention_dict.Delay_Period_Gaussian_Mean == 180)
+        assert (intervention_dict.Delay_Period_Gaussian_Std_Dev == 0.5)
 
     def test_weibull_delay(self):
         inv_to_distribute = BroadcastEvent(self.campaign, 'TestEvent')
@@ -373,9 +368,9 @@ class TestDelayedIntervention(TestIndividualIntervention):
                                            intervention_to_distribute_at_delay_completion=[inv_to_distribute],
                                            delay_period_distribution=WeibullDistribution(180, 0.5))
         intervention_dict = intervention.to_schema_dict()
-        assert(intervention_dict.Delay_Period_Distribution=='WEIBULL_DISTRIBUTION')
-        assert(intervention_dict.Delay_Period_Kappa==180)
-        assert(intervention_dict.Delay_Period_Lambda==0.5)
+        assert (intervention_dict.Delay_Period_Distribution == 'WEIBULL_DISTRIBUTION')
+        assert (intervention_dict.Delay_Period_Kappa == 180)
+        assert (intervention_dict.Delay_Period_Lambda == 0.5)
 
     def test_poisson_delay(self):
         inv_to_distribute = BroadcastEvent(self.campaign, 'TestEvent')
@@ -383,8 +378,8 @@ class TestDelayedIntervention(TestIndividualIntervention):
                                            intervention_to_distribute_at_delay_completion=[inv_to_distribute],
                                            delay_period_distribution=PoissonDistribution(180))
         intervention_dict = intervention.to_schema_dict()
-        assert(intervention_dict.Delay_Period_Distribution=='POISSON_DISTRIBUTION')
-        assert(intervention_dict.Delay_Period_Poisson_Mean==180)
+        assert (intervention_dict.Delay_Period_Distribution == 'POISSON_DISTRIBUTION')
+        assert (intervention_dict.Delay_Period_Poisson_Mean == 180)
 
     def test_dual_constant_delay(self):
         inv_to_distribute = BroadcastEvent(self.campaign, 'TestEvent')
@@ -392,9 +387,9 @@ class TestDelayedIntervention(TestIndividualIntervention):
                                            intervention_to_distribute_at_delay_completion=[inv_to_distribute],
                                            delay_period_distribution=DualConstantDistribution(0.4, 365))
         intervention_dict = intervention.to_schema_dict()
-        assert(intervention_dict.Delay_Period_Distribution=='DUAL_CONSTANT_DISTRIBUTION')
-        assert(intervention_dict.Delay_Period_Proportion_0==0.4)
-        assert(intervention_dict.Delay_Period_Peak_2_Value==365)
+        assert (intervention_dict.Delay_Period_Distribution == 'DUAL_CONSTANT_DISTRIBUTION')
+        assert (intervention_dict.Delay_Period_Proportion_0 == 0.4)
+        assert (intervention_dict.Delay_Period_Peak_2_Value == 365)
 
     def test_dual_exponential_delay(self):
         inv_to_distribute = BroadcastEvent(self.campaign, 'TestEvent')
@@ -402,10 +397,10 @@ class TestDelayedIntervention(TestIndividualIntervention):
                                            intervention_to_distribute_at_delay_completion=[inv_to_distribute],
                                            delay_period_distribution=DualExponentialDistribution(0.2, 365, 730))
         intervention_dict = intervention.to_schema_dict()
-        assert(intervention_dict.Delay_Period_Distribution=='DUAL_EXPONENTIAL_DISTRIBUTION')
-        assert(intervention_dict.Delay_Period_Proportion_1==0.2)
-        assert(intervention_dict.Delay_Period_Mean_1==365)
-        assert(intervention_dict.Delay_Period_Mean_2==730)
+        assert (intervention_dict.Delay_Period_Distribution == 'DUAL_EXPONENTIAL_DISTRIBUTION')
+        assert (intervention_dict.Delay_Period_Proportion_1 == 0.2)
+        assert (intervention_dict.Delay_Period_Mean_1 == 365)
+        assert (intervention_dict.Delay_Period_Mean_2 == 730)
 
     def test_delay_with_multi_iv(self):
         inv_be = BroadcastEvent(self.campaign, 'TestEvent')
@@ -414,12 +409,12 @@ class TestDelayedIntervention(TestIndividualIntervention):
                                            intervention_to_distribute_at_delay_completion=[inv_be, inv_oi],
                                            delay_period_distribution=DualExponentialDistribution(0.2, 365, 730))
         intervention_dict = intervention.to_schema_dict()
-        assert(intervention_dict.Delay_Period_Distribution=='DUAL_EXPONENTIAL_DISTRIBUTION')
-        assert(intervention_dict.Delay_Period_Proportion_1==0.2)
-        assert(intervention_dict.Delay_Period_Mean_1==365)
-        assert(intervention_dict.Delay_Period_Mean_2==730)
-        assert(intervention_dict.Actual_IndividualIntervention_Configs[0]['class']=='BroadcastEvent')
-        assert(intervention_dict.Actual_IndividualIntervention_Configs[1]['class']=='OutbreakIndividual')
+        assert (intervention_dict.Delay_Period_Distribution == 'DUAL_EXPONENTIAL_DISTRIBUTION')
+        assert (intervention_dict.Delay_Period_Proportion_1 == 0.2)
+        assert (intervention_dict.Delay_Period_Mean_1 == 365)
+        assert (intervention_dict.Delay_Period_Mean_2 == 730)
+        assert (intervention_dict.Actual_IndividualIntervention_Configs[0]['class'] == 'BroadcastEvent')
+        assert (intervention_dict.Actual_IndividualIntervention_Configs[1]['class'] == 'OutbreakIndividual')
 
     def test_set_cost(self):
         self.assert_set_cost()
@@ -452,18 +447,18 @@ class TestIVCalendar(TestIndividualIntervention):
         self.custom_intervention_name = self.intervention_class_name
 
     def test_init(self):
-        assert(self.intervention_class_name==self.intervention_dict['class'])
-        assert(len(self.intervention_dict.Calendar)==3)
-        assert(self.intervention_dict.Calendar[0].Age==1)
-        assert(self.intervention_dict.Calendar[1].Age==180)
-        assert(self.intervention_dict.Calendar[2].Age==365)
-        assert(self.intervention_dict.Calendar[0].Probability==1.00)
-        assert(self.intervention_dict.Calendar[1].Probability==0.50)
-        assert(self.intervention_dict.Calendar[2].Probability==0.25)
-        assert(len(self.intervention_dict.Actual_IndividualIntervention_Configs)==1)
-        assert(self.intervention_dict.Actual_IndividualIntervention_Configs[0]['class']=='SimpleVaccine')
-        assert(self.intervention_dict.Actual_IndividualIntervention_Configs[0].Vaccine_Type==VaccineType.AcquisitionBlocking)
-        assert(self.intervention_dict.Actual_IndividualIntervention_Configs[0].Vaccine_Take==0.99)
+        assert (self.intervention_class_name == self.intervention_dict['class'])
+        assert (len(self.intervention_dict.Calendar) == 3)
+        assert (self.intervention_dict.Calendar[0].Age == 1)
+        assert (self.intervention_dict.Calendar[1].Age == 180)
+        assert (self.intervention_dict.Calendar[2].Age == 365)
+        assert (self.intervention_dict.Calendar[0].Probability == 1.00)
+        assert (self.intervention_dict.Calendar[1].Probability == 0.50)
+        assert (self.intervention_dict.Calendar[2].Probability == 0.25)
+        assert (len(self.intervention_dict.Actual_IndividualIntervention_Configs) == 1)
+        assert (self.intervention_dict.Actual_IndividualIntervention_Configs[0]['class'] == 'SimpleVaccine')
+        assert (self.intervention_dict.Actual_IndividualIntervention_Configs[0].Vaccine_Type == VaccineType.AcquisitionBlocking)
+        assert (self.intervention_dict.Actual_IndividualIntervention_Configs[0].Vaccine_Take == 0.99)
 
     def test_set_cost(self):
         self.assert_set_cost()
@@ -492,17 +487,17 @@ class TestIndividualImmunityChanger(TestIndividualIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Prime_Transmit==0.1)
-        assert(self.intervention_dict.Prime_Acquire==0.3)
-        assert(self.intervention_dict.Prime_Mortality==0.5)
-        assert(self.intervention_dict.Boost_Transmit==0.2)
-        assert(self.intervention_dict.Boost_Acquire==0.4)
-        assert(self.intervention_dict.Boost_Mortality==0.6)
-        assert(self.intervention_dict.Boost_Threshold_Transmit==0.7)
-        assert(self.intervention_dict.Boost_Threshold_Acquire==0.8)
-        assert(self.intervention_dict.Boost_Threshold_Mortality==0.9)
-        assert(self.intervention_dict.Cost_To_Consumer==1.5)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Prime_Transmit == 0.1)
+        assert (self.intervention_dict.Prime_Acquire == 0.3)
+        assert (self.intervention_dict.Prime_Mortality == 0.5)
+        assert (self.intervention_dict.Boost_Transmit == 0.2)
+        assert (self.intervention_dict.Boost_Acquire == 0.4)
+        assert (self.intervention_dict.Boost_Mortality == 0.6)
+        assert (self.intervention_dict.Boost_Threshold_Transmit == 0.7)
+        assert (self.intervention_dict.Boost_Threshold_Acquire == 0.8)
+        assert (self.intervention_dict.Boost_Threshold_Mortality == 0.9)
+        assert (self.intervention_dict.Cost_To_Consumer == 1.5)
 
     def test_set_disqualifying_properties(self):
         self.assert_set_disqualifying_properties()
@@ -537,12 +532,12 @@ class TestIndividualNonDiseaseDeathRateModifier(TestIndividualIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Duration_To_Modifier.Times==[0, 365])
-        assert(self.intervention_dict.Duration_To_Modifier.Values==[1, 2])
-        assert(self.intervention_dict.Expiration_Event=='Expired')
-        assert(self.intervention_dict.Expiration_Duration_Distribution=='POISSON_DISTRIBUTION')
-        assert(self.intervention_dict.Expiration_Duration_Poisson_Mean==4)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Duration_To_Modifier.Times == [0, 365])
+        assert (self.intervention_dict.Duration_To_Modifier.Values == [1, 2])
+        assert (self.intervention_dict.Expiration_Event == 'Expired')
+        assert (self.intervention_dict.Expiration_Duration_Distribution == 'POISSON_DISTRIBUTION')
+        assert (self.intervention_dict.Expiration_Duration_Poisson_Mean == 4)
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
@@ -567,14 +562,14 @@ class TestMigrateIndividuals(TestIndividualIntervention):
         self.custom_intervention_name = 'TestName2'
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.NodeID_To_Migrate_To==1)
-        assert(not self.intervention_dict.Is_Moving)
-        assert(self.intervention_dict.Duration_Before_Leaving_Distribution=='GAUSSIAN_DISTRIBUTION')
-        assert(self.intervention_dict.Duration_Before_Leaving_Gaussian_Mean==30)
-        assert(self.intervention_dict.Duration_Before_Leaving_Gaussian_Std_Dev==0.5)
-        assert(self.intervention_dict.Duration_At_Node_Distribution=='CONSTANT_DISTRIBUTION')
-        assert(self.intervention_dict.Duration_At_Node_Constant==365)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.NodeID_To_Migrate_To == 1)
+        assert (not self.intervention_dict.Is_Moving)
+        assert (self.intervention_dict.Duration_Before_Leaving_Distribution == 'GAUSSIAN_DISTRIBUTION')
+        assert (self.intervention_dict.Duration_Before_Leaving_Gaussian_Mean == 30)
+        assert (self.intervention_dict.Duration_Before_Leaving_Gaussian_Std_Dev == 0.5)
+        assert (self.intervention_dict.Duration_At_Node_Distribution == 'CONSTANT_DISTRIBUTION')
+        assert (self.intervention_dict.Duration_At_Node_Constant == 365)
         self.assert_common_parameters(self.intervention_dict, None, ['age:50'], False, 'TestName2', 'Risk:Low')
 
     def test_set_cost(self):
@@ -612,29 +607,29 @@ class TestMultiEffectBoosterVaccine(TestIndividualIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Transmit_Config=={'Initial_Effect': 0.1,
-                                                        'class': 'WaningEffectConstant'})
-        assert(self.intervention_dict.Acquire_Config=={'class': 'WaningEffectMapLinear',
-                                                       'Durability_Map': {'Times': [0, 365],
-                                                                          'Values': [1, 0.5]},
-                                                       'Expire_At_Durability_Map_End': 1,
-                                                       'Initial_Effect': 0.2,
-                                                       'Reference_Timer': 0})  # todo: Reference_Timer is not used, remove it after we remove it from the schema
-        assert(self.intervention_dict.Mortality_Config=={'Initial_Effect': 0.3,
-                                                         'Box_Duration': 365,
-                                                         'Decay_Time_Constant': 0.1,
-                                                         'class': 'WaningEffectBoxExponential'})
-        assert(self.intervention_dict.Vaccine_Take==0.7)
-        assert(self.intervention_dict.Prime_Acquire==0.8)
-        assert(self.intervention_dict.Prime_Transmit==0.9)
-        assert(self.intervention_dict.Prime_Mortality==1.0)
-        assert(self.intervention_dict.Boost_Acquire==0.1)
-        assert(self.intervention_dict.Boost_Transmit==0.6)
-        assert(self.intervention_dict.Boost_Mortality==0.3)
-        assert(self.intervention_dict.Boost_Threshold_Acquire==0.4)
-        assert(self.intervention_dict.Boost_Threshold_Transmit==0.5)
-        assert(self.intervention_dict.Boost_Threshold_Mortality==0.6)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Transmit_Config == {'Initial_Effect': 0.1,
+                                                           'class': 'WaningEffectConstant'})
+        assert (self.intervention_dict.Acquire_Config == {'class': 'WaningEffectMapLinear',
+                                                          'Durability_Map': {'Times': [0, 365],
+                                                                             'Values': [1, 0.5]},
+                                                          'Expire_At_Durability_Map_End': 1,
+                                                          'Initial_Effect': 0.2,
+                                                          'Reference_Timer': 0})  # todo: Reference_Timer is not used, remove it after we remove it from the schema
+        assert (self.intervention_dict.Mortality_Config == {'Initial_Effect': 0.3,
+                                                            'Box_Duration': 365,
+                                                            'Decay_Time_Constant': 0.1,
+                                                            'class': 'WaningEffectBoxExponential'})
+        assert (self.intervention_dict.Vaccine_Take == 0.7)
+        assert (self.intervention_dict.Prime_Acquire == 0.8)
+        assert (self.intervention_dict.Prime_Transmit == 0.9)
+        assert (self.intervention_dict.Prime_Mortality == 1.0)
+        assert (self.intervention_dict.Boost_Acquire == 0.1)
+        assert (self.intervention_dict.Boost_Transmit == 0.6)
+        assert (self.intervention_dict.Boost_Mortality == 0.3)
+        assert (self.intervention_dict.Boost_Threshold_Acquire == 0.4)
+        assert (self.intervention_dict.Boost_Threshold_Transmit == 0.5)
+        assert (self.intervention_dict.Boost_Threshold_Mortality == 0.6)
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
@@ -660,19 +655,19 @@ class TestMultiEffectVaccine(TestIndividualIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Transmit_Config=={'Decay_Time_Constant': 10,
-                                                        'Initial_Effect': 0.1,
-                                                        'class': 'WaningEffectExponential'})
-        assert(self.intervention_dict.Acquire_Config=={'class': 'WaningEffectMapLinearAge',
-                                                       'Durability_Map': {'Times': [0, 30, 60],
-                                                                          'Values': [1, 0.5, 0.2]},
-                                                       'Initial_Effect': 0.3})
-        assert(self.intervention_dict.Mortality_Config=={'class': 'WaningEffectMapLinearSeasonal',
-                                                         'Durability_Map': {'Times': [0, 365],
-                                                                            'Values': [1, 0.5]},
-                                                         'Initial_Effect': 0.4})
-        assert(self.intervention_dict.Vaccine_Take==0.7)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Transmit_Config == {'Decay_Time_Constant': 10,
+                                                           'Initial_Effect': 0.1,
+                                                           'class': 'WaningEffectExponential'})
+        assert (self.intervention_dict.Acquire_Config == {'class': 'WaningEffectMapLinearAge',
+                                                          'Durability_Map': {'Times': [0, 30, 60],
+                                                                             'Values': [1, 0.5, 0.2]},
+                                                          'Initial_Effect': 0.3})
+        assert (self.intervention_dict.Mortality_Config == {'class': 'WaningEffectMapLinearSeasonal',
+                                                            'Durability_Map': {'Times': [0, 365],
+                                                                               'Values': [1, 0.5]},
+                                                            'Initial_Effect': 0.4})
+        assert (self.intervention_dict.Vaccine_Take == 0.7)
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
@@ -688,17 +683,15 @@ class TestMultiInterventionDistributor(TestIndividualIntervention):
                                                                            intervention_name='TestName3',
                                                                            new_property_value='Risk:Low')
         self.intervention = MultiInterventionDistributor(self.campaign,
-                                                         intervention_list=
-                                                         [BroadcastEvent(self.campaign, 'TestEvent'),
-                                                          IndividualImmunityChanger(self.campaign, prime_acquire=0.8)],
+                                                         intervention_list=[BroadcastEvent(self.campaign, 'TestEvent'), IndividualImmunityChanger(self.campaign, prime_acquire=0.8)],
                                                          common_intervention_parameters=self.common_intervention_parameters)
         self.intervention_dict = self.intervention.to_schema_dict()
         self.custom_intervention_name = 'TestName3'
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Intervention_List[0]['class']=='BroadcastEvent')
-        assert(self.intervention_dict.Intervention_List[1]['class']=='IndividualImmunityChanger')
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Intervention_List[0]['class'] == 'BroadcastEvent')
+        assert (self.intervention_dict.Intervention_List[1]['class'] == 'IndividualImmunityChanger')
         self.assert_common_parameters(self.intervention_dict, None, ['age:30'], False, 'TestName3', 'Risk:Low')
 
     def test_set_cost(self):
@@ -721,11 +714,11 @@ class TestOutbreakIndividual(TestIndividualIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Incubation_Period_Override==10)
-        assert(not self.intervention_dict.Ignore_Immunity)
-        assert(self.intervention_dict.Genome==1)
-        assert(self.intervention_dict.Antigen==2)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Incubation_Period_Override == 10)
+        assert (not self.intervention_dict.Ignore_Immunity)
+        assert (self.intervention_dict.Genome == 1)
+        assert (self.intervention_dict.Antigen == 2)
 
     def test_set_cost(self):
         self.assert_set_cost()
@@ -769,12 +762,12 @@ class TestPropertyValueChanger(TestIndividualIntervention):
         self.custom_intervention_name = 'TestName4'
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Target_Property_Value=="High")
-        assert(self.intervention_dict.Target_Property_Key=="Risk")
-        assert(self.intervention_dict.Revert==365)
-        assert(self.intervention_dict.Maximum_Duration==730)
-        assert(self.intervention_dict.Daily_Probability==0.8)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Target_Property_Value == "High")
+        assert (self.intervention_dict.Target_Property_Key == "Risk")
+        assert (self.intervention_dict.Revert == 365)
+        assert (self.intervention_dict.Maximum_Duration == 730)
+        assert (self.intervention_dict.Daily_Probability == 0.8)
         self.assert_common_parameters(self.intervention_dict, None, ['age:40'], False, 'TestName4', 'Risk:Low')
 
     def test_set_cost(self):
@@ -805,19 +798,19 @@ class TestSimpleBoosterVaccine(TestIndividualIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
         expected_waning_config = {'Effect_List': [{'Initial_Effect': 0.1, 'class': 'WaningEffectConstant'},
                                                   {'class': 'WaningEffectExponential', 'Decay_Time_Constant': 0.2, 'Initial_Effect': 0.5}],
                                   'Add_Effects': 1,
                                   'Expires_When_All_Expire': 1,
                                   'class': 'WaningEffectCombo'}
-        assert(self.intervention_dict.Waning_Config==expected_waning_config)
-        assert(self.intervention_dict.Vaccine_Type==VaccineType.TransmissionBlocking.value)
-        assert(self.intervention_dict.Vaccine_Take==0.9)
-        assert(self.intervention_dict.Prime_Effect==0.8)
-        assert(self.intervention_dict.Boost_Effect==0.7)
-        assert(not self.intervention_dict.Efficacy_Is_Multiplicative)
-        assert(self.intervention_dict.Boost_Threshold==0.6)
+        assert (self.intervention_dict.Waning_Config == expected_waning_config)
+        assert (self.intervention_dict.Vaccine_Type == VaccineType.TransmissionBlocking.value)
+        assert (self.intervention_dict.Vaccine_Take == 0.9)
+        assert (self.intervention_dict.Prime_Effect == 0.8)
+        assert (self.intervention_dict.Boost_Effect == 0.7)
+        assert (not self.intervention_dict.Efficacy_Is_Multiplicative)
+        assert (self.intervention_dict.Boost_Threshold == 0.6)
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
@@ -840,14 +833,14 @@ class TestSimpleDiagnostic(TestIndividualIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Positive_Diagnosis_Config['class']=='BroadcastEvent')
-        assert(self.intervention_dict.Treatment_Fraction==0.9)
-        assert(self.intervention_dict.Event_Or_Config==EventOrConfig.Config)
-        assert(self.intervention_dict.Enable_Is_Symptomatic)
-        assert(self.intervention_dict.Days_To_Diagnosis==4)
-        assert(self.intervention_dict.Base_Sensitivity==0.9)
-        assert(self.intervention_dict.Base_Specificity==0.95)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Positive_Diagnosis_Config['class'] == 'BroadcastEvent')
+        assert (self.intervention_dict.Treatment_Fraction == 0.9)
+        assert (self.intervention_dict.Event_Or_Config == EventOrConfig.Config)
+        assert (self.intervention_dict.Enable_Is_Symptomatic)
+        assert (self.intervention_dict.Days_To_Diagnosis == 4)
+        assert (self.intervention_dict.Base_Sensitivity == 0.9)
+        assert (self.intervention_dict.Base_Specificity == 0.95)
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
     def test_init_event(self):
@@ -860,31 +853,31 @@ class TestSimpleDiagnostic(TestIndividualIntervention):
                                          base_specificity=0.97
                                          )
         intervention_dict = intervention.to_schema_dict()
-        assert(intervention_dict['class']==self.intervention_class_name)
-        assert(intervention_dict.Positive_Diagnosis_Event=='PositiveDiagnosis')
-        assert(intervention_dict.Treatment_Fraction==0.99)
-        assert(intervention_dict.Event_Or_Config==EventOrConfig.Event)
-        assert(not intervention_dict.Enable_Is_Symptomatic)
-        assert(intervention_dict.Days_To_Diagnosis==3)
-        assert(intervention_dict.Base_Sensitivity==0.98)
-        assert(intervention_dict.Base_Specificity==0.97)
+        assert (intervention_dict['class'] == self.intervention_class_name)
+        assert (intervention_dict.Positive_Diagnosis_Event == 'PositiveDiagnosis')
+        assert (intervention_dict.Treatment_Fraction == 0.99)
+        assert (intervention_dict.Event_Or_Config == EventOrConfig.Event)
+        assert (not intervention_dict.Enable_Is_Symptomatic)
+        assert (intervention_dict.Days_To_Diagnosis == 3)
+        assert (intervention_dict.Base_Sensitivity == 0.98)
+        assert (intervention_dict.Base_Specificity == 0.97)
 
     def test_init_no_commom_intervention(self):
         intervention = _SimpleDiagnostic(self.campaign, positive_diagnosis_event='PositiveDiagnosis')
         intervention_dict = intervention.to_schema_dict()
-        assert(intervention_dict['class']==self.intervention_class_name)
-        assert(intervention_dict.Positive_Diagnosis_Event=='PositiveDiagnosis')
-        assert(intervention_dict.Treatment_Fraction==1)
-        assert(intervention_dict.Event_Or_Config==EventOrConfig.Event)
-        assert(not intervention_dict.Enable_Is_Symptomatic)
-        assert(intervention_dict.Days_To_Diagnosis==0)
-        assert(intervention_dict.Base_Sensitivity==1)
-        assert(intervention_dict.Base_Specificity==1)
-        assert(intervention_dict.Cost_To_Consumer==1)
-        assert(intervention_dict.Disqualifying_Properties==[])
-        assert(not intervention_dict.Dont_Allow_Duplicates)
-        assert(intervention_dict.Intervention_Name==self.intervention_class_name)
-        assert(intervention_dict.New_Property_Value=='')
+        assert (intervention_dict['class'] == self.intervention_class_name)
+        assert (intervention_dict.Positive_Diagnosis_Event == 'PositiveDiagnosis')
+        assert (intervention_dict.Treatment_Fraction == 1)
+        assert (intervention_dict.Event_Or_Config == EventOrConfig.Event)
+        assert (not intervention_dict.Enable_Is_Symptomatic)
+        assert (intervention_dict.Days_To_Diagnosis == 0)
+        assert (intervention_dict.Base_Sensitivity == 1)
+        assert (intervention_dict.Base_Specificity == 1)
+        assert (intervention_dict.Cost_To_Consumer == 1)
+        assert (intervention_dict.Disqualifying_Properties == [])
+        assert (not intervention_dict.Dont_Allow_Duplicates)
+        assert (intervention_dict.Intervention_Name == self.intervention_class_name)
+        assert (intervention_dict.New_Property_Value == '')
 
 
 @pytest.mark.unit
@@ -894,28 +887,25 @@ class TestSimpleHealthSeekingBehavior(TestIndividualIntervention):
     def run_every_test(self, request) -> None:
         # Pre-test
         self.intervention_class_name = 'SimpleHealthSeekingBehavior'
-        self.common_intervention_parameters= CommonInterventionParameters(disqualifying_properties=['age:50'],
-                                                                          dont_allow_duplicates=False,
-                                                                          intervention_name='TestName5',
-                                                                          new_property_value='Risk:Low')
+        self.common_intervention_parameters = CommonInterventionParameters(disqualifying_properties=['age:50'],
+                                                                           dont_allow_duplicates=False,
+                                                                           intervention_name='TestName5',
+                                                                           new_property_value='Risk:Low')
         self.intervention = _SimpleHealthSeekingBehavior(self.campaign,
-                                                         intervention_config=
-                                                         BroadcastEvent(self.campaign,
-                                                                        "SeekHealthTreatment"),
+                                                         intervention_config=BroadcastEvent(self.campaign, "SeekHealthTreatment"),
                                                          tendency=0.8,
                                                          single_use=False,
-                                                         common_intervention_parameters=self.common_intervention_parameters
-                                                         )
+                                                         common_intervention_parameters=self.common_intervention_parameters)
         self.intervention_dict = self.intervention.to_schema_dict()
         self.custom_intervention_name = 'TestName5'
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Actual_IndividualIntervention_Config['class']=='BroadcastEvent')
-        assert(self.intervention_dict.Actual_IndividualIntervention_Config.Broadcast_Event=='SeekHealthTreatment')
-        assert(self.intervention_dict.Tendency==0.8)
-        assert(not self.intervention_dict.Single_Use)
-        assert(self.intervention_dict.Event_Or_Config==EventOrConfig.Config)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Actual_IndividualIntervention_Config['class'] == 'BroadcastEvent')
+        assert (self.intervention_dict.Actual_IndividualIntervention_Config.Broadcast_Event == 'SeekHealthTreatment')
+        assert (self.intervention_dict.Tendency == 0.8)
+        assert (not self.intervention_dict.Single_Use)
+        assert (self.intervention_dict.Event_Or_Config == EventOrConfig.Config)
         self.assert_common_parameters(self.intervention_dict, None, ['age:50'], False, 'TestName5', 'Risk:Low')
 
     def test_init_event(self):
@@ -925,11 +915,11 @@ class TestSimpleHealthSeekingBehavior(TestIndividualIntervention):
                                                     single_use=True
                                                     )
         self.intervention_dict = intervention.to_schema_dict()
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Actual_IndividualIntervention_Event=="SeekHealthTreatment")
-        assert(self.intervention_dict.Tendency==0.9)
-        assert(self.intervention_dict.Single_Use)
-        assert(self.intervention_dict.Event_Or_Config==EventOrConfig.Event)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Actual_IndividualIntervention_Event == "SeekHealthTreatment")
+        assert (self.intervention_dict.Tendency == 0.9)
+        assert (self.intervention_dict.Single_Use)
+        assert (self.intervention_dict.Event_Or_Config == EventOrConfig.Event)
 
     def test_set_cost(self):
         self.assert_set_cost()
@@ -954,16 +944,16 @@ class TestSimpleVaccine(TestIndividualIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Waning_Config=={'class': 'WaningEffectMapPiecewise',
-                                                      'Durability_Map': {'Times': [0, 365],
-                                                                         'Values': [1, 0.5]},
-                                                      'Expire_At_Durability_Map_End': 1,
-                                                      'Initial_Effect': 0.2,
-                                                      'Reference_Timer': 0})  # todo: Reference_Timer is not used, remove it after we remove it from the schema
-        assert(self.intervention_dict.Vaccine_Type==VaccineType.AcquisitionBlocking.value)
-        assert(self.intervention_dict.Vaccine_Take==0.9)
-        assert(not self.intervention_dict.Efficacy_Is_Multiplicative)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Waning_Config == {'class': 'WaningEffectMapPiecewise',
+                                                         'Durability_Map': {'Times': [0, 365],
+                                                                            'Values': [1, 0.5]},
+                                                         'Expire_At_Durability_Map_End': 1,
+                                                         'Initial_Effect': 0.2,
+                                                         'Reference_Timer': 0})  # todo: Reference_Timer is not used, remove it after we remove it from the schema
+        assert (self.intervention_dict.Vaccine_Type == VaccineType.AcquisitionBlocking.value)
+        assert (self.intervention_dict.Vaccine_Take == 0.9)
+        assert (not self.intervention_dict.Efficacy_Is_Multiplicative)
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
@@ -987,17 +977,17 @@ class TestStandardDiagnostic(TestIndividualIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Positive_Diagnosis_Config['class']=='BroadcastEvent')
-        assert(self.intervention_dict.Positive_Diagnosis_Config.Broadcast_Event=='PositiveDiagnosis')
-        assert(self.intervention_dict.Negative_Diagnosis_Config['class']=='BroadcastEvent')
-        assert(self.intervention_dict.Negative_Diagnosis_Config.Broadcast_Event=='NegativeDiagnosis')
-        assert(self.intervention_dict.Event_Or_Config==EventOrConfig.Config)
-        assert(self.intervention_dict.Enable_Is_Symptomatic)
-        assert(self.intervention_dict.Days_To_Diagnosis==4)
-        assert(self.intervention_dict.Base_Sensitivity==0.9)
-        assert(self.intervention_dict.Base_Specificity==0.95)
-        assert(self.intervention_dict.Treatment_Fraction==0.89)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Positive_Diagnosis_Config['class'] == 'BroadcastEvent')
+        assert (self.intervention_dict.Positive_Diagnosis_Config.Broadcast_Event == 'PositiveDiagnosis')
+        assert (self.intervention_dict.Negative_Diagnosis_Config['class'] == 'BroadcastEvent')
+        assert (self.intervention_dict.Negative_Diagnosis_Config.Broadcast_Event == 'NegativeDiagnosis')
+        assert (self.intervention_dict.Event_Or_Config == EventOrConfig.Config)
+        assert (self.intervention_dict.Enable_Is_Symptomatic)
+        assert (self.intervention_dict.Days_To_Diagnosis == 4)
+        assert (self.intervention_dict.Base_Sensitivity == 0.9)
+        assert (self.intervention_dict.Base_Specificity == 0.95)
+        assert (self.intervention_dict.Treatment_Fraction == 0.89)
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
     def test_init_event(self):
@@ -1010,15 +1000,15 @@ class TestStandardDiagnostic(TestIndividualIntervention):
                                           base_specificity=0.97
                                           )
         self.intervention_dict = intervention.to_schema_dict()
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Positive_Diagnosis_Event=='PositiveDiagnosis')
-        assert(self.intervention_dict.Negative_Diagnosis_Event=='NegativeDiagnosis')
-        assert(self.intervention_dict.Event_Or_Config==EventOrConfig.Event)
-        assert(not self.intervention_dict.Enable_Is_Symptomatic)
-        assert(self.intervention_dict.Days_To_Diagnosis==3)
-        assert(self.intervention_dict.Base_Sensitivity==0.98)
-        assert(self.intervention_dict.Base_Specificity==0.97)
-        assert(self.intervention_dict.Treatment_Fraction==1)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Positive_Diagnosis_Event == 'PositiveDiagnosis')
+        assert (self.intervention_dict.Negative_Diagnosis_Event == 'NegativeDiagnosis')
+        assert (self.intervention_dict.Event_Or_Config == EventOrConfig.Event)
+        assert (not self.intervention_dict.Enable_Is_Symptomatic)
+        assert (self.intervention_dict.Days_To_Diagnosis == 3)
+        assert (self.intervention_dict.Base_Sensitivity == 0.98)
+        assert (self.intervention_dict.Base_Specificity == 0.97)
+        assert (self.intervention_dict.Treatment_Fraction == 1)
 
     def test_init_positive_event(self):
         intervention = StandardDiagnostic(self.campaign,
@@ -1029,14 +1019,14 @@ class TestStandardDiagnostic(TestIndividualIntervention):
                                           base_specificity=0.66
                                           )
         self.intervention_dict = intervention.to_schema_dict()
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Positive_Diagnosis_Event=='PositiveDiagnosis')
-        assert(self.intervention_dict.Negative_Diagnosis_Event=='')
-        assert(self.intervention_dict.Event_Or_Config==EventOrConfig.Event)
-        assert(not self.intervention_dict.Enable_Is_Symptomatic)
-        assert(self.intervention_dict.Days_To_Diagnosis==4)
-        assert(self.intervention_dict.Base_Sensitivity==0.77)
-        assert(self.intervention_dict.Base_Specificity==0.66)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Positive_Diagnosis_Event == 'PositiveDiagnosis')
+        assert (self.intervention_dict.Negative_Diagnosis_Event == '')
+        assert (self.intervention_dict.Event_Or_Config == EventOrConfig.Event)
+        assert (not self.intervention_dict.Enable_Is_Symptomatic)
+        assert (self.intervention_dict.Days_To_Diagnosis == 4)
+        assert (self.intervention_dict.Base_Sensitivity == 0.77)
+        assert (self.intervention_dict.Base_Specificity == 0.66)
 
     def test_init_positive_config(self):
         intervention = StandardDiagnostic(self.campaign,
@@ -1048,15 +1038,15 @@ class TestStandardDiagnostic(TestIndividualIntervention):
                                           common_intervention_parameters=self.common_intervention_parameters
                                           )
         self.intervention_dict = intervention.to_schema_dict()
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Positive_Diagnosis_Config['class']=='BroadcastEvent')
-        assert(self.intervention_dict.Positive_Diagnosis_Config.Broadcast_Event=='PositiveDiagnosis')
-        assert(self.intervention_dict.Negative_Diagnosis_Config=={})
-        assert(self.intervention_dict.Event_Or_Config==EventOrConfig.Config)
-        assert(self.intervention_dict.Enable_Is_Symptomatic)
-        assert(self.intervention_dict.Days_To_Diagnosis==4)
-        assert(self.intervention_dict.Base_Sensitivity==0.9)
-        assert(self.intervention_dict.Base_Specificity==0.95)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Positive_Diagnosis_Config['class'] == 'BroadcastEvent')
+        assert (self.intervention_dict.Positive_Diagnosis_Config.Broadcast_Event == 'PositiveDiagnosis')
+        assert (self.intervention_dict.Negative_Diagnosis_Config == {})
+        assert (self.intervention_dict.Event_Or_Config == EventOrConfig.Config)
+        assert (self.intervention_dict.Enable_Is_Symptomatic)
+        assert (self.intervention_dict.Days_To_Diagnosis == 4)
+        assert (self.intervention_dict.Base_Sensitivity == 0.9)
+        assert (self.intervention_dict.Base_Specificity == 0.95)
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
@@ -1092,15 +1082,13 @@ class TestMultiNodeInterventionDistributor(TestNodeIntervention):
                                                                            new_property_value='Risk:High')
         self.intervention = MultiNodeInterventionDistributor(self.campaign,
                                                              node_intervention_list=intervention_list,
-                                                             common_intervention_parameters=
-                                                             self.common_intervention_parameters
-                                                             )
+                                                             common_intervention_parameters=self.common_intervention_parameters)
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Node_Intervention_List[0]['class']=='Outbreak')
-        assert(self.intervention_dict.Node_Intervention_List[1]['class']=='BroadcastNodeEvent')
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Node_Intervention_List[0]['class'] == 'Outbreak')
+        assert (self.intervention_dict.Node_Intervention_List[1]['class'] == 'BroadcastNodeEvent')
         self.assert_common_parameters(self.intervention_dict, None, ['age:20'], True, 'TestName', 'Risk:High')
 
     def test_set_cost(self):
@@ -1116,15 +1104,14 @@ class TestNodeLevelHealthTriggeredIV(TestNodeIntervention):
         self.intervention_class_name = 'NodeLevelHealthTriggeredIV'
         self.intervention = _NodeLevelHealthTriggeredIV(self.campaign,
                                                         intervention_list=[Outbreak(self.campaign)],
-                                                        trigger_condition_list=["TestTrigger"]
-                                                       )
+                                                        trigger_condition_list=["TestTrigger"])
         self.intervention_dict = self.intervention.to_schema_dict()
         self.custom_intervention_name = self.intervention_class_name
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Actual_NodeIntervention_Config['class']=='Outbreak')
-        assert(self.intervention_dict.Trigger_Condition_List==["TestTrigger"])
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Actual_NodeIntervention_Config['class'] == 'Outbreak')
+        assert (self.intervention_dict.Trigger_Condition_List == ["TestTrigger"])
 
     def test_node_intervention(self):
         intervention = _NodeLevelHealthTriggeredIV(self.campaign,
@@ -1132,28 +1119,27 @@ class TestNodeLevelHealthTriggeredIV(TestNodeIntervention):
                                                    trigger_condition_list=["TestTrigger"]
                                                    )
         self.intervention_dict = intervention.to_schema_dict()
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Actual_IndividualIntervention_Config=={})
-        assert(self.intervention_dict.Actual_NodeIntervention_Config['class']=='Outbreak')
-        assert(self.intervention_dict.Trigger_Condition_List==["TestTrigger"])
-        assert(self.intervention_dict.Property_Restrictions_Within_Node==[])
-        assert(self.intervention_dict.Node_Property_Restrictions==[])
-        assert(self.intervention_dict.Targeting_Config=={})
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Actual_IndividualIntervention_Config == {})
+        assert (self.intervention_dict.Actual_NodeIntervention_Config['class'] == 'Outbreak')
+        assert (self.intervention_dict.Trigger_Condition_List == ["TestTrigger"])
+        assert (self.intervention_dict.Property_Restrictions_Within_Node == [])
+        assert (self.intervention_dict.Node_Property_Restrictions == [])
+        assert (self.intervention_dict.Targeting_Config == {})
 
     def test_multi_node_intervention(self):
         intervention = _NodeLevelHealthTriggeredIV(self.campaign,
                                                    intervention_list=[Outbreak(self.campaign),
-                                                                      BroadcastNodeEvent(self.campaign,
-                                                                                              'TestNodeEvent')],
+                                                                      BroadcastNodeEvent(self.campaign, 'TestNodeEvent')],
                                                    trigger_condition_list=["TestTrigger"]
                                                    )
         self.intervention_dict = intervention.to_schema_dict()
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Actual_IndividualIntervention_Config=={})
-        assert(self.intervention_dict.Actual_NodeIntervention_Config['class']=='MultiNodeInterventionDistributor')
-        assert(self.intervention_dict.Actual_NodeIntervention_Config.Node_Intervention_List[0]['class']=='Outbreak')
-        assert(self.intervention_dict.Actual_NodeIntervention_Config.Node_Intervention_List[1]['class']=='BroadcastNodeEvent')
-        assert(self.intervention_dict.Trigger_Condition_List==["TestTrigger"])
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Actual_IndividualIntervention_Config == {})
+        assert (self.intervention_dict.Actual_NodeIntervention_Config['class'] == 'MultiNodeInterventionDistributor')
+        assert (self.intervention_dict.Actual_NodeIntervention_Config.Node_Intervention_List[0]['class'] == 'Outbreak')
+        assert (self.intervention_dict.Actual_NodeIntervention_Config.Node_Intervention_List[1]['class'] == 'BroadcastNodeEvent')
+        assert (self.intervention_dict.Trigger_Condition_List == ["TestTrigger"])
 
     def test_individual_intervention(self):
         intervention = _NodeLevelHealthTriggeredIV(self.campaign,
@@ -1168,48 +1154,44 @@ class TestNodeLevelHealthTriggeredIV(TestNodeIntervention):
                                                        individual_property_restrictions=[["risk:HIGH"]]),
                                                    )
         self.intervention_dict = intervention.to_schema_dict()
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Actual_NodeIntervention_Config=={})
-        assert(self.intervention_dict.Actual_IndividualIntervention_Config['class']=='OutbreakIndividual')
-        assert(self.intervention_dict.Trigger_Condition_List==["TestTrigger"])
-        assert(self.intervention_dict.Demographic_Coverage==0.5)
-        assert(self.intervention_dict.Target_Age_Min==10)
-        assert(self.intervention_dict.Target_Age_Max==20)
-        assert(self.intervention_dict.Property_Restrictions_Within_Node==[{"risk": "HIGH"}])
-        assert(self.intervention_dict.Targeting_Config=={'Is_Equal_To': 0, 'class': 'IsPregnant'})
-
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Actual_NodeIntervention_Config == {})
+        assert (self.intervention_dict.Actual_IndividualIntervention_Config['class'] == 'OutbreakIndividual')
+        assert (self.intervention_dict.Trigger_Condition_List == ["TestTrigger"])
+        assert (self.intervention_dict.Demographic_Coverage == 0.5)
+        assert (self.intervention_dict.Target_Age_Min == 10)
+        assert (self.intervention_dict.Target_Age_Max == 20)
+        assert (self.intervention_dict.Property_Restrictions_Within_Node == [{"risk": "HIGH"}])
+        assert (self.intervention_dict.Targeting_Config == {'Is_Equal_To': 0, 'class': 'IsPregnant'})
 
     def test_multi_individual_intervention(self):
         intervention = _NodeLevelHealthTriggeredIV(self.campaign,
                                                    intervention_list=[OutbreakIndividual(self.campaign),
-                                                                      BroadcastEvent(self.campaign,
-                                                                                         'TestIndividualEvent')],
+                                                                      BroadcastEvent(self.campaign, 'TestIndividualEvent')],
                                                    trigger_condition_list=["TestTrigger"]
                                                    )
         intervention_dict = intervention.to_schema_dict()
-        assert(intervention_dict['class']==self.intervention_class_name)
-        assert(intervention_dict.Actual_NodeIntervention_Config=={})
-        assert(intervention_dict.Actual_IndividualIntervention_Config['class']=='MultiInterventionDistributor')
-        assert(intervention_dict.Actual_IndividualIntervention_Config.Intervention_List[0]['class']=='OutbreakIndividual')
-        assert(intervention_dict.Actual_IndividualIntervention_Config.Intervention_List[1]['class']=='BroadcastEvent')
-        assert(intervention_dict.Trigger_Condition_List==["TestTrigger"])
+        assert (intervention_dict['class'] == self.intervention_class_name)
+        assert (intervention_dict.Actual_NodeIntervention_Config == {})
+        assert (intervention_dict.Actual_IndividualIntervention_Config['class'] == 'MultiInterventionDistributor')
+        assert (intervention_dict.Actual_IndividualIntervention_Config.Intervention_List[0]['class'] == 'OutbreakIndividual')
+        assert (intervention_dict.Actual_IndividualIntervention_Config.Intervention_List[1]['class'] == 'BroadcastEvent')
+        assert (intervention_dict.Trigger_Condition_List == ["TestTrigger"])
 
     def test_set_cost(self):
         self.assert_set_cost()
 
     def test_node_intervention_individual_targeting(self):
         with pytest.raises(Exception) as e_info:
-            iv = _NodeLevelHealthTriggeredIV(self.campaign,
-                                             intervention_list=[Outbreak(self.campaign)],
-                                             trigger_condition_list=["TestTrigger"],
-                                             target_demographics_config=TargetDemographicsConfig(
-                                             demographic_coverage=0.5,
-                                             target_age_min=10,
-                                             target_age_max=20),
-                                             targeting_config=IsPregnant(),
-                                             property_restrictions=PropertyRestrictions(
-                                             individual_property_restrictions=[["risk:HIGH"]]))
-        assert('is a node-level intervention, so it will be distributed to nodes.' in str(e_info))
+            _NodeLevelHealthTriggeredIV(self.campaign,
+                                        intervention_list=[Outbreak(self.campaign)],
+                                        trigger_condition_list=["TestTrigger"],
+                                        target_demographics_config=TargetDemographicsConfig(demographic_coverage=0.5,
+                                                                                            target_age_min=10,
+                                                                                            target_age_max=20),
+                                        targeting_config=IsPregnant(),
+                                        property_restrictions=PropertyRestrictions(individual_property_restrictions=[["risk:HIGH"]]))
+        assert ('is a node-level intervention, so it will be distributed to nodes.' in str(e_info))
 
 
 @pytest.mark.unit
@@ -1224,13 +1206,12 @@ class TestBroadcastCoordinatorEventFromNode(TestNodeIntervention):
                                                                            intervention_name='TestName',
                                                                            new_property_value='Risk:High')
         self.intervention = _BroadcastCoordinatorEventFromNode(self.campaign, broadcast_event='TestEvent',
-                                                               common_intervention_parameters=
-                                                              self.common_intervention_parameters)
+                                                               common_intervention_parameters=self.common_intervention_parameters)
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Broadcast_Event=='TestEvent')
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Broadcast_Event == 'TestEvent')
         self.assert_common_parameters(self.intervention_dict, None, ['age:20'], True, 'TestName', 'Risk:High')
 
     def test_set_cost(self):
@@ -1245,13 +1226,12 @@ class TestBroadcastNodeEvent(TestNodeIntervention):
         # Pre-test
         self.intervention_class_name = 'BroadcastNodeEvent'
         self.intervention = BroadcastNodeEvent(self.campaign, broadcast_event='TestNodeEvent',
-                                               common_intervention_parameters=
-                                               self.common_intervention_parameters)
+                                               common_intervention_parameters=self.common_intervention_parameters)
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Broadcast_Event=='TestNodeEvent')
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Broadcast_Event == 'TestNodeEvent')
         self.assert_common_parameters(self.intervention_dict, 0.5, ['age:20'], True, 'TestName', 'Risk:High')
 
 
@@ -1267,12 +1247,12 @@ class TestImportPressure(TestNodeIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Import_Age==365)
-        assert(self.intervention_dict.Genome==0)
-        assert(self.intervention_dict.Durations==[30])
-        assert(self.intervention_dict.Daily_Import_Pressures==[0.1])
-        assert(self.intervention_dict.Antigen==1)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Import_Age == 365)
+        assert (self.intervention_dict.Genome == 0)
+        assert (self.intervention_dict.Durations == [30])
+        assert (self.intervention_dict.Daily_Import_Pressures == [0.1])
+        assert (self.intervention_dict.Antigen == 1)
 
     def test_set_cost(self):
         self.assert_set_cost()
@@ -1311,15 +1291,15 @@ class TestMigrateFamily(TestNodeIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.NodeID_To_Migrate_To==1)
-        assert(self.intervention_dict.Is_Moving)
-        assert(self.intervention_dict.Duration_Before_Leaving_Distribution=='LOG_NORMAL_DISTRIBUTION')
-        assert(self.intervention_dict.Duration_Before_Leaving_Log_Normal_Mu==30)
-        assert(self.intervention_dict.Duration_Before_Leaving_Log_Normal_Sigma==0.5)
-        assert(self.intervention_dict.Duration_At_Node_Distribution=='WEIBULL_DISTRIBUTION')
-        assert(self.intervention_dict.Duration_At_Node_Kappa==2)
-        assert(self.intervention_dict.Duration_At_Node_Lambda==4)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.NodeID_To_Migrate_To == 1)
+        assert (self.intervention_dict.Is_Moving)
+        assert (self.intervention_dict.Duration_Before_Leaving_Distribution == 'LOG_NORMAL_DISTRIBUTION')
+        assert (self.intervention_dict.Duration_Before_Leaving_Log_Normal_Mu == 30)
+        assert (self.intervention_dict.Duration_Before_Leaving_Log_Normal_Sigma == 0.5)
+        assert (self.intervention_dict.Duration_At_Node_Distribution == 'WEIBULL_DISTRIBUTION')
+        assert (self.intervention_dict.Duration_At_Node_Kappa == 2)
+        assert (self.intervention_dict.Duration_At_Node_Lambda == 4)
         self.assert_common_parameters(self.intervention_dict, None, ['age:20'], True, 'TestName', 'Risk:High')
 
     def test_set_cost(self):
@@ -1343,11 +1323,11 @@ class TestNodePropertyValueChanger(TestNodeIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Target_NP_Key_Value=="TestKey:TestValue")
-        assert(self.intervention_dict.Revert==365)
-        assert(self.intervention_dict.Maximum_Duration==730)
-        assert(self.intervention_dict.Daily_Probability==0.8)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Target_NP_Key_Value == "TestKey:TestValue")
+        assert (self.intervention_dict.Revert == 365)
+        assert (self.intervention_dict.Maximum_Duration == 730)
+        assert (self.intervention_dict.Daily_Probability == 0.8)
         self.assert_common_parameters(self.intervention_dict, None, ['age:20'], True, 'TestName', 'Risk:High')
 
     def test_set_cost(self):
@@ -1366,12 +1346,12 @@ class TestOutbreak(TestNodeIntervention):
         self.intervention_dict = self.intervention.to_schema_dict()
 
     def test_init(self):
-        assert(self.intervention_dict['class']==self.intervention_class_name)
-        assert(self.intervention_dict.Probability_Of_Infection==0.5)
-        assert(self.intervention_dict.Number_Cases_Per_Node==10)
-        assert(self.intervention_dict.Import_Age==365)
-        assert(self.intervention_dict.Genome==1)
-        assert(self.intervention_dict.Antigen==2)
+        assert (self.intervention_dict['class'] == self.intervention_class_name)
+        assert (self.intervention_dict.Probability_Of_Infection == 0.5)
+        assert (self.intervention_dict.Number_Cases_Per_Node == 10)
+        assert (self.intervention_dict.Import_Age == 365)
+        assert (self.intervention_dict.Genome == 1)
+        assert (self.intervention_dict.Antigen == 2)
 
     def test_set_cost(self):
         self.assert_set_cost()

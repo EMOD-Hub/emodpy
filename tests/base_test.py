@@ -1,17 +1,15 @@
 import os
 import unittest
 import pytest
-from pathlib import Path
-import sys
 import json
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
-import manifest
+
+from tests import manifest
 
 
 @pytest.mark.hiv
 class TestHIV(unittest.TestCase):
     is_base_class = False
+
     @classmethod
     def setUpClass(cls):
         if not os.path.isfile(manifest.hiv_eradication_path):
@@ -30,6 +28,7 @@ class TestHIV(unittest.TestCase):
 @pytest.mark.malaria
 class TestMalaria(unittest.TestCase):
     is_base_class = False
+
     @classmethod
     def setUpClass(cls):
         if not os.path.isfile(manifest.malaria_eradication_path):

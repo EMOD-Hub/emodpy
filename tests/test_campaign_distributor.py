@@ -1,10 +1,9 @@
 import os
-import sys
 import json
-from pathlib import Path
-import unittest
 import pytest
+
 from emod_api import campaign as api_campaign
+
 from emodpy.campaign.individual_intervention import BroadcastEvent, SimpleVaccine
 from emodpy.campaign.node_intervention import Outbreak
 
@@ -14,15 +13,14 @@ from emodpy.utils.distributions import UniformDistribution, ExponentialDistribut
 from emodpy.utils.targeting_config import IsPregnant
 from emodpy.campaign.waning_config import MapLinear
 
-
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
 from base_test import TestHIV, TestMalaria, BaseTestClass
-import manifest
-import helpers
+
+from tests import manifest
+from tests import helpers
 
 regression_folder = os.path.join(manifest.inputs_folder, 'campaigns', 'distributor_regression')
 output_folder = os.path.join(manifest.output_folder, 'campaign_distributor')
+
 if not os.path.exists(output_folder):
     os.makedirs(output_folder, exist_ok=True)
 
@@ -209,7 +207,7 @@ class BaseScheduledDistributorTest(BaseTestClass):
                                    event_name="test_event",
                                    node_ids=[1, 2, 3],
                                    repetition_config=RepetitionConfig(number_repetitions=2,
-                                                                        timesteps_between_repetitions=365),
+                                                                      timesteps_between_repetitions=365),
                                    property_restrictions=PropertyRestrictions(node_property_restrictions=[["Risk:High"]]))
         # Verify that the correct event was added to the campaign
         event = self.verify_campaign_event(self.start_day, self.start_year)
@@ -790,7 +788,6 @@ class BaseTriggeredDistributorTest(BaseTestClass):
         self.assertEqual(intervention_list[1]['class'], 'Outbreak')
         self.assertEqual(intervention_list[1].Number_Cases_Per_Node, 40)
 
-
         # Verify that the correct event was added to the campaign
         event = self.verify_campaign_event(self.start_day, self.start_year, event_index=1, num_events=2)
         # Verify that the correct event coordinator was added to the even
@@ -808,7 +805,6 @@ class BaseTriggeredDistributorTest(BaseTestClass):
         intervention_config = coordinator.Intervention_Config
         self.assertEqual(intervention_config['class'], 'BroadcastEvent')
         self.assertEqual(intervention_config.Broadcast_Event, 'Test_Event')
-
 
 
 @pytest.mark.unit
@@ -865,7 +861,3 @@ class TestDistributorMalariaByYear(TestMalaria):
                                        start_year=1990,
                                        duration=365)
         self.assertTrue('The start_year is not supported in this disease model, please use start_day' in str(context.exception))
-
-
-if __name__ == '__main__':
-    unittest.main()

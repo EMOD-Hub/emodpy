@@ -1,10 +1,5 @@
 import unittest
-from pathlib import Path
-import sys
-parent = Path(__file__).resolve().parent
-sys.path.append(str(parent))
-import manifest
-import helpers
+
 import os
 import pytest
 import time
@@ -13,13 +8,16 @@ from idmtools.entities.experiment import Experiment
 from idmtools.core.platform_factory import Platform
 from emodpy.emod_task import EMODTask, logger
 from idmtools.assets import AssetCollection
+
+from tests import manifest
+from tests import helpers
+
 """
     original, now resolved issue:
     https://github.com/InstituteforDiseaseModeling/emodpy-old/issues/139
-    
+
     Leaving this test for
     https://github.com/InstituteforDiseaseModeling/emodpy-old/issues/839
- 
 """
 
 """
@@ -45,7 +43,6 @@ class Test139(unittest.TestCase):
 
     def custom_setUp(self):
         self.builders = helpers.BuildersCommon
-
 
     def tearDown(self) -> None:
         # Check if the test failed and leave the data in the folder if it did
@@ -89,7 +86,3 @@ class Test139(unittest.TestCase):
 class Test139Generic(Test139):
     def custom_setUp(self):
         self.builders = helpers.BuildersGeneric
-
-
-if __name__ == '__main__':
-    unittest.main()

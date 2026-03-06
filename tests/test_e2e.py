@@ -32,7 +32,8 @@ class TestE2E():
         self.original_working_dir = os.getcwd()
         self.case_name = os.path.basename(__file__) + "_" + self.__class__.__name__ + "_" + request.node.name
         self.test_folder = helpers.make_test_directory(self.case_name)
-        self.platform = Platform(type=manifest.container_platform_name, job_directory=self.test_folder, num_retries=0)
+        self.platform = Platform(type=manifest.container_platform_name, job_directory=self.test_folder,
+                                 docker_image=manifest.container_platform_image, num_retries=0)
 
         # Run test
         yield

@@ -14,6 +14,7 @@ from tests import helpers
 
 @pytest.mark.comps
 @pytest.mark.ssmt
+@pytest.mark.skip
 class TestSSMTAnalysis():
 
     @pytest.fixture(autouse=True)

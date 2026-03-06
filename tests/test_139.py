@@ -86,7 +86,3 @@ class Test139(unittest.TestCase):
 class Test139Generic(Test139):
     def custom_setUp(self):
         self.builders = helpers.BuildersGeneric
-
-
-if __name__ == '__main__':
-    unittest.main()

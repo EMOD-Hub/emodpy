@@ -1065,7 +1065,8 @@ class TestReportersCommon(unittest.TestCase):
             return reporters
 
         os.chdir(self.original_working_dir)
-        platform = Platform(manifest.container_platform_name, job_directory=self.test_folder)
+        platform = Platform(manifest.container_platform_name, job_directory=self.test_folder,
+                            docker_image=manifest.container_platform_image, num_retries=0)
         os.chdir(self.test_folder)
         self.task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                            schema_path=self.builders.schema_path,

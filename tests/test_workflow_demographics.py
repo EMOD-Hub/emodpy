@@ -45,7 +45,8 @@ class TestWorkflowDemographics(unittest.TestCase):
         self.case_name = os.path.basename(__file__) + "_" + request.node.name
         self.original_working_dir = os.getcwd()
         self.test_folder = helpers.make_test_directory(self.case_name)
-        self.platform = Platform(manifest.container_platform_name, job_directory=self.test_folder)
+        self.platform = Platform(manifest.container_platform_name, job_directory=self.test_folder,
+                                 docker_image=manifest.container_platform_image, num_retries=0)
         self.set_builder()
 
         # Run test

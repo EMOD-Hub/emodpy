@@ -12,7 +12,6 @@ import emod_malaria.bootstrap as malaria_bootstrap
 
 @pytest.mark.container
 @pytest.mark.unit
-@pytest.mark.comps
 class TestDownloadFromPackage():
 
     @pytest.fixture(autouse=True)

@@ -37,7 +37,8 @@ class TestSerialization():
         self.task: EMODTask
         self.experiment: Experiment
         self.test_folder = helpers.make_test_directory(self.case_name)
-        self.platform = Platform(manifest.container_platform_name, job_directory=self.test_folder)
+        self.platform = Platform(manifest.container_platform_name, job_directory=self.test_folder,
+                                 docker_image=manifest.container_platform_image, num_retries=0)
         self.setup_custom_params()
 
         # Run test

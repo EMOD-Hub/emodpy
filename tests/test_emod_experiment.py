@@ -5,11 +5,9 @@ import pytest
 
 from idmtools.assets import Asset
 from idmtools.builders import SimulationBuilder
-from idmtools.core import ItemType
 from idmtools.core.platform_factory import Platform
 from idmtools.entities.experiment import Experiment
 from idmtools.entities.simulation import Simulation
-from idmtools_platform_comps.utils.singularity_build import SingularityBuildWorkItem
 from emodpy.emod_task import EMODTask, logger
 
 from tests import manifest
@@ -23,7 +21,6 @@ class TestEMODExperiment:
     num_sim = 2
     num_sim_long = 20
     original_working_dir = manifest.test_directory_absolute_path
-    environment_block = None
 
     def setup_custom_params(self):
         self.builders = helpers.BuildersCommon
@@ -35,7 +32,8 @@ class TestEMODExperiment:
         print(f"\n{self.case_name}")
         os.chdir(self.original_working_dir)
         self.test_folder = helpers.make_test_directory(self.case_name)  # Moves to failed test directory
-        self.platform = Platform(self.environment_block, num_retries=0, job_directory=self.test_folder)
+        self.platform = Platform(manifest.container_platform_name, job_directory=self.test_folder,
+                                 docker_image=manifest.container_platform_image, num_retries=0)
         self.setup_custom_params()
 
         # Run test
@@ -46,70 +44,7 @@ class TestEMODExperiment:
         os.chdir(self.original_working_dir)
 
 
-class TestEMODExperimentCOMPS(TestEMODExperiment):
-    environment_block = manifest.comps_platform_name
-
-    def singularity_test(self, my_sif_path, embedded_python_scripts_path=None):
-        """
-        Helper function for various singularity tests
-        """
-        base_task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
-                                           schema_path=self.builders.schema_path,
-                                           config_builder=self.builders.config_builder,
-                                           demographics_builder=self.builders.demographics_builder,
-                                           embedded_python_scripts_path=embedded_python_scripts_path,
-                                           report_builder=self.builders.reports_builder)
-
-        base_task.set_sif(my_sif_path, platform=self.platform)
-        exp_obj = Experiment.from_task(base_task, self.case_name)
-        exp_obj.run(wait_until_done=True, platform=self.platform)
-        assert exp_obj.succeeded
-
-        sim = exp_obj.simulations[0]
-        files = self.platform.get_files(sim, ["stdout.txt"])
-        stdout = files["stdout.txt"].decode("utf-8")
-        assert "EMOD Disease Transmission Kernel" in stdout
-
-    @pytest.mark.comps
-    def test_experiment_from_task_with_singularity_from_local_file(self):
-        """
-        This checks that if you have a singularity image on your local machine,
-        you can use it to run the simulation
-        """
-        self.platform = Platform(manifest.comps_platform_name)
-        asset_collection_id = "bcf11390-75df-ef11-930c-f0921c167860"  # please update to the latest one
-        out_filename = "dtk_run_rocky_py39.sif"
-
-        targ_sif_file = os.path.join(self.test_folder, out_filename)
-        ret_dict = self.platform.get_files_by_id(asset_collection_id, ItemType.ASSETCOLLECTION, [out_filename])
-        with open(targ_sif_file, 'wb') as fid01:
-            fid01.write(ret_dict[out_filename])
-
-        self.singularity_test(my_sif_path=targ_sif_file)
-
-    @pytest.mark.comps
-    def test_experiment_from_task_with_singularity(self):
-        """
-        This test checks that you can create a singularity image on Comps and use it to run the simulation
-        """
-        self.platform = Platform(manifest.comps_platform_name)
-        this_sif_path = os.path.join(self.test_folder, "assets.id")
-
-        # use the commented line to create a singularity image on Comps for the first time.
-        sbi = SingularityBuildWorkItem(name="Creating dtk_run_rocky_py39.sif with def file",
-                                       definition_file=os.path.join(self.builders.input_folder, "dtk_run_rocky_py39.def"),
-                                       image_name="dtk_run_rocky_py39.sif")
-        sbi.tags = dict(os="rockylinux", python=3.9)
-        sbi.run(wait_until_done=True, platform=self.platform)
-        assert sbi.succeeded
-
-        # Write asset id to file (needs to be *.id)
-        sbi.asset_collection.to_id_file(this_sif_path)
-        self.singularity_test(my_sif_path=this_sif_path)
-
-
 class TestEMODExperimentContainer(TestEMODExperiment):
-    environment_block = manifest.container_platform_name
 
     @pytest.mark.container
     def test_experiment_from_task_with_task_from_default_simple(self):

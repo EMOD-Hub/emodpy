@@ -114,7 +114,6 @@ class TestEMODTaskContainerPlatform(TestEMODTask):
         We do not validate custom_reports.json when we use from_files
         just add it to the assets and set Custom_Reports_Filename in the config.
         """
-        self.platform = Platform(manifest.container_platform_name, num_retries=0, job_directory=self.test_folder)
         task = EMODTask.from_files(eradication_path=self.builders.eradication_path,
                                    config_path=self.builders.config_file,
                                    campaign_path=self.builders.campaign_file,
@@ -122,6 +121,7 @@ class TestEMODTaskContainerPlatform(TestEMODTask):
                                    custom_reports_path=self.builders.custom_reports_file)
 
         self.experiment = Experiment.from_task(task, name=self.case_name)
+        self.experiment.pre_creation(self.platform)
         self.experiment.run(wait_until_done=True)
         assert (self.experiment.succeeded)
         sim = self.experiment.simulations[0]

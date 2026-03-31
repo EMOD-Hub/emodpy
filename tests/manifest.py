@@ -45,4 +45,4 @@ comps_node_group = "idm_48cores"  # for Calculon
 comps_priority = "Lowest"  # for Calculon
 
 container_platform_name = "Container"
-container_platform_image = "ghcr.io/emod-hub/emod_runtime_env:latest"
+container_platform_image = "ghcr.io/emod-hub/emod-ubuntu-runtime:latest"

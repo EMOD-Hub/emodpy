@@ -45,10 +45,10 @@ lint = [
     "flake8",
 ]
 test = [
-    "emod-common==2.32.39.dev2",
-    "emod-generic==2.22.32.dev2",
-    "emod-hiv==2.32.39.dev2",
-    "emod-malaria==2.32.39.dev2",
+    "emod-common==2.33.0.dev3",
+    "emod-generic==2.22.33.dev3",
+    "emod-hiv==2.33.0.dev3",
+    "emod-malaria==2.33.0.dev3",
     "pytest",
     "pytest-cov",
     "pytest-xdist",

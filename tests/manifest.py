@@ -45,4 +45,4 @@ comps_node_group = "idm_48cores"  # for Calculon
 comps_priority = "Lowest"  # for Calculon
 
 container_platform_name = "Container"
-container_platform_image = "ghcr.io/institutefordiseasemodeling/container-rocky-runtime:0.0.6"
+container_platform_image = "ghcr.io/emod-hub/emod-ubuntu-runtime:latest"

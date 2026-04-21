@@ -1,9 +1,13 @@
 [emod]: https://emod.idmod.org/EMOD/
 [emod-generic]: https://emod.idmod.org/EMOD-Generic/
+[emod-generic-scripts]: https://emod.idmod.org/EMOD-Generic-Scripts/
 [emod-api]: https://emod.idmod.org/emod-api/
 [emodpy]: https://emod.idmod.org/emodpy/
 [emodpy-hiv]: https://emod.idmod.org/emodpy-hiv/
+[emodpy-hiv_tutorial]: https://github.com/EMOD-Hub/emodpy-hiv/tree/main/tutorials
 [emodpy-malaria]: https://emod.idmod.org/emodpy-malaria/
+[emodpy-malaria_tutorial]: https://github.com/EMOD-Hub/emodpy-malaria/blob/main/getting_started.md
+[emodpy-workflow]: https://emod.idmod.org/emodpy-workflow/
 [idmod]: https://www.idmod.org/
 [idmtools]: https://institutefordiseasemodeling.github.io/idmtools/
 [idmtools_cli]: https://institutefordiseasemodeling.github.io/idmtools/cli/

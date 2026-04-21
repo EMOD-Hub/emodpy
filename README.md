@@ -10,7 +10,7 @@ Python 3.13 is the recommended and supported version.
 
 ## Documentation
 
-Documentation available at https://emod-hub.github.io/emodpy/.
+Documentation available at https://emod.idmod.org/emodpy/
 
 To build the documentation locally, do the following:
 
@@ -18,6 +18,7 @@ To build the documentation locally, do the following:
 2. Navigate to the root directory of the repo.
     ```
     python -m pip install .[docs]
+    mkdocs serve
     ```
 
 ## Running tests

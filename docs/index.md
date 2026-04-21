@@ -6,15 +6,20 @@ title: Home
 
 The emodpy package is a collection of Python scripts for using EMOD. It integrates the configuring of EMOD with idmtools ability to run a model on different platforms. Typical use of emodpy is as part of a disease specific package like [emodpy-malaria][emodpy-malaria] or [emodpy-hiv][emodpy-hiv].
 
-
-See [idmtools documentation][idmtools] for a diagram showing how idmtools and each of the related packages are used in an end-to-end workflow using EMOD as the disease transmission model.
+See the [idmtools documentation][idmtools] for a diagram showing how idmtools and each of the related packages are used in an end-to-end workflow using EMOD as the disease transmission model.
 
 ## Installation
 
-The emodpy package is currently available on a [Python package index server][idm_pypi] managed by the [Institute for Disease Modeling][idmod].
+### Python Version
+
+Python 3.13 is the recommended and supported version.
+
+### Installing the Package
+
+The emodpy package is currently available on the [Python package index][pypi].
 
 Typically, emodpy is installed as part of [emodpy-malaria][emodpy-malaria] or [emodpy-hiv.][emodpy-hiv]. It can be installed independently as below:
 
 ```
-pip install emodpy --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
+pip install emodpy
 ```

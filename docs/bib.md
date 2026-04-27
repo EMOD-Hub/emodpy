@@ -1,3 +1,4 @@
+[discussions]: https://github.com/orgs/EMOD-Hub/discussions
 [emod]: https://emod.idmod.org/EMOD/
 [emod-generic]: https://emod.idmod.org/EMOD-Generic/
 [emod-generic-scripts]: https://emod.idmod.org/EMOD-Generic-Scripts/

@@ -1247,15 +1247,15 @@ class SimpleBoosterVaccine(IndividualIntervention):
         self._intervention.Boost_Effect = validate_value_range(boost_effect, 'boost_effect', 0, 1, float)
 
 
-# DanB - Making SimpleDiagnostic private because users should use StandardDiagnostic instead.  It is the same thing
-# but adds the negative diagnosis.
-
 class _SimpleDiagnostic(IndividualIntervention):
     """
     The **SimpleDiagnostic** intervention class identifies infected individuals, regardless of disease state,
     based on specified diagnostic sensitivity and specificity. Diagnostics are a key component of modern disease
     control efforts, whether used to identify high-risk individuals, infected individuals, or drug resistance.
     This intervention class distributes a specified intervention to a fraction of individuals who test positive.
+
+    Developer note: Making SimpleDiagnostic private because users should use **StandardDiagnostic** instead.
+    It is the same thing but adds the negative diagnosis.
 
     Args:
         campaign (api_campaign, required):
@@ -1630,3 +1630,76 @@ class StandardDiagnostic(IndividualIntervention):
         self._intervention.Days_To_Diagnosis = validate_value_range(days_to_diagnosis, 'days_to_diagnosis', 0, 3.40282e+38, float)
         self._intervention.Base_Specificity = validate_value_range(base_specificity, 'base_specificity', 0, 1, float)
         self._intervention.Base_Sensitivity = validate_value_range(base_sensitivity, 'base_sensitivity', 0, 1, float)
+
+
+class FemaleContraceptive(IndividualIntervention):
+    """
+    The **FemaleContraceptive** intervention class models contraceptive use among women. It is
+    an individual-level intervention that reduces fertility for a configurable duration with a
+    configurable waning efficacy. The usage_duration_distribution determines how long each
+    woman uses the contraceptive, and the waning_config controls how the efficacy changes over
+    that period. When a woman stops using the contraceptive, the usage_expiration_event is
+    broadcast. This intervention can only be distributed to females, and ignores the waning
+    condition expiration (as women could still use a contraceptive, even if it is ineffective).
+
+    This intervention applies only when **Birth_Rate_Dependence** in config.json is set to
+    ``INDIVIDUAL_PREGNANCIES`` or ``INDIVIDUAL_PREGNANCIES_BY_AGE_AND_YEAR``.
+
+    At a glance:
+
+    * Distributed to: Individuals (females only)
+    * Serialized: Yes. It will be preserved when starting from a serialized file.
+    * Time-based expiration: Yes. Expires when the usage duration expires, which is
+      determined by the usage_duration_distribution.
+    * Purge existing: No. Adding a new intervention of this class will not remove any
+      existing interventions and efficacies will combine as
+      birth_modifier *= new_birth_modifier.
+
+    Args:
+        campaign (api_campaign, required):
+            An instance of the emod_api.campaign module.
+
+        waning_config (AbstractWaningConfig, required):
+            Waning effect for contraceptive efficacy.
+            Available types are defined in :mod:`emodpy.campaign.waning_config`.
+
+        usage_expiration_event (str, required):
+            An individual-level event to broadcast when the contraceptive expires.
+
+        usage_duration_distribution (BaseDistribution, required):
+            The distribution type to use for setting the duration of contraceptive use. Each
+            intervention gets a usage duration by doing a random draw from the distribution.
+            This is independent of how long the contraceptive is effective. Please use the
+            following distribution classes from emodpy.utils.distributions to define the
+            distribution:
+            * ConstantDistribution
+            * UniformDistribution
+            * GaussianDistribution
+            * ExponentialDistribution
+            * PoissonDistribution
+            * LogNormalDistribution
+            * DualConstantDistribution
+            * WeibullDistribution
+            * DualExponentialDistribution
+
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 5 common
+            parameters: cost, intervention_name, new_property_value,
+            disqualifying_properties, dont_allow_duplicates.
+            Default value: None
+    """
+
+    def __init__(self,
+                 campaign: api_campaign,
+                 waning_config: AbstractWaningConfig,
+                 usage_expiration_event: str,
+                 usage_duration_distribution: BaseDistribution,
+                 common_intervention_parameters: CommonInterventionParameters = None):
+        super().__init__(campaign, 'FemaleContraceptive', common_intervention_parameters)
+        if not isinstance(waning_config, AbstractWaningConfig):
+            raise ValueError(f"waning_config must be an instance of AbstractWaningConfig, not {type(waning_config)}.")
+        self._intervention.Waning_Config = waning_config.to_schema_dict(campaign)
+        self._intervention.Usage_Expiration_Event = set_event(usage_expiration_event, 'usage_expiration_event', campaign, True)
+        if not isinstance(usage_duration_distribution, BaseDistribution):
+            raise ValueError(f"usage_duration_distribution must be an instance of BaseDistribution, not {type(usage_duration_distribution)}.")
+        self.set_distribution(usage_duration_distribution, 'Usage_Duration')

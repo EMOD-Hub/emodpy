@@ -364,6 +364,9 @@ class Reporters(InputFilesList):
         super().__init__(relative_path=None)
         self.builtin_reporters = []
         self.config_reporters = []
+        self.listening_individual_events = []
+        self.listening_node_events = []
+        self.listening_coordinator_events = []
         self.schema_path = schema_path
         self._schema_json = None
 
@@ -392,6 +395,68 @@ class Reporters(InputFilesList):
             self.config_reporters.append(reporter)
         else:
             raise Exception(f"Your report is not of BuiltInReporter or ConfigReporter instance, type: {type(reporter)}!")
+
+        self._register_listening_events(reporter)
+
+    @staticmethod
+    def _find_builtin_events(schema, reporter_key, events_key):
+        if isinstance(schema, dict):
+            if reporter_key in schema:
+                events_entry = schema[reporter_key]
+                if isinstance(events_entry, dict):
+                    events_param = events_entry.get(events_key)
+                    if isinstance(events_param, dict):
+                        builtin = events_param.get("Built-in")
+                        if isinstance(builtin, list):
+                            return builtin
+                        enum = events_param.get("enum")
+                        if isinstance(enum, list):
+                            return enum
+                return None
+            for value in schema.values():
+                result = Reporters._find_builtin_events(value, reporter_key, events_key)
+                if result is not None:
+                    return result
+        elif isinstance(schema, list):
+            for item in schema:
+                result = Reporters._find_builtin_events(item, reporter_key, events_key)
+                if result is not None:
+                    return result
+        return None
+
+    def get_builtin_events(self) -> dict:
+        schema_json = self.get_schema_json()
+        result = {
+            "individual": [],
+            "node": [],
+            "coordinator": [],
+        }
+        found = self._find_builtin_events(schema_json, "ReportEventRecorder", "Report_Event_Recorder_Events")
+        if found:
+            result["individual"] = found
+        found = self._find_builtin_events(schema_json, "ReportEventRecorderNode", "Report_Node_Event_Recorder_Events")
+        if found:
+            result["node"] = found
+        found = self._find_builtin_events(schema_json, "ReportEventRecorderCoordinator",
+                                          "Report_Coordinator_Event_Recorder_Events")
+        if found:
+            result["coordinator"] = found
+        return result
+
+    def _register_listening_events(self, reporter: AbstractBaseReporter) -> None:
+        if not hasattr(reporter, '_event_level') or not hasattr(reporter, '_event_list'):
+            return
+        level_map = {
+            "individual": self.listening_individual_events,
+            "node": self.listening_node_events,
+            "coordinator": self.listening_coordinator_events,
+        }
+        target_list = level_map.get(reporter._event_level)
+        if target_list is None:
+            return
+        for event in reporter._event_list:
+            if event not in target_list:
+                target_list.append(event)
 
     @property
     def json(self):

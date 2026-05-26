@@ -149,26 +149,21 @@ class EMODTask(ITask):
         # from mucking with each other.
         campaign_dict = json.loads(json.dumps(campaign.campaign_dict))
         self.campaign = EMODCampaign.load_from_dict(campaign_dict)
-        adhoc_events = campaign.get_adhocs()
         if dev_mode:
             campaign.save()
 
-        if adhoc_events:
-            if verbose:
-                logger.debug("Found adhoc events in campaign. Needs some special processing behind the scenes.")
-            if "Custom_Individual_Events" in self.config.parameters:
-                self.config.parameters.Custom_Individual_Events = [x for x in adhoc_events.keys()]
-            else:
-                reverse_map = {}
-                for user_name, builtin_name in adhoc_events.items():
-                    reverse_map[builtin_name] = user_name
-                self.config.parameters["Event_Map"] = reverse_map
-        # checking attributes because if using older emod-api whose campaign doesn't have them,
-        # we don't want to fail, just move on.
-        if hasattr(campaign, "get_custom_coordinator_events") and "Custom_Coordinator_Events" in self.config.parameters:
-            self.config.parameters.Custom_Coordinator_Events = campaign.get_custom_coordinator_events()
-        if hasattr(campaign, "get_custom_node_events") and "Custom_Node_Events" in self.config.parameters:
-            self.config.parameters.Custom_Node_Events = campaign.get_custom_node_events()
+        if "Custom_Individual_Events" in self.config.parameters:  # not present in EMOD-Generic
+            # adding to the events that might already be there due to user explicitly adding them
+            self.config.parameters.Custom_Individual_Events = list(set(
+                self.config.parameters.Custom_Individual_Events + campaign.get_custom_individual_events()))
+            self.config.parameters.Custom_Coordinator_Events = list(set(
+                self.config.parameters.Custom_Coordinator_Events + campaign.get_custom_coordinator_events()))
+            self.config.parameters.Custom_Node_Events = list(set(
+                self.config.parameters.Custom_Node_Events + campaign.get_custom_node_events()))
+        else: # this just runs the validation that the listened to events are also broadcast
+            campaign.get_custom_individual_events()
+            campaign.get_custom_coordinator_events()
+            campaign.get_custom_node_events()
 
         # This might be a great place to reset the campaign module so users don't have to.
         campaign.reset()
@@ -251,6 +246,38 @@ class EMODTask(ITask):
         for fn in self.implicit_configs:
             if fn:
                 self.config = fn(self.config)
+
+    def _validate_reporter_listening_events(self) -> None:
+        if not self.reporters or not self.reporters.schema_path:
+            return
+
+        has_custom_events = "Custom_Individual_Events" in self.config.parameters
+
+        builtin = self.reporters.get_builtin_events()
+
+        checks = [
+            ("individual", self.reporters.listening_individual_events,
+             "Custom_Individual_Events"),
+            ("node", self.reporters.listening_node_events,
+             "Custom_Node_Events"),
+            ("coordinator", self.reporters.listening_coordinator_events,
+             "Custom_Coordinator_Events"),
+        ]
+        for level, listening_events, config_key in checks:
+            if not listening_events:
+                continue
+            builtin_set = set(builtin.get(level, []))
+            if has_custom_events:
+                custom_set = set(getattr(self.config.parameters, config_key, []))
+            else:
+                custom_set = set()
+            known = builtin_set | custom_set
+            unknown = [e for e in listening_events if e not in known]
+            if unknown:
+                raise ValueError(
+                    f"Reporter(s) are listening for {level}-level event(s) that are not broadcast by any of the "
+                    f"campaign modules or simulation (built-in): {unknown}. Either remove these events from the "
+                    f"reporter or set up your campaign to broadcast these events. Known {level}-level events are: {sorted(known)}")
 
     @staticmethod
     def build_default_config(schema_path: Union[str, Path]) -> ReadOnlyDict:
@@ -412,6 +439,7 @@ class EMODTask(ITask):
             if not returned or not isinstance(returned, Reporters):
                 raise ValueError("Something went wrong with report_builder, please make sure "
                                  "the report_builder function returns a Reporters object.")
+            task._validate_reporter_listening_events()
 
         if serialized_population_files:
             task.add_serialized_population_files_from_path(serialized_population_files)

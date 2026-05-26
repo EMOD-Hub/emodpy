@@ -41,3 +41,34 @@ class EventOrConfig(StrEnum):
 class SettingType(StrEnum):
     CURRENT_AGE = 'CURRENT_AGE'
     USER_SPECIFIED = 'USER_SPECIFIED'
+
+
+class ThresholdType(StrEnum):
+    COUNT = 'COUNT'
+    PERCENTAGE = 'PERCENTAGE'
+    PERCENTAGE_EVENTS = 'PERCENTAGE_EVENTS'
+
+
+class EventType(StrEnum):
+    INDIVIDUAL = 'INDIVIDUAL'
+    NODE = 'NODE'
+    COORDINATOR = 'COORDINATOR'
+
+
+class MigrationType(StrEnum):
+    LOCAL = 'LOCAL'
+    AIR = 'AIR'
+    REGIONAL = 'REGIONAL'
+    SEA = 'SEA'
+    FAMILY = 'FAMILY'
+
+
+class MigrationPattern(StrEnum):
+    RANDOM_WALK_DIFFUSION = 'RANDOM_WALK_DIFFUSION'
+    SINGLE_ROUND_TRIPS = 'SINGLE_ROUND_TRIPS'
+    WAYPOINTS_HOME = 'WAYPOINTS_HOME'
+
+
+class InterpolationType(StrEnum):
+    PIECEWISE_CONSTANT = 'PIECEWISE_CONSTANT'
+    LINEAR_INTERPOLATION = 'LINEAR_INTERPOLATION'

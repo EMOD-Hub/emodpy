@@ -7,9 +7,9 @@ from emod_api import campaign as api_campaign
 from emodpy.campaign.individual_intervention import BroadcastEvent, SimpleVaccine
 from emodpy.campaign.node_intervention import Outbreak
 
-from emodpy.campaign.distributor import add_intervention_triggered, add_intervention_scheduled
+from emodpy.campaign.distributor import add_intervention_triggered, add_intervention_scheduled, add_community_health_worker, add_broadcast_coordinator_event
 from emodpy.campaign.common import TargetDemographicsConfig, RepetitionConfig, PropertyRestrictions, TargetGender
-from emodpy.utils.distributions import UniformDistribution, ExponentialDistribution
+from emodpy.utils.distributions import UniformDistribution, ExponentialDistribution, ConstantDistribution
 from emodpy.utils.targeting_config import IsPregnant
 from emodpy.campaign.waning_config import MapLinear
 
@@ -861,3 +861,444 @@ class TestDistributorMalariaByYear(TestMalaria):
                                        start_year=1990,
                                        duration=365)
         self.assertTrue('The start_year is not supported in this disease model, please use start_day' in str(context.exception))
+
+
+def save_or_compare_regression_json(campaign, filename):
+    """Compare to regression file if it exists, otherwise generate it."""
+    regression_file = os.path.join(regression_folder, filename)
+    tmp_filename = os.path.join(output_folder, filename)
+    campaign.save(tmp_filename)
+    with open(tmp_filename, 'r') as f:
+        output = json.load(f)
+    if os.path.exists(regression_file):
+        with open(regression_file, 'r') as f:
+            regression = json.load(f)
+        assert output == regression
+    else:
+        with open(regression_file, 'w') as f:
+            json.dump(output, f, sort_keys=True, indent=4)
+    helpers.delete_existing_file(tmp_filename)
+
+
+class BaseCHWDistributorTest(BaseTestClass):
+
+    def verify_campaign_event(self, start_day, start_year, default=False):
+        self.assertEqual(len(self.campaign.campaign_dict['Events']), 1)
+        event = self.campaign.campaign_dict['Events'][0]
+        if not default:
+            self.assertEqual(event.Event_Name, "test_chw_event")
+            self.assertEqual(event.Nodeset_Config.Node_List, [1, 2, 3])
+            self.assertEqual(event.Nodeset_Config['class'], 'NodeSetNodeList')
+        else:
+            self.assertEqual(event.Nodeset_Config['class'], 'NodeSetAll')
+        if start_day is not None:
+            self.assertEqual(event.Start_Day, start_day)
+            self.assertEqual(event['class'], 'CampaignEvent')
+        else:
+            self.assertEqual(event.Start_Year, start_year)
+            self.assertEqual(event['class'], 'CampaignEventByYear')
+        return event
+
+    def test_add_chw_default(self):
+        interventions = [BroadcastEvent(self.campaign, "CHW_Distributed")]
+        add_community_health_worker(
+            campaign=self.campaign,
+            intervention_list=interventions,
+            trigger_condition_list=["NewClinicalCase"],
+            initial_amount_distribution=ConstantDistribution(500),
+            max_distributed_per_day=10,
+            waiting_period=30,
+            days_between_shipments=7,
+            amount_in_shipment=100,
+            start_day=self.start_day,
+            start_year=self.start_year)
+
+        event = self.verify_campaign_event(self.start_day, self.start_year, default=True)
+        coordinator = event.Event_Coordinator_Config
+        self.assertEqual(coordinator['class'], 'CommunityHealthWorkerEventCoordinator')
+        self.assertEqual(coordinator.Trigger_Condition_List, ["NewClinicalCase"])
+        self.assertEqual(coordinator.Max_Distributed_Per_Day, 10)
+        self.assertEqual(coordinator.Waiting_Period, 30)
+        self.assertEqual(coordinator.Days_Between_Shipments, 7)
+        self.assertEqual(coordinator.Amount_In_Shipment, 100)
+        self.assertEqual(coordinator.Initial_Amount_Distribution, 'CONSTANT_DISTRIBUTION')
+        self.assertEqual(coordinator.Initial_Amount_Constant, 500)
+        self.assertEqual(coordinator.Demographic_Coverage, 1)
+        self.assertEqual(coordinator.Target_Demographic, 'Everyone')
+
+        intervention_config = coordinator.Intervention_Config
+        self.assertEqual(intervention_config['class'], 'BroadcastEvent')
+        self.assertEqual(intervention_config.Broadcast_Event, 'CHW_Distributed')
+
+    def test_add_chw(self):
+        interventions = [BroadcastEvent(self.campaign, "CHW_Distributed")]
+        add_community_health_worker(
+            campaign=self.campaign,
+            intervention_list=interventions,
+            trigger_condition_list=["NewClinicalCase", "NewSevereCase"],
+            initial_amount_distribution=UniformDistribution(100, 1000),
+            max_distributed_per_day=20,
+            waiting_period=60,
+            days_between_shipments=14,
+            amount_in_shipment=200,
+            start_day=self.start_day,
+            start_year=self.start_year,
+            duration=365,
+            max_stock=1000,
+            event_name="test_chw_event",
+            node_ids=[1, 2, 3],
+            target_demographics_config=TargetDemographicsConfig(
+                demographic_coverage=0.7,
+                target_gender=TargetGender.FEMALE),
+            property_restrictions=PropertyRestrictions(
+                individual_property_restrictions=[["Risk:High"]]),
+            targeting_config=~IsPregnant())
+
+        event = self.verify_campaign_event(self.start_day, self.start_year)
+        coordinator = event.Event_Coordinator_Config
+        self.assertEqual(coordinator['class'], 'CommunityHealthWorkerEventCoordinator')
+        self.assertEqual(coordinator.Trigger_Condition_List, ["NewClinicalCase", "NewSevereCase"])
+        self.assertEqual(coordinator.Max_Distributed_Per_Day, 20)
+        self.assertEqual(coordinator.Waiting_Period, 60)
+        self.assertEqual(coordinator.Days_Between_Shipments, 14)
+        self.assertEqual(coordinator.Amount_In_Shipment, 200)
+        self.assertEqual(coordinator.Duration, 365)
+        self.assertEqual(coordinator.Max_Stock, 1000)
+        self.assertEqual(coordinator.Initial_Amount_Distribution, 'UNIFORM_DISTRIBUTION')
+        self.assertEqual(coordinator.Initial_Amount_Min, 100)
+        self.assertEqual(coordinator.Initial_Amount_Max, 1000)
+        self.assertEqual(coordinator.Demographic_Coverage, 0.7)
+        self.assertEqual(coordinator.Target_Gender, "Female")
+        self.assertEqual(coordinator.Property_Restrictions_Within_Node, [{'Risk': 'High'}])
+        self.assertEqual(coordinator.Targeting_Config['class'], 'IsPregnant')
+        self.assertEqual(coordinator.Targeting_Config.Is_Equal_To, 0)
+
+        intervention_config = coordinator.Intervention_Config
+        self.assertEqual(intervention_config['class'], 'BroadcastEvent')
+        self.assertEqual(intervention_config.Broadcast_Event, 'CHW_Distributed')
+
+    def test_add_chw_with_delay(self):
+        interventions = [BroadcastEvent(self.campaign, "CHW_Distributed")]
+        add_community_health_worker(
+            campaign=self.campaign,
+            intervention_list=interventions,
+            trigger_condition_list=["NewClinicalCase"],
+            initial_amount_distribution=ConstantDistribution(500),
+            max_distributed_per_day=10,
+            waiting_period=30,
+            days_between_shipments=7,
+            amount_in_shipment=100,
+            start_day=self.start_day,
+            start_year=self.start_year,
+            delay_distribution=ExponentialDistribution(10))
+
+        event = self.verify_campaign_event(self.start_day, self.start_year, default=True)
+        coordinator = event.Event_Coordinator_Config
+        self.assertEqual(coordinator['class'], 'CommunityHealthWorkerEventCoordinator')
+
+        intervention_config = coordinator.Intervention_Config
+        self.assertEqual(intervention_config['class'], 'DelayedIntervention')
+        self.assertEqual(intervention_config.Delay_Period_Distribution, 'EXPONENTIAL_DISTRIBUTION')
+        self.assertEqual(intervention_config.Delay_Period_Exponential, 10)
+        self.assertDictEqual(
+            intervention_config.Actual_IndividualIntervention_Configs[0],
+            interventions[0].to_schema_dict())
+
+    def test_add_chw_with_multi_iv(self):
+        interventions = [BroadcastEvent(self.campaign, "CHW_Distributed"),
+                         SimpleVaccine(self.campaign, waning_config=MapLinear([2010, 2020], [0.9, 0.95]))]
+        add_community_health_worker(
+            campaign=self.campaign,
+            intervention_list=interventions,
+            trigger_condition_list=["NewClinicalCase"],
+            initial_amount_distribution=ConstantDistribution(500),
+            max_distributed_per_day=10,
+            waiting_period=30,
+            days_between_shipments=7,
+            amount_in_shipment=100,
+            start_day=self.start_day,
+            start_year=self.start_year)
+
+        event = self.verify_campaign_event(self.start_day, self.start_year, default=True)
+        coordinator = event.Event_Coordinator_Config
+        self.assertEqual(coordinator['class'], 'CommunityHealthWorkerEventCoordinator')
+
+        multi_interventions = coordinator.Intervention_Config
+        self.assertEqual(multi_interventions['class'], 'MultiInterventionDistributor')
+        actual_interventions = multi_interventions.Intervention_List
+        for i, iv in enumerate(actual_interventions):
+            self.assertDictEqual(iv, interventions[i].to_schema_dict())
+
+    def test_add_chw_node_intervention(self):
+        interventions = [Outbreak(self.campaign, number_cases_per_node=10)]
+        add_community_health_worker(
+            campaign=self.campaign,
+            intervention_list=interventions,
+            trigger_condition_list=["NewClinicalCase", "NewSevereCase"],
+            initial_amount_distribution=UniformDistribution(100, 1000),
+            max_distributed_per_day=20,
+            waiting_period=60,
+            days_between_shipments=14,
+            amount_in_shipment=200,
+            start_day=self.start_day,
+            start_year=self.start_year,
+            event_name="test_chw_event",
+            node_ids=[1, 2, 3],
+            property_restrictions=PropertyRestrictions(
+                node_property_restrictions=[["Risk:High"]]))
+
+        event = self.verify_campaign_event(self.start_day, self.start_year)
+        coordinator = event.Event_Coordinator_Config
+        self.assertEqual(coordinator['class'], 'CommunityHealthWorkerEventCoordinator')
+        self.assertEqual(coordinator.Trigger_Condition_List, ["NewClinicalCase", "NewSevereCase"])
+        self.assertEqual(coordinator.Max_Distributed_Per_Day, 20)
+        self.assertEqual(coordinator.Node_Property_Restrictions, [{'Risk': 'High'}])
+
+        intervention_config = coordinator.Intervention_Config
+        self.assertEqual(intervention_config['class'], 'Outbreak')
+        self.assertEqual(intervention_config.Number_Cases_Per_Node, 10)
+
+    def test_add_chw_node_intervention_exception(self):
+        interventions = [Outbreak(self.campaign, number_cases_per_node=10)]
+
+        with self.assertRaises(ValueError) as context_1:
+            add_community_health_worker(
+                campaign=self.campaign,
+                intervention_list=interventions,
+                trigger_condition_list=["NewClinicalCase"],
+                initial_amount_distribution=ConstantDistribution(500),
+                max_distributed_per_day=10,
+                waiting_period=30,
+                days_between_shipments=7,
+                amount_in_shipment=100,
+                start_day=self.start_day,
+                start_year=self.start_year,
+                target_demographics_config=TargetDemographicsConfig(
+                    demographic_coverage=0.7,
+                    target_gender=TargetGender.FEMALE))
+        self.assertTrue('target_demographics_config' in str(context_1.exception))
+
+        with self.assertRaises(ValueError) as context_2:
+            add_community_health_worker(
+                campaign=self.campaign,
+                intervention_list=interventions,
+                trigger_condition_list=["NewClinicalCase"],
+                initial_amount_distribution=ConstantDistribution(500),
+                max_distributed_per_day=10,
+                waiting_period=30,
+                days_between_shipments=7,
+                amount_in_shipment=100,
+                start_day=self.start_day,
+                start_year=self.start_year,
+                targeting_config=~IsPregnant())
+        self.assertTrue('targeting_config' in str(context_2.exception))
+
+        with self.assertRaises(ValueError) as context_3:
+            add_community_health_worker(
+                campaign=self.campaign,
+                intervention_list=interventions,
+                trigger_condition_list=["NewClinicalCase"],
+                initial_amount_distribution=ConstantDistribution(500),
+                max_distributed_per_day=10,
+                waiting_period=30,
+                days_between_shipments=7,
+                amount_in_shipment=100,
+                start_day=self.start_day,
+                start_year=self.start_year,
+                property_restrictions=PropertyRestrictions(
+                    individual_property_restrictions=[["Risk:High"]]))
+        self.assertTrue('individual_property_restrictions' in str(context_3.exception))
+
+        with self.assertRaises(NotImplementedError) as context_4:
+            add_community_health_worker(
+                campaign=self.campaign,
+                intervention_list=interventions,
+                trigger_condition_list=["NewClinicalCase"],
+                initial_amount_distribution=ConstantDistribution(500),
+                max_distributed_per_day=10,
+                waiting_period=30,
+                days_between_shipments=7,
+                amount_in_shipment=100,
+                start_day=self.start_day,
+                start_year=self.start_year,
+                delay_distribution=UniformDistribution(0, 365))
+        self.assertTrue('delay_distribution' in str(context_4.exception))
+
+    def test_add_chw_validation_exception(self):
+        interventions = [BroadcastEvent(self.campaign, "CHW_Distributed")]
+
+        with self.assertRaises(ValueError):
+            add_community_health_worker(
+                campaign=self.campaign,
+                intervention_list=interventions,
+                trigger_condition_list=[],
+                initial_amount_distribution=ConstantDistribution(500),
+                max_distributed_per_day=10,
+                waiting_period=30,
+                days_between_shipments=7,
+                amount_in_shipment=100,
+                start_day=self.start_day,
+                start_year=self.start_year)
+
+        with self.assertRaises(ValueError):
+            add_community_health_worker(
+                campaign=self.campaign,
+                intervention_list=interventions,
+                trigger_condition_list=["NewClinicalCase"],
+                initial_amount_distribution=ConstantDistribution(500),
+                max_distributed_per_day=0,
+                waiting_period=30,
+                days_between_shipments=7,
+                amount_in_shipment=100,
+                start_day=self.start_day,
+                start_year=self.start_year)
+
+        with self.assertRaises(ValueError):
+            add_community_health_worker(
+                campaign=self.campaign,
+                intervention_list=interventions,
+                trigger_condition_list=["NewClinicalCase"],
+                initial_amount_distribution=ConstantDistribution(500),
+                max_distributed_per_day=10,
+                waiting_period=-1,
+                days_between_shipments=7,
+                amount_in_shipment=100,
+                start_day=self.start_day,
+                start_year=self.start_year)
+
+
+class BaseBroadcastCoordinatorEventTest(BaseTestClass):
+
+    def verify_campaign_event(self, start_day, start_year, default=False):
+        self.assertEqual(len(self.campaign.campaign_dict['Events']), 1)
+        event = self.campaign.campaign_dict['Events'][0]
+        if not default:
+            self.assertEqual(event.Event_Name, "test_broadcast_event")
+            self.assertEqual(event.Nodeset_Config.Node_List, [1, 2, 3])
+            self.assertEqual(event.Nodeset_Config['class'], 'NodeSetNodeList')
+        else:
+            self.assertEqual(event.Nodeset_Config['class'], 'NodeSetAll')
+        if start_day is not None:
+            self.assertEqual(event.Start_Day, start_day)
+            self.assertEqual(event['class'], 'CampaignEvent')
+        else:
+            self.assertEqual(event.Start_Year, start_year)
+            self.assertEqual(event['class'], 'CampaignEventByYear')
+        return event
+
+    def test_add_broadcast_coordinator_event_default(self):
+        add_broadcast_coordinator_event(
+            campaign=self.campaign,
+            broadcast_event="StartSurveillance",
+            start_day=self.start_day,
+            start_year=self.start_year)
+
+        event = self.verify_campaign_event(self.start_day, self.start_year, default=True)
+        coordinator = event.Event_Coordinator_Config
+        self.assertEqual(coordinator['class'], 'BroadcastCoordinatorEvent')
+        self.assertEqual(coordinator.Broadcast_Event, "StartSurveillance")
+        self.assertEqual(coordinator.Coordinator_Name, "BroadcastCoordinatorEvent")
+        self.assertEqual(coordinator.Cost_To_Consumer, 0)
+
+    def test_add_broadcast_coordinator_event(self):
+        add_broadcast_coordinator_event(
+            campaign=self.campaign,
+            broadcast_event="StartSurveillance",
+            start_day=self.start_day,
+            start_year=self.start_year,
+            coordinator_name="MyBroadcast",
+            cost_to_consumer=5.0,
+            event_name="test_broadcast_event",
+            node_ids=[1, 2, 3])
+
+        event = self.verify_campaign_event(self.start_day, self.start_year)
+        coordinator = event.Event_Coordinator_Config
+        self.assertEqual(coordinator['class'], 'BroadcastCoordinatorEvent')
+        self.assertEqual(coordinator.Broadcast_Event, "StartSurveillance")
+        self.assertEqual(coordinator.Coordinator_Name, "MyBroadcast")
+        self.assertEqual(coordinator.Cost_To_Consumer, 5.0)
+
+    def test_add_broadcast_coordinator_event_empty_event_raises(self):
+        with self.assertRaises(ValueError) as context:
+            add_broadcast_coordinator_event(
+                campaign=self.campaign,
+                broadcast_event="",
+                start_day=self.start_day,
+                start_year=self.start_year)
+        self.assertIn("broadcast_event", str(context.exception))
+
+    def test_add_broadcast_coordinator_event_none_event_raises(self):
+        with self.assertRaises(ValueError) as context:
+            add_broadcast_coordinator_event(
+                campaign=self.campaign,
+                broadcast_event=None,
+                start_day=self.start_day,
+                start_year=self.start_year)
+        self.assertIn("broadcast_event", str(context.exception))
+
+    def test_add_broadcast_coordinator_event_invalid_cost_raises(self):
+        with self.assertRaises(ValueError):
+            add_broadcast_coordinator_event(
+                campaign=self.campaign,
+                broadcast_event="StartSurveillance",
+                start_day=self.start_day,
+                start_year=self.start_year,
+                cost_to_consumer=-1)
+
+    def test_add_broadcast_coordinator_event_no_start_raises(self):
+        with self.assertRaises(ValueError):
+            add_broadcast_coordinator_event(
+                campaign=self.campaign,
+                broadcast_event="StartSurveillance")
+
+
+@pytest.mark.unit
+class TestBroadcastCoordinatorEventMalariaByDay(BaseBroadcastCoordinatorEventTest, TestMalaria):
+    def setUp(self):
+        TestMalaria().setUp()
+        self.campaign = api_campaign
+        self.campaign.set_schema(self.schema_path)
+        self.start_day = 1
+        self.start_year = None
+
+    def tearDown(self):
+        save_or_compare_regression_json(self.campaign, filename=f"Malaria_{self._testMethodName}.json")
+
+
+@pytest.mark.unit
+class TestBroadcastCoordinatorEventHIVByYear(BaseBroadcastCoordinatorEventTest, TestHIV):
+    def setUp(self):
+        TestHIV().setUp()
+        self.campaign = api_campaign
+        self.campaign.set_schema(self.schema_path)
+        self.start_day = None
+        self.start_year = 1990
+
+    def tearDown(self):
+        save_or_compare_regression_json(self.campaign, filename=f"HIV_{self._testMethodName}.json")
+
+
+@pytest.mark.unit
+class TestCHWDistributorMalariaByDay(BaseCHWDistributorTest, TestMalaria):
+    def setUp(self):
+        TestMalaria().setUp()
+        self.campaign = api_campaign
+        self.campaign.set_schema(self.schema_path)
+        self.start_day = 1
+        self.start_year = None
+
+    def tearDown(self):
+        save_or_compare_regression_json(self.campaign, filename=f"Malaria_{self._testMethodName}.json")
+
+
+@pytest.mark.unit
+class TestCHWDistributorHIVByYear(BaseCHWDistributorTest, TestHIV):
+    def setUp(self):
+        TestHIV().setUp()
+        self.campaign = api_campaign
+        self.campaign.set_schema(self.schema_path)
+        self.start_day = None
+        self.start_year = 1990
+
+    def tearDown(self):
+        save_or_compare_regression_json(self.campaign, filename=f"HIV_{self._testMethodName}.json")

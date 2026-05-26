@@ -1,0 +1,78 @@
+{
+    "Events": [
+        {
+            "Event_Coordinator_Config": {
+                "Amount_In_Shipment": 100,
+                "Days_Between_Shipments": 7,
+                "Demographic_Coverage": 1,
+                "Duration": 3.40282e+38,
+                "Initial_Amount_Constant": 500,
+                "Initial_Amount_Distribution": "CONSTANT_DISTRIBUTION",
+                "Intervention_Config": {
+                    "Disqualifying_Properties": [],
+                    "Dont_Allow_Duplicates": 0,
+                    "Intervention_List": [
+                        {
+                            "Broadcast_Event": "CHW_Distributed",
+                            "Disqualifying_Properties": [],
+                            "Dont_Allow_Duplicates": 0,
+                            "Intervention_Name": "BroadcastEvent",
+                            "New_Property_Value": "",
+                            "class": "BroadcastEvent"
+                        },
+                        {
+                            "Cost_To_Consumer": 10,
+                            "Disqualifying_Properties": [],
+                            "Dont_Allow_Duplicates": 0,
+                            "Efficacy_Is_Multiplicative": 1,
+                            "Intervention_Name": "SimpleVaccine",
+                            "New_Property_Value": "",
+                            "Vaccine_Take": 1,
+                            "Vaccine_Type": "Generic",
+                            "Waning_Config": {
+                                "Durability_Map": {
+                                    "Times": [
+                                        2010,
+                                        2020
+                                    ],
+                                    "Values": [
+                                        0.9,
+                                        0.95
+                                    ]
+                                },
+                                "Expire_At_Durability_Map_End": 0,
+                                "Initial_Effect": 1,
+                                "Reference_Timer": 0,
+                                "class": "WaningEffectMapLinear"
+                            },
+                            "class": "SimpleVaccine"
+                        }
+                    ],
+                    "Intervention_Name": "MultiInterventionDistributor",
+                    "New_Property_Value": "",
+                    "class": "MultiInterventionDistributor"
+                },
+                "Max_Distributed_Per_Day": 10,
+                "Max_Stock": 2147480000.0,
+                "Node_Property_Restrictions": [],
+                "Property_Restrictions": [],
+                "Property_Restrictions_Within_Node": [],
+                "Target_Demographic": "Everyone",
+                "Target_Gender": "All",
+                "Target_Residents_Only": 0,
+                "Targeting_Config": {},
+                "Trigger_Condition_List": [
+                    "NewClinicalCase"
+                ],
+                "Waiting_Period": 30,
+                "class": "CommunityHealthWorkerEventCoordinator"
+            },
+            "Nodeset_Config": {
+                "class": "NodeSetAll"
+            },
+            "Start_Day": 1,
+            "class": "CampaignEvent"
+        }
+    ],
+    "Use_Defaults": 1
+}

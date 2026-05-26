@@ -4,7 +4,7 @@ from emodpy.campaign.individual_intervention import IndividualIntervention, Mult
 from emodpy.utils.distributions import BaseDistribution
 from emodpy.utils import validate_key_value_pair, validate_value_range
 from emodpy.utils.targeting_config import AbstractTargetingConfig
-from emodpy.campaign.utils import set_event, get_trigger_conditions
+from emodpy.campaign.utils import get_trigger_conditions
 from emod_api import campaign as api_campaign
 
 from typing import Union
@@ -22,12 +22,12 @@ class MultiNodeInterventionDistributor(NodeIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        node_intervention_list(list[NodeIntervention], optional):
+        node_intervention_list(list[NodeIntervention], required):
             A list of NodeIntervention objects for the multi-node-level interventions to be distributed by this
             intervention.
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, dont_allow_duplicates, new_property_value, disqualifying_properties.
             The following parameters are not valid for this intervention:
             cost
@@ -68,12 +68,12 @@ class _NodeLevelHealthTriggeredIV(NodeIntervention):
         they must be added to the new campaign file.
         - This can be used to distribute other node-level interventions. For example, it can be used to
         distribute emodpy.campaign.node_intervention.MigrateFamily to the node when someone becomes infected
-        (e.g. by listening for for 'NewInfectionEvent' or an event from EMOD).
+        (e.g. by listening for 'NewInfectionEvent' or an event from EMOD).
         - A powerful feature of this intervention is that it can target specific groups of individuals who
         broadcast the event. Individuals, and subgroups of individuals, can be targeted by age, gender, and
         Individual Property.
         - Note that when distributing a node-level intervention parameters associated with targeting an
-        individual (such as  target_demographic, target_age_min, target_age_max, target_gender,
+        individual (such as target_demographic, target_age_min, target_age_max, target_gender,
         property_restrictions_within_node,
         etc.) do not apply.
         - The blackout_event_trigger is a feature that can be useful when monitoring an event from the individual
@@ -101,16 +101,16 @@ class _NodeLevelHealthTriggeredIV(NodeIntervention):
             in the campaign. See :doc:`emod-hiv:emod/parameter-campaign-event-list` for events already used in EMOD.
 
         target_demographics_config(TargetDemographicsConfig, optional):
-            The TargetDemographicsConfig object that is used to configure the demographcs of the targeted individuals,
-            for example: demographic_coverage, target_demographic, target_age_min, target_age_max, target_gender and
-            target_residents_only in the coordinator class. Please refer to the
-            emodpy.campaign.common.TargetDemographicsConfig for more information.
+            The TargetDemographicsConfig object that is used to configure the demographics of the targeted individuals,
+            for example: Demographic_Coverage, Target_Demographic, Target_Age_Min, Target_Age_Max, Target_Gender and
+            Target_Residents_Only. Please refer to :class:`emodpy.campaign.common.TargetDemographicsConfig` for more
+            information.
             Default value: None
 
         property_restrictions(PropertyRestrictions, optional):
             A PropertyRestrictions object that can be used to restrict the distribution of the intervention to
-            individuals or nodes with specific properties. Please see the emodpy.common.PropertyRestrictions for more
-            information.
+            individuals or nodes with specific properties. Please see
+            :class:`emodpy.campaign.common.PropertyRestrictions` for more information.
             Default value: None
 
         targeting_config(AbstractTargetingConfig, optional):
@@ -127,7 +127,7 @@ class _NodeLevelHealthTriggeredIV(NodeIntervention):
         distribute_on_return_home(bool, optional):
             When set to True, individuals will receive an intervention upon returning home if that
             intervention was originally distributed while the individual was away.
-            Default value: True
+            Default value: False
 
         blackout_period(float, optional):
             After the initial intervention distribution, the time, in days, to wait before distributing the
@@ -140,15 +140,13 @@ class _NodeLevelHealthTriggeredIV(NodeIntervention):
         blackout_on_first_occurrence(bool, optional):
             If set to True, individuals will enter the blackout period after the first occurrence of an
             event in the trigger_condition_list.
-            Default value: True
+            Default value: False
 
         blackout_event_trigger(str, optional):
-            The event to broadcast if an intervention cannot be distributed due to the blackout_period.See
-            :doc:`emod-hiv:emod/parameter-campaign-event-list` for events already used in EMOD or use your
-            own custom event.
+            The event to broadcast if an intervention cannot be distributed due to the blackout_period.
             Default value: None
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
+        common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, dont_allow_duplicates, new_property_value, disqualifying_properties.
             The following parameters are not valid for this intervention:
@@ -222,8 +220,8 @@ class _NodeLevelHealthTriggeredIV(NodeIntervention):
         self._intervention.Distribute_On_Return_Home = distribute_on_return_home
         self._intervention.Blackout_Period = validate_value_range(blackout_period, 'blackout_period', 0, 3.40282e+38, float)
         self._intervention.Blackout_On_First_Occurrence = blackout_on_first_occurrence
-        if blackout_event_trigger is not None:
-            self._intervention.Blackout_Event_Trigger = set_event(blackout_event_trigger, 'blackout_event_trigger', campaign, True)
+        if blackout_event_trigger:
+            self._intervention.Blackout_Event_Trigger = campaign.set_broadcast_node_event(blackout_event_trigger)
 
     def _set_cost(self, cost: float) -> None:
         raise ValueError('Cost_To_Consumer is not a valid parameter for the NodeLevelHealthTriggeredIV intervention.')
@@ -233,27 +231,29 @@ class _BirthTriggeredIV(NodeIntervention):
     """
     **DEPRECATED** - Use the **Births** event with **add_intervention_triggered()**.
 
-    The ** BirthTriggeredIV** intervention class monitors for birth events and then distributes an actual
+    The **BirthTriggeredIV** intervention class monitors for birth events and then distributes an actual
     intervention to the new individuals as specified in **Actual_IndividualIntervention_Config**.
 
     Args:
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        actual_individualintervention_config(IndividualIntervention, required):
+        intervention_config(IndividualIntervention, required):
             The configuration of an actual individual intervention to be distributed on the trigger. Selects a
             class for the intervention and configures the parameters specific for that intervention class.
 
         target_demographics_config(TargetDemographicsConfig, optional):
-            The TargetDemographicsConfig object that is used to configure the demographcs of the targeted individuals,
-            for example: Demographics_Coverage, Target_Demographic, Target_Age_Min, Target_Age_Max, Target_Gender and
-            Target_Residents_Only in the coordinator class. Please refer to the emodpy.campaign.common.TargetDemographicsConfig for more information.
+            The TargetDemographicsConfig object that is used to configure the demographics of the targeted individuals,
+            for example: Demographic_Coverage, Target_Demographic, Target_Age_Min, Target_Age_Max, Target_Gender and
+            Target_Residents_Only. Please refer to :class:`emodpy.campaign.common.TargetDemographicsConfig` for more
+            information.
             Default value: None
 
         property_restrictions(PropertyRestrictions, optional):
             A PropertyRestrictions object that can be used to restrict the distribution of the intervention to
-            individuals with specific properties. Please see the emodpy.common.PropertyRestrictions for more
-            information. This Intervention only allows individual properties, not node properties.
+            individuals with specific properties. Please see :class:`emodpy.campaign.common.PropertyRestrictions` for
+            more information. This intervention only supports individual property restrictions
+            (Property_Restrictions, Property_Restrictions_Within_Node), not node property restrictions.
             Default value: None
 
         duration(float, optional):
@@ -263,7 +263,7 @@ class _BirthTriggeredIV(NodeIntervention):
             Maximum value: 3.40282e+38
             Default value: -1
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
+        common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 4 common
             parameters: disqualifying_properties, dont_allow_duplicates, intervention_name, new_property_value.
             The following parameters are not valid for this intervention:
@@ -289,6 +289,11 @@ class _BirthTriggeredIV(NodeIntervention):
             target_demographics_config._set_target_demographics(self._intervention)
 
         if property_restrictions is not None:
+            if property_restrictions.node_property_restrictions:
+                raise ValueError(
+                    "BirthTriggeredIV only supports individual property restrictions "
+                    "(Property_Restrictions, Property_Restrictions_Within_Node), "
+                    "not node_property_restrictions.")
             property_restrictions._set_property_restrictions(self._intervention)
 
         # ---------------------------------------------------------------------------------------------------
@@ -307,14 +312,13 @@ class _BirthTriggeredIV(NodeIntervention):
         raise ValueError('Cost_To_Consumer is not a valid parameter for the BirthTriggeredIV intervention.')
 
 
-# Make this function private until we can handle the Coordinator Event.
-class _BroadcastCoordinatorEventFromNode(NodeIntervention):
+class BroadcastCoordinatorEventFromNode(NodeIntervention):
     """
-    The **BroadcastCoordinatorEventFromNode** is node-level intervention that broadcasts an event for coordinators.
+    The **BroadcastCoordinatorEventFromNode** is a node-level intervention that broadcasts an event for coordinators.
     For example, if a death occurs in a node, an event can be broadcasted that will trigger some sort of response
     by the healthcare system. **NodeLevelHealthTriggeredIV** could be used to listen for the death of an individual
-    and distribute this intervention to the node. The node intervention could then broadcast its event that a
-    **TriggeredEventCoordinator** is listening for. One can use the **Report_Coordinator_Event_Recorder** to report
+    and distribute this intervention to the node. The node intervention could then broadcast its event that another
+    coordinator is listening for. One can use :class:`emodpy.reporters.common.ReportCoordinatorEventRecorder` to report
     on the events broadcasted by this intervention. Note, this coordinator class must be used with listeners that
     are operating on the same core. For more information, see Simulation core components.
 
@@ -322,13 +326,12 @@ class _BroadcastCoordinatorEventFromNode(NodeIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        broadcast_event(str, optional):
-            The Coordinator Event to be broadcasted by this node.  An Event Coordinator like
-            **TriggeredEventCoordinator** could be activated from this event. Custom events may be defined in
-            **Custom_Coordinator_Events** in the simulation configuration file.
+        broadcast_event(str, required):
+            The Coordinator Event to be broadcast by this node. An Event Coordinator could be activated from
+            this event.
             Default value: None
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
+        common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 4 common
             parameters: disqualifying_properties, dont_allow_duplicates, intervention_name, new_property_value.
             The following parameters are not valid for this intervention:
@@ -338,12 +341,11 @@ class _BroadcastCoordinatorEventFromNode(NodeIntervention):
 
     def __init__(self,
                  campaign: api_campaign,
-                 broadcast_event: str = None,
+                 broadcast_event: str,
                  common_intervention_parameters: CommonInterventionParameters = None):
         super().__init__(campaign, 'BroadcastCoordinatorEventFromNode', common_intervention_parameters)
 
-        # todo: This Broadcast_Event is of type CoorinatorEvent. It probably needs a different _set_event() function
-        self._intervention.Broadcast_Event = set_event(broadcast_event, 'broadcast_event', campaign, True)
+        self._intervention.Broadcast_Event = campaign.set_broadcast_coordinator_event(broadcast_event)
 
     def _set_cost(self, cost: float) -> None:
         raise ValueError('Cost_To_Consumer is not a valid parameter for the BroadcastCoordinatorEventFromNode intervention.')
@@ -356,19 +358,18 @@ class BroadcastNodeEvent(NodeIntervention):
     **BroadcastNodeEvent** and then perform an action based on the broadcasted event. You can also use this for
     the reporting, by recording broadcasted events with :class:`emodpy.reporters.common.ReportNodeEventRecorder` or
     :class:`emodpy.reporters.common.ReportSurveillanceEventRecorder`.
-    You must use this coordinator class with listeners that are operating on the same core. You can
+    You must use this intervention with listeners that are operating on the same core. You can
     also use **NLHTIVNode**. For more information, see Simulation core components.
 
     Args:
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        broadcast_event(str, optional):
+        broadcast_event(str, required):
             The name of the Node Event to broadcast.
-            configuration parameter.
             Default value: None
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
+        common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 5 common
             parameters: intervention_name, new_property_value, disqualifying_properties, dont_allow_duplicates, cost.
             Default value: None
@@ -376,11 +377,12 @@ class BroadcastNodeEvent(NodeIntervention):
 
     def __init__(self,
                  campaign: api_campaign,
-                 broadcast_event: str = None,
+                 broadcast_event: str,
                  common_intervention_parameters: CommonInterventionParameters = None):
         super().__init__(campaign, 'BroadcastNodeEvent', common_intervention_parameters)
 
-        self._intervention.Broadcast_Event = set_event(broadcast_event, 'broadcast_event', campaign, True)
+        if broadcast_event:
+            self._intervention.Broadcast_Event = campaign.set_broadcast_node_event(broadcast_event)
 
 
 class ImportPressure(NodeIntervention):
@@ -401,6 +403,14 @@ class ImportPressure(NodeIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
+        durations(list[int], required):
+            The durations over which to apply import pressure. Must be a non-empty list and
+            must have the same length as **daily_import_pressures**.
+
+        daily_import_pressures(list[float], required):
+            The rate of per-day importation for each node that the intervention is distributed to.
+            Must be a non-empty list and must have the same length as **durations**.
+
         import_age(float, optional):
             The age (in days) of infected import cases.
             Minimum value: 0
@@ -414,14 +424,6 @@ class ImportPressure(NodeIntervention):
             Maximum value: 16777200.0
             Default value: 0
 
-        durations(list[int], optional):
-            The durations over which to apply import pressure.
-            Default value: None
-
-        daily_import_pressures(list[float], optional):
-            The rate of per-day importation for each node that the intervention is distributed to.
-            Default value: None
-
         antigen(int, optional):
             The antigenic base strain ID of the outbreak infection.
             Minimum value: 0
@@ -432,17 +434,26 @@ class ImportPressure(NodeIntervention):
 
     def __init__(self,
                  campaign: api_campaign,
+                 durations: list[int],
+                 daily_import_pressures: list[float],
                  import_age: float = 365,
                  genome: int = 0,
-                 durations: list[int] = None,
-                 daily_import_pressures: list[float] = None,
                  antigen: int = 0):
         super().__init__(campaign, 'ImportPressure')
 
+        if not durations or not isinstance(durations, list):
+            raise ValueError("durations must be a non-empty list.")
+        if not daily_import_pressures or not isinstance(daily_import_pressures, list):
+            raise ValueError("daily_import_pressures must be a non-empty list.")
+        if len(durations) != len(daily_import_pressures):
+            raise ValueError(
+                f"durations and daily_import_pressures must have the same length, "
+                f"got {len(durations)} and {len(daily_import_pressures)}.")
+
         self._intervention.Import_Age = validate_value_range(import_age, 'import_age', 0, 43800, float)
         self._intervention.Genome = validate_value_range(genome, 'genome', -1, 16777200.0, int)
-        self._intervention.Durations = durations.copy() if durations is not None else []
-        self._intervention.Daily_Import_Pressures = daily_import_pressures.copy() if daily_import_pressures is not None else []
+        self._intervention.Durations = durations.copy()
+        self._intervention.Daily_Import_Pressures = daily_import_pressures.copy()
         if antigen is not None:  # antigen is not in Generic model, workaround for Generic model
             self._intervention.Antigen = validate_value_range(antigen, 'antigen', 0, 10, int)
 
@@ -506,7 +517,7 @@ class MigrateFamily(NodeIntervention):
             * WeibullDistribution
             * DualExponentialDistribution
 
-        nodeid_to_migrate_to(int, optional):
+        nodeid_to_migrate_to(int, required):
             The destination node ID for intervention-based migration.
             Minimum value: 0
             Maximum value: 4294970000.0
@@ -516,9 +527,9 @@ class MigrateFamily(NodeIntervention):
             Set to true (1) to indicate all the individuals of the family are permanently moving to a new home
             node for intervention-based migration. Once at the new home node, trips will be made with this node
             as the root (i.e. round trips come back to this node).
-            Default value: True
+            Default value: False
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
+        common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 4 common
             parameters: disqualifying_properties, dont_allow_duplicates, intervention_name, new_property_value.
             The following parameters are not valid for this intervention:
@@ -530,7 +541,7 @@ class MigrateFamily(NodeIntervention):
                  campaign: api_campaign,
                  duration_before_leaving_distribution: BaseDistribution,
                  duration_at_node_distribution: BaseDistribution,
-                 nodeid_to_migrate_to: int = 0,
+                 nodeid_to_migrate_to: int,
                  is_moving: bool = False,
                  common_intervention_parameters: CommonInterventionParameters = None):
         super().__init__(campaign, 'MigrateFamily', common_intervention_parameters)
@@ -549,7 +560,7 @@ class NodePropertyValueChanger(NodeIntervention):
     The **NodePropertyValueChanger** intervention class sets a given node property to a new value. You can also
     define a duration in days before the node property reverts back to its original value, the probability that
     a node will change its node property to the target value, and the number of days over which nodes will
-    attempt to change their individual properties to the target value. This node-level intervention functions
+    attempt to change their node properties to the target value. This node-level intervention functions
     in a similar manner as the individual-level intervention, **PropertyValueChanger**.
 
     Args:
@@ -561,11 +572,11 @@ class NodePropertyValueChanger(NodeIntervention):
 
         revert(float, optional):
             The number of days to keep the value of the property/key, specified in **Target_NP_Key_Value** and
-            set by the intervenion, for the node. When the time has expired, the intervention will reset the
+            set by the intervention, for the node. When the time has expired, the intervention will reset the
             property/key back to the value it had when the intervention was first applied.
             Minimum value: 0
             Maximum value: 3.40282e+38
-            Default value: 0
+            Default value: 3.40282e+38
 
         maximum_duration(float, optional):
             The maximum amount of time in days nodes have to update the property value. This timing works in
@@ -580,7 +591,7 @@ class NodePropertyValueChanger(NodeIntervention):
             Maximum value: 1
             Default value: 1
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
+        common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 4 common
             parameters: disqualifying_properties, dont_allow_duplicates, intervention_name, new_property_value.
             The following parameters are not valid for this intervention:
@@ -591,7 +602,7 @@ class NodePropertyValueChanger(NodeIntervention):
     def __init__(self,
                  campaign: api_campaign,
                  target_np_key_value: str,
-                 revert: float = 0,
+                 revert: float = 3.40282e+38,
                  maximum_duration: float = 3.40282e+38,
                  daily_probability: float = 1,
                  common_intervention_parameters: CommonInterventionParameters = None):

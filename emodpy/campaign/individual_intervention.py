@@ -19,7 +19,8 @@ class BroadcastEvent(IndividualIntervention):
     event.
 
     Args:
-        campaign (api_campaign, required):
+        campaign (api_campaign, required):waityou're on leave
+
             An instance of the emod_api.campaign module.
 
         broadcast_event(str, required):
@@ -27,8 +28,8 @@ class BroadcastEvent(IndividualIntervention):
             :doc:`emod-hiv:emod/parameter-campaign-event-list` for events already used in EMOD or use your own
             custom event.
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 4 common
             parameters: disqualifying_properties, new_property_value, intervention_name, dont_allow_duplicates.
             The following parameters are not valid for this intervention:
             cost
@@ -67,7 +68,7 @@ class BroadcastEventToOtherNodes(IndividualIntervention):
 
         broadcast_event(str, required):
             The name of the event to broadcast to the people of 'nearby' nodes. For example, if a house is
-            found to have malarai, broadcast an event to the people in the nearby houses so that they can get
+            found to have malaria, broadcast an event to the people in the nearby houses so that they can get
             treatment. For HIV, see :doc:`emod-hiv:emod/parameter-campaign-event-list`, and for malaria,
             :doc:`emod-malaria:emod/parameter-campaign-event-list` for events already used in EMOD or use your own
             custom event.
@@ -91,10 +92,10 @@ class BroadcastEventToOtherNodes(IndividualIntervention):
 
         include_my_node(bool, optional):
             Set to True to broadcast the event to the current node.
-            Default value: True
+            Default value: False
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
             cost
@@ -144,7 +145,7 @@ class ControlledVaccine(IndividualIntervention):
 
         waning_config(AbstractWaningConfig, required):
             The configuration of the vaccine's efficacy and waning over time. Specify how this effect decays
-            over time using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            over time using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         vaccine_type(VaccineType, optional):
             The type of vaccine to distribute in a vaccine intervention. Possible values are:
@@ -190,8 +191,8 @@ class ControlledVaccine(IndividualIntervention):
 
             Default value: None
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 5 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 5 common
             parameters: cost, new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             Default value: None
     """
@@ -248,8 +249,8 @@ class DelayedIntervention(IndividualIntervention):
             the delay period.
             Either intervention_to_broadcast_at_delay_completion or event_to_broadcast_at_delay_completion must be set.
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
             cost
@@ -295,7 +296,7 @@ class IVCalendar(IndividualIntervention):
     is dependent on whether the individual's age matches the next date in the calendar. This implies that
     at a certain age, the list of actual interventions will be distributed according to a given probability.
     While a typical use case might involve the distribution of calendars due to a **Births** event in the
-    context of a routine vaccination schedule, calendars may also be distributed directly to individuals at
+    context of a routine vaccination schedule, calendars may also be distributed directly to individuals
     at times other than birth.
 
     Args:
@@ -378,7 +379,7 @@ class IVCalendar(IndividualIntervention):
 
         def to_schema_dict(self, campaign) -> s2c.ReadOnlyDict:
             """
-            A function that converts the Sigmoid object to a schema dictionary.
+            A function that converts the AgeAndProbability object to a schema dictionary.
             """
             aap = s2c.get_class_with_defaults("idmType:AgeAndProbability", schema_json=campaign.get_schema())
             aap.Age = self.age_days
@@ -387,12 +388,14 @@ class IVCalendar(IndividualIntervention):
             return aap
 
 
-class _ImmunityBloodTest(IndividualIntervention):  # make this class private until we have time to review and test it.
+class _ImmunityBloodTest(IndividualIntervention):
     """
     The **ImmunityBloodTest** intervention class identifies whether an individual's immunity meets a specified
     threshold (as set with the **positive_threshold_acquisition_immunity** campaign parameter) and then broadcasts
     an event based on the results; positive has immunity while negative does not. Note that **base_sensitivity**
     and **base_specificity** function whether or not the immunity is above the threshold.
+
+    Developer Note: This class is private because we still need to review and test it.
 
     Args:
         campaign (api_campaign, required):
@@ -428,7 +431,7 @@ class _ImmunityBloodTest(IndividualIntervention):  # make this class private unt
 
         enable_is_symptomatic(bool, optional):
             If True, requires an infection to be symptomatic to return a positive test.
-            Default value: True
+            Default value: False
 
         days_to_diagnosis(float, optional):
             The number of days from the test, which is done when the intervention is distributed, until the
@@ -565,9 +568,9 @@ class IndividualImmunityChanger(IndividualIntervention):
             Maximum value: 1
             Default value: 0
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 1 common
-            parameters: cost.
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 1 common
+            parameter: cost.
             The following parameters are not valid for this intervention:
             intervention_name
             dont_allow_duplicates
@@ -631,7 +634,7 @@ class IndividualNonDiseaseDeathRateModifier(IndividualIntervention):
             exceeds the max time, then the last modifier value will be used.
 
         expiration_event(str, optional):
-            When the person stops using the intervention (intervetion expires), this event will be broadcasted. See
+            When the person stops using the intervention (intervention expires), this event will be broadcast. See
             :doc:`emod-hiv:emod/parameter-campaign-event-list` for events already used in EMOD or use your own
             custom event.
             Default value: None
@@ -652,8 +655,8 @@ class IndividualNonDiseaseDeathRateModifier(IndividualIntervention):
             * DualExponentialDistribution
             Default value: None
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 5 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 5 common
             parameters: cost, new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             Default value: None
     """
@@ -708,7 +711,7 @@ class MigrateIndividuals(IndividualIntervention):
             Set to True to indicate the individual is permanently moving to a new home node for
             intervention-based migration. Once at the new home node, trips will be made with this node as the
             root (i.e. round trips come back to this node).
-            Default value: True
+            Default value: False
 
         duration_before_leaving_distribution(BaseDistribution, optional):
             The distribution type to use for assigning the duration of time an individual waits before
@@ -742,8 +745,8 @@ class MigrateIndividuals(IndividualIntervention):
             * DualExponentialDistribution
             Default value: None
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
             cost
@@ -787,15 +790,15 @@ class MultiEffectBoosterVaccine(IndividualIntervention):
 
         transmit_config(AbstractWaningConfig, required):
             The configuration for multi-effect vaccine transmission. Specify how this effect decays over time
-            using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         mortality_config(AbstractWaningConfig, required):
             The configuration for multi-effect vaccine mortality. Specify how this effect decays over time
-            using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         acquire_config(AbstractWaningConfig, required):
             The configuration for multi-effect vaccine acquisition. Specify how this effect decays over time
-            using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         vaccine_take(float, optional):
             The rate at which delivered vaccines will successfully stimulate an immune response and achieve the
@@ -872,8 +875,8 @@ class MultiEffectBoosterVaccine(IndividualIntervention):
             Maximum value: 1
             Default value: 0
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 5 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 5 common
             parameters: cost, new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             Default value: None
     """
@@ -920,7 +923,7 @@ class MultiEffectBoosterVaccine(IndividualIntervention):
 class MultiEffectVaccine(IndividualIntervention):
     """
     The **MultiEffectVaccine** intervention class implements vaccine campaigns in the simulation.
-    Vaccines can effect all of the following:
+    Vaccines can affect all of the following:
 
         - Reduce the likelihood of acquiring an infection
         - Reduce the likelihood of transmitting an infection
@@ -934,15 +937,15 @@ class MultiEffectVaccine(IndividualIntervention):
 
         transmit_config(AbstractWaningConfig, required):
             The configuration for multi-effect vaccine transmission. Specify how this effect decays over time
-            using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         mortality_config(AbstractWaningConfig, required):
             The configuration for multi-effect vaccine mortality. Specify how this effect decays over time
-            using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         acquire_config(AbstractWaningConfig, required):
             The configuration for multi-effect vaccine acquisition. Specify how this effect decays over time
-            using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         vaccine_take(float, optional):
             The rate at which delivered vaccines will successfully stimulate an immune response and achieve the
@@ -953,8 +956,8 @@ class MultiEffectVaccine(IndividualIntervention):
             Maximum value: 1
             Default value: 1
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 5 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 5 common
             parameters: cost, new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             Default value: None
     """
@@ -992,8 +995,8 @@ class MultiInterventionDistributor(IndividualIntervention):
         intervention_list(list[IndividualIntervention], required):
             The list of individual interventions that is distributed by **MultiInterventionDistributor**.
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
             cost
@@ -1104,7 +1107,7 @@ class PropertyValueChanger(IndividualIntervention):
 
         revert(float, optional):
             The number of days to keep the value (**Target_Property_Value**) of the property
-            (**Target_Property_Key**) set by the intervenion for the individual. When the time has expired, the
+            (**Target_Property_Key**) set by the intervention for the individual. When the time has expired, the
             intervention will reset the property back to the value it had when the intervention was first
             applied.
             Minimum value: 0
@@ -1124,8 +1127,8 @@ class PropertyValueChanger(IndividualIntervention):
             Maximum value: 1
             Default value: 1
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
             cost
@@ -1171,7 +1174,7 @@ class SimpleBoosterVaccine(IndividualIntervention):
 
         waning_config(AbstractWaningConfig, required):
             The configuration of the vaccine's efficacy and waning over time. Specify how this effect decays
-            over time using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            over time using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         vaccine_type(VaccineType, optional):
             The type of vaccine to distribute in a vaccine intervention. Possible values are:
@@ -1218,8 +1221,8 @@ class SimpleBoosterVaccine(IndividualIntervention):
             Maximum value: 1
             Default value: 1
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 5 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 5 common
             parameters: cost, new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             Default value: None
     """
@@ -1263,7 +1266,7 @@ class _SimpleDiagnostic(IndividualIntervention):
 
         positive_diagnosis_config(IndividualIntervention, optional):
             The intervention distributed to individuals if they test positive. Must be defined if not using
-            postive_diagnosis_event. Cannot have both positive_diagnosis_config and positive_diagnosis_event.
+            positive_diagnosis_event. Cannot have both positive_diagnosis_config and positive_diagnosis_event.
             Default value: None
 
         positive_diagnosis_event(str, optional):
@@ -1282,7 +1285,7 @@ class _SimpleDiagnostic(IndividualIntervention):
 
         enable_is_symptomatic(bool, optional):
             If True, requires an infection to be symptomatic to return a positive test.
-            Default value: True
+            Default value: False
 
         days_to_diagnosis(float, optional):
             The number of days from diagnosis (which is done when the intervention is distributed) until a
@@ -1310,8 +1313,8 @@ class _SimpleDiagnostic(IndividualIntervention):
             Maximum value: 1
             Default value: 1
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 5 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 5 common
             parameters: cost, new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             Default value: None
     """
@@ -1362,7 +1365,7 @@ class _SimpleHealthSeekingBehavior(IndividualIntervention):
     intervention can be distributed using **add_intervention_triggered()** so that when an individual is
     infected, he or she receives a **SimpleHealthSeekingBehavior**, representing that the individual will now
     seek care. The individual subsequently seeks care with an exponentially distributed delay and ultimately
-    receives the specified intervention or sents out an event that triggers them receiving an intervention.
+    receives the specified intervention or sends out an event that triggers them receiving an intervention.
 
     Args:
         campaign (api_campaign, required):
@@ -1390,8 +1393,8 @@ class _SimpleHealthSeekingBehavior(IndividualIntervention):
             it remains indefinitely.
             Default value: True
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
             cost
@@ -1470,8 +1473,8 @@ class SimpleVaccine(IndividualIntervention):
             the vaccine efficacies are multiplied together; when set to False, the efficacies are additive.
             Default value: True
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 5 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 5 common
             parameters: cost, new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             Default value: None
     """
@@ -1503,7 +1506,7 @@ class StandardDiagnostic(IndividualIntervention):
     fraction of individuals who test positive.
 
         - You can use either the XXX_diagnosis_config or XXX_diagnosis_event parameters, but not both.
-        - You must specifiy a response for a postive diagnosis, but not for a negative diagnosis.
+        - You must specify a response for a positive diagnosis, but not for a negative diagnosis.
 
     Args:
         campaign (api_campaign, required):
@@ -1511,13 +1514,13 @@ class StandardDiagnostic(IndividualIntervention):
 
         positive_diagnosis_config(IndividualIntervention, optional):
             - The intervention distributed to individuals if they test positive.
-            - Must be defined if not using postive_diagnosis_event.
+            - Must be defined if not using positive_diagnosis_event.
             - Cannot have both positive_diagnosis_config and positive_diagnosis_event.
             - Default value: None
 
         negative_diagnosis_config(IndividualIntervention, optional):
             - The intervention distributed to individuals if they test negative.
-            - If using postive_diagnosis_config, you can use negative_diagnosis_config, but not negative_diagnosis_event.
+            - If using positive_diagnosis_config, you can use negative_diagnosis_config, but not negative_diagnosis_event.
             - Can use this or negative_diagnosis_event, but not both.
             - Default value: None
 
@@ -1529,9 +1532,9 @@ class StandardDiagnostic(IndividualIntervention):
             - Default value: None
 
         negative_diagnosis_event(str, optional):
-            - This parameter defines the event to be broadcasted on a negative test result.
+            - This parameter defines the event to be broadcast on a negative test result.
             - Cannot have both negative_diagnosis_config and negative_diagnosis_event.
-            - if using positive_diagnosis_config, you can use negative_diagnosis_config, but not negative_diagnosis_event.
+            - If using positive_diagnosis_config, you can use negative_diagnosis_config, but not negative_diagnosis_event.
             - For HIV, see :doc:`emod-hiv:emod/parameter-campaign-event-list`, and for malaria, :doc:`emod-malaria:emod/parameter-campaign-event-list` for events already used in EMOD or use your own custom event.
             - Default value: None
 
@@ -1545,7 +1548,7 @@ class StandardDiagnostic(IndividualIntervention):
 
         enable_is_symptomatic(bool, optional):
             - If True, requires an infection to be symptomatic to return a positive test.
-            - Default value: True
+            - Default value: False
 
         days_to_diagnosis(float, optional):
             - The number of days from the test, which is done when the intervention is distributed, until the
@@ -1574,7 +1577,7 @@ class StandardDiagnostic(IndividualIntervention):
             - Maximum value: 1
             - Default value: 1
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
+        common_intervention_parameters (CommonInterventionParameters, optional):
             - The CommonInterventionParameters object that contains the 5 common additional parameters: cost,
               new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             - Default value: None

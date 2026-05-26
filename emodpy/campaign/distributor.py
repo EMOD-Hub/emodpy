@@ -1,7 +1,7 @@
 from emod_api import campaign as api_campaign
 
 from emodpy.campaign.common import TargetDemographicsConfig, RepetitionConfig, PropertyRestrictions
-from emodpy.campaign.event_coordinator import StandardEventCoordinator
+from emodpy.campaign.event_coordinator import StandardEventCoordinator, CommunityHealthWorkerEventCoordinator, BroadcastCoordinatorEvent
 from emodpy.campaign.base_intervention import IndividualIntervention, NodeIntervention
 from emodpy.campaign.individual_intervention import DelayedIntervention
 from emodpy.campaign.node_intervention import _NodeLevelHealthTriggeredIV
@@ -278,6 +278,224 @@ def add_intervention_triggered(campaign: api_campaign,
                                   start_day=start_day, start_year=start_year)
 
     # Add the event to the campaign
+    campaign.add(event.to_schema_dict(campaign))
+
+
+def add_community_health_worker(campaign: api_campaign,
+                                intervention_list: Union[list[IndividualIntervention], list[NodeIntervention]],
+                                trigger_condition_list: list[str],
+                                initial_amount_distribution: BaseDistribution,
+                                max_distributed_per_day: int,
+                                waiting_period: float,
+                                days_between_shipments: float,
+                                amount_in_shipment: int,
+                                start_day: float = None,
+                                start_year: float = None,
+                                duration: float = None,
+                                max_stock: int = None,
+                                event_name: str = None,
+                                node_ids: Optional[List[int]] = None,
+                                delay_distribution: BaseDistribution = None,
+                                target_demographics_config: TargetDemographicsConfig = None,
+                                property_restrictions: PropertyRestrictions = None,
+                                targeting_config: AbstractTargetingConfig = None) -> None:
+    """
+    Add a community health worker (CHW) intervention to the campaign. The CHW listens for
+    trigger events, queues individuals or nodes, and distributes interventions at a configurable
+    rate limited by available stock. Stock is replenished periodically via shipments.
+
+    Individuals or nodes that have been in the queue longer than the **waiting_period** are
+    removed. Individuals who die or emigrate are automatically removed from the queue. The
+    coordinator expires after **duration** days (duration of -1 means it never expires).
+
+    Args:
+        campaign (api_campaign, required):
+            - The campaign object to which the event will be added. This should be an instance of the emod_api.campaign class.
+        intervention_list (Union[list[IndividualIntervention], list[NodeIntervention]], required):
+            - A list of IndividualIntervention or NodeIntervention objects. It should contain only one type of intervention.
+            - Refer to the emodpy(_'disease').campaign.individual_intervention module for available IndividualIntervention derived classes.
+            - Refer to the emodpy(_'disease').campaign.node_intervention module for available NodeIntervention derived classes.
+        trigger_condition_list (list[str], required):
+            - A list of individual events that add the triggering individual or node to the CHW's queue.
+            - Events can be EMOD built-in (e.g., ``"NewInfectionEvent"``, ``"NewClinicalCase"``) or custom events broadcast by other campaign components.
+            - It can not be an empty list.
+        initial_amount_distribution (BaseDistribution, required):
+            - The distribution used to determine the initial stock of interventions.
+            - Use any :class:`~emodpy.utils.distributions.BaseDistribution` subclass, e.g.,
+              ``ConstantDistribution(500)`` or ``UniformDistribution(100, 1000)``.
+        max_distributed_per_day (int, required):
+            - The maximum number of interventions the CHW can distribute per day.
+            - Minimum value: 1. Maximum value: 2147480000.
+        waiting_period (float, required):
+            - The number of days a person or node can remain in the queue. Entities exceeding this waiting period are removed.
+            - Minimum value: 0. Maximum value: 3.40282e+38.
+        days_between_shipments (float, required):
+            - The number of days between restocking shipments.
+            - Minimum value: 1. Maximum value: 3.40282e+38.
+        amount_in_shipment (int, required):
+            - The number of interventions received in each shipment.
+            - Minimum value: 0. Maximum value: 2147480000.
+        start_day (float, optional):
+            - The day when the event starts.
+            - Either start_day or start_year is required, but not both.
+            - Defaults to None.
+        start_year (float, optional):
+            - The year when the event starts.
+            - Either start_day or start_year is required, but not both.
+            - Defaults to None.
+        duration (float, optional):
+            - The number of days the coordinator remains active before it expires.
+            - Minimum value: 0. Maximum value: 3.40282e+38.
+            - Default value: None (uses EMOD default: 3.40282e+38).
+        max_stock (int, optional):
+            - The maximum inventory the CHW can hold. Excess stock from shipments is discarded.
+            - Minimum value: 0. Maximum value: 2147480000.
+            - Default value: None (uses EMOD default: 2147480000).
+        event_name (str, optional):
+            - The name of the event.
+            - Defaults to None.
+        node_ids (Optional[List[int]], optional):
+            - A list of node IDs where the event will be applied.
+            - If None, the event applies to all nodes.
+            - Defaults to None.
+        delay_distribution (BaseDistribution, optional):
+            - A Distribution to define the delay distribution for the IndividualIntervention.
+            - It only applies when intervention_list contains IndividualIntervention.
+            - Defaults to None which has no delay.
+        target_demographics_config (TargetDemographicsConfig, optional):
+            - A TargetDemographicsConfig to define the demographics related parameters.
+            - Defaults to None which targets everyone with 100% coverage.
+        property_restrictions (PropertyRestrictions, optional):
+            - A PropertyRestrictions to define the Individual or Node Property_Restrictions in the coordinator.
+            - Defaults to None which has no restrictions.
+        targeting_config (AbstractTargetingConfig, optional):
+            - A TargetingConfig to targeting individuals.
+            - Please refer to the emodpy.utils.targeting_config module for more information.
+            - If None (default), then there is no extra targeting.
+
+    Returns:
+        None, add the configuration to the campaign.
+
+    Example:
+        >>> from emodpy.campaign.distributor import add_community_health_worker
+        >>> from emodpy.campaign.common import TargetDemographicsConfig
+        >>> from emodpy.campaign.individual_intervention import BroadcastEvent
+        >>> from emodpy.utils.distributions import ConstantDistribution
+        >>> from emod_api import campaign as api_campaign
+        >>> my_campaign = api_campaign
+        >>> my_campaign.set_schema('path_to_schema.json')
+        >>> add_community_health_worker(
+        >>>     campaign=my_campaign,
+        >>>     intervention_list=[BroadcastEvent(my_campaign, broadcast_event="receive_treatment")],
+        >>>     trigger_condition_list=["NewClinicalCase"],
+        >>>     initial_amount_distribution=ConstantDistribution(500),
+        >>>     max_distributed_per_day=10,
+        >>>     waiting_period=30,
+        >>>     days_between_shipments=7,
+        >>>     amount_in_shipment=100,
+        >>>     start_day=1,
+        >>>     duration=365,
+        >>>     target_demographics_config=TargetDemographicsConfig(demographic_coverage=0.8)
+        >>> )
+    """
+    intervention_list = _add_delay(campaign, delay_distribution, intervention_list)
+
+    coordinator = CommunityHealthWorkerEventCoordinator(
+        campaign,
+        intervention_list=intervention_list,
+        trigger_condition_list=trigger_condition_list,
+        initial_amount_distribution=initial_amount_distribution,
+        max_distributed_per_day=max_distributed_per_day,
+        waiting_period=waiting_period,
+        days_between_shipments=days_between_shipments,
+        amount_in_shipment=amount_in_shipment,
+        duration=duration,
+        max_stock=max_stock,
+        target_demographics_config=target_demographics_config,
+        property_restrictions=property_restrictions,
+        targeting_config=targeting_config)
+
+    event = create_campaign_event(campaign, coordinator=coordinator, event_name=event_name, node_ids=node_ids,
+                                  start_day=start_day, start_year=start_year)
+
+    campaign.add(event.to_schema_dict(campaign))
+
+
+def add_broadcast_coordinator_event(campaign: api_campaign,
+                                    broadcast_event: str,
+                                    start_day: float = None,
+                                    start_year: float = None,
+                                    coordinator_name: str = "BroadcastCoordinatorEvent",
+                                    cost_to_consumer: float = 0,
+                                    event_name: str = None,
+                                    node_ids: Optional[List[int]] = None) -> None:
+    """
+    Add a coordinator-level event broadcast to the campaign. This creates a
+    :class:`~emodpy.campaign.event_coordinator.BroadcastCoordinatorEvent` coordinator that
+    broadcasts a single coordinator event when the campaign event fires. It does **not**
+    distribute interventions.
+
+    This is useful for triggering coordinator-level event chains. For example, it can
+    broadcast the start trigger for a
+    :class:`~emodpy.campaign.event_coordinator.SurveillanceEventCoordinator` or a
+    :class:`~emodpy_malaria.campaign.event_coordinator.VectorSurveillanceEventCoordinator`.
+
+    Args:
+        campaign (api_campaign, required):
+            - The campaign object to which the event will be added. This should be an
+              instance of the emod_api.campaign class.
+        broadcast_event (str, required):
+            - The name of the coordinator-level event to broadcast. Must be a non-empty
+              string. The event must be defined in **Custom_Coordinator_Events** in the
+              simulation configuration.
+        start_day (float, optional):
+            - The day when the event fires.
+            - Either start_day or start_year is required, but not both.
+            - Defaults to None.
+        start_year (float, optional):
+            - The year when the event fires.
+            - Either start_day or start_year is required, but not both.
+            - Defaults to None.
+        coordinator_name (str, optional):
+            - A descriptive name for this coordinator instance, useful in output reports
+              such as :class:`~emodpy.reporters.common.ReportCoordinatorEventRecorder`.
+            - Default value: "BroadcastCoordinatorEvent"
+        cost_to_consumer (float, optional):
+            - The unit cost per coordinator created.
+            - Minimum value: 0. Maximum value: 3.40282e+38.
+            - Default value: 0
+        event_name (str, optional):
+            - The name of the campaign event.
+            - Defaults to None.
+        node_ids (Optional[List[int]], optional):
+            - A list of node IDs where the event will be applied.
+            - If None, the event applies to all nodes.
+            - Defaults to None.
+
+    Returns:
+        None, adds the configuration to the campaign.
+
+    Example:
+        >>> from emodpy.campaign.distributor import add_broadcast_coordinator_event
+        >>> from emod_api import campaign as api_campaign
+        >>> my_campaign = api_campaign
+        >>> my_campaign.set_schema('path_to_schema.json')
+        >>> add_broadcast_coordinator_event(
+        ...     campaign=my_campaign,
+        ...     broadcast_event="StartSurveillance",
+        ...     start_day=1,
+        ...     coordinator_name="TriggerSurveillance"
+        ... )
+    """
+    coordinator = BroadcastCoordinatorEvent(
+        campaign,
+        broadcast_event=broadcast_event,
+        coordinator_name=coordinator_name,
+        cost_to_consumer=cost_to_consumer)
+
+    event = create_campaign_event(campaign, coordinator=coordinator, event_name=event_name,
+                                  node_ids=node_ids, start_day=start_day, start_year=start_year)
+
     campaign.add(event.to_schema_dict(campaign))
 
 

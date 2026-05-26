@@ -17,6 +17,8 @@ def get_trigger_conditions(campaign: api_campaign, trigger_list: list[str]) -> l
     """
     Get the trigger conditions from the campaign module and return the trigger list.
     """
+    if not trigger_list or not isinstance(trigger_list, list):
+        raise ValueError(f"{trigger_list} must be a non-empty list of strings.")
     def validate_trigger(trigger: str) -> str:
         if not trigger:
             raise ValueError(f"{trigger} must be a string and cannot be None or empty.")

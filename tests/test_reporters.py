@@ -80,9 +80,33 @@ class TestReportersCommon(unittest.TestCase):
         self.node_ids = [1241, 2342, 485]
         self.age_bins = [0, 5.6, 34, 70.1, 99]
 
-    def create_final_task(self, reporters, builtin=False):
+        def _config_with_custom_node_events(config):
+            config.parameters.Custom_Node_Events = self.event_list
+            return config
+
+        def _config_with_custom_coordinator_events(config):
+            config.parameters.Custom_Coordinator_Events = self.event_list
+            return config
+
+        def _config_with_custom_node_and_coordinator_events(config):
+            config.parameters.Custom_Node_Events = self.event_list
+            config.parameters.Custom_Coordinator_Events = self.event_list
+            return config
+
+        def _config_with_all_custom_events(config):
+            config.parameters.Custom_Individual_Events = [self.random_string2, self.random_string3]
+            config.parameters.Custom_Coordinator_Events = self.event_list
+            return config
+
+        self.config_with_custom_node_events = _config_with_custom_node_events
+        self.config_with_custom_coordinator_events = _config_with_custom_coordinator_events
+        self.config_with_custom_node_and_coordinator_events = _config_with_custom_node_and_coordinator_events
+        self.config_with_all_custom_events = _config_with_all_custom_events
+
+    def create_final_task(self, reporters, builtin=False, config_builder=None):
         task = EMODTask.from_defaults(schema_path=self.builders.schema_path,
-                                      report_builder=reporters)
+                                      report_builder=reporters,
+                                      config_builder=config_builder)
         if task.reporters.builtin_reporters:
             task.config.parameters.Custom_Reports_Filename = "custom_reports.json"
         for reporter in task.reporters.config_reporters:
@@ -317,7 +341,7 @@ class TestReportersCommon(unittest.TestCase):
                                                                          must_have_intervention=self.must_have_intervention)))
             return reporters
 
-        task = self.create_final_task(build_reports)
+        task = self.create_final_task(build_reports, config_builder=self.config_with_custom_node_events)
         # verifying that the settings made it to the config
         assert (task.config.parameters.Report_Event_Recorder_Individual_Properties == self.individual_properties)
         assert (task.config.parameters.Report_Event_Recorder_PropertyChange_IP_Key_Of_Interest == self.property_change_ip_to_record)
@@ -346,7 +370,7 @@ class TestReportersCommon(unittest.TestCase):
                                                   stats_by_ips=self.individual_properties))
             return reporters
 
-        task = self.create_final_task(build_reports)
+        task = self.create_final_task(build_reports, config_builder=self.config_with_custom_node_events)
         assert (task.config.parameters.Custom_Reports_Filename == "")
         assert (task.config.parameters.Report_Node_Event_Recorder == 1)
         assert (task.config.parameters.Report_Node_Event_Recorder_Events == self.event_list)
@@ -363,7 +387,7 @@ class TestReportersCommon(unittest.TestCase):
                                                   stats_by_ips=[]))
             return reporters
 
-        task = self.create_final_task(build_reports)
+        task = self.create_final_task(build_reports, config_builder=self.config_with_custom_node_events)
         assert (task.config.parameters.Custom_Reports_Filename == "")
         assert (task.config.parameters.Report_Node_Event_Recorder_Node_Properties == [])
         assert (task.config.parameters.Report_Node_Event_Recorder_Stats_By_IPs == [])
@@ -375,7 +399,7 @@ class TestReportersCommon(unittest.TestCase):
                                                   event_list=self.event_list))
             return reporters
 
-        task = self.create_final_task(build_reports)
+        task = self.create_final_task(build_reports, config_builder=self.config_with_custom_node_events)
         assert (task.config.parameters.Custom_Reports_Filename == "")
         assert (task.config.parameters.Report_Node_Event_Recorder_Events == self.event_list)
         assert (task.config.parameters.Report_Node_Event_Recorder_Ignore_Events_In_List == 0)
@@ -409,7 +433,7 @@ class TestReportersCommon(unittest.TestCase):
                                                          event_list=self.event_list))
             return reporters
 
-        task = self.create_final_task(build_reports)
+        task = self.create_final_task(build_reports, config_builder=self.config_with_custom_coordinator_events)
         assert (task.config.parameters.Report_Coordinator_Event_Recorder == 1)
         assert (task.config.parameters.Report_Coordinator_Event_Recorder_Events == self.event_list)
         assert (task.config.parameters.Report_Coordinator_Event_Recorder_Ignore_Events_In_List == 0)
@@ -432,7 +456,7 @@ class TestReportersCommon(unittest.TestCase):
                                                           stats_by_ips=self.individual_properties))
             return reporters
 
-        task = self.create_final_task(build_reports)
+        task = self.create_final_task(build_reports, config_builder=self.config_with_custom_coordinator_events)
         assert (task.config.parameters.Report_Surveillance_Event_Recorder_Events == self.event_list)
         assert (task.config.parameters.Report_Surveillance_Event_Recorder_Ignore_Events_In_List == 0)
         assert (task.config.parameters.Report_Surveillance_Event_Recorder_Stats_By_IPs == self.individual_properties)
@@ -444,7 +468,7 @@ class TestReportersCommon(unittest.TestCase):
                                                           event_list=self.event_list))
             return reporters
 
-        task = self.create_final_task(build_reports)
+        task = self.create_final_task(build_reports, config_builder=self.config_with_custom_coordinator_events)
         assert (task.config.parameters.Custom_Reports_Filename == "")
         assert (task.config.parameters.Report_Surveillance_Event_Recorder == 1)
         assert (task.config.parameters.Report_Surveillance_Event_Recorder_Events == self.event_list)
@@ -579,7 +603,8 @@ class TestReportersCommon(unittest.TestCase):
                                                           stats_by_ips=self.individual_properties))
             return reporters
 
-        task = self.create_final_task(build_reports, builtin=True)
+        task = self.create_final_task(build_reports, builtin=True,
+                                     config_builder=self.config_with_all_custom_events)
         self.assertEqual(task.config.parameters.Custom_Reports_Filename, "custom_reports.json")
         self.assertEqual(task.config.parameters.Report_Surveillance_Event_Recorder_Events, self.event_list)
         self.assertEqual(task.config.parameters.Report_Surveillance_Event_Recorder_Ignore_Events_In_List, 0)
@@ -1106,6 +1131,145 @@ class TestReportersCommon(unittest.TestCase):
         except Exception:
             all_good = False
         assert (all_good)
+
+
+@pytest.mark.unit
+class TestListeningEvents(unittest.TestCase):
+
+    @pytest.fixture(autouse=True)
+    def run_every_test(self, request) -> None:
+        self.original_working_dir = os.getcwd()
+        self.case_name = request.node.name
+        self.test_folder = helpers.make_test_directory(self.case_name)
+        self.reporter = Reporters(helpers.BuildersCommon.schema_path)
+        yield
+        helpers.close_logger(idmtools_logger.parent)
+        os.chdir(self.original_working_dir)
+
+    def test_empty_reporters_have_empty_event_lists(self):
+        self.assertEqual(self.reporter.listening_individual_events, [])
+        self.assertEqual(self.reporter.listening_node_events, [])
+        self.assertEqual(self.reporter.listening_coordinator_events, [])
+
+    def test_event_counter_registers_individual_events(self):
+        events = ["HappyBirthday", "NewInfectionEvent"]
+        self.reporter.add(ReportEventCounter(reporters_object=self.reporter, event_list=events))
+        self.assertEqual(self.reporter.listening_individual_events, events)
+        self.assertEqual(self.reporter.listening_node_events, [])
+        self.assertEqual(self.reporter.listening_coordinator_events, [])
+
+    def test_event_recorder_registers_individual_events(self):
+        events = ["HappyBirthday", "NewInfectionEvent"]
+        self.reporter.add(ReportEventRecorder(reporters_object=self.reporter, event_list=events))
+        self.assertEqual(self.reporter.listening_individual_events, events)
+        self.assertEqual(self.reporter.listening_node_events, [])
+        self.assertEqual(self.reporter.listening_coordinator_events, [])
+
+    def test_node_event_recorder_registers_node_events(self):
+        events = ["NodeEvent1", "NodeEvent2"]
+        self.reporter.add(ReportNodeEventRecorder(reporters_object=self.reporter, event_list=events))
+        self.assertEqual(self.reporter.listening_individual_events, [])
+        self.assertEqual(self.reporter.listening_node_events, events)
+        self.assertEqual(self.reporter.listening_coordinator_events, [])
+
+    def test_coordinator_event_recorder_registers_coordinator_events(self):
+        events = ["CoordEvent1", "CoordEvent2"]
+        self.reporter.add(ReportCoordinatorEventRecorder(reporters_object=self.reporter, event_list=events))
+        self.assertEqual(self.reporter.listening_individual_events, [])
+        self.assertEqual(self.reporter.listening_node_events, [])
+        self.assertEqual(self.reporter.listening_coordinator_events, events)
+
+    def test_surveillance_event_recorder_registers_coordinator_events(self):
+        events = ["SurvEvent1", "SurvEvent2"]
+        self.reporter.add(ReportSurveillanceEventRecorder(reporters_object=self.reporter, event_list=events))
+        self.assertEqual(self.reporter.listening_individual_events, [])
+        self.assertEqual(self.reporter.listening_node_events, [])
+        self.assertEqual(self.reporter.listening_coordinator_events, events)
+
+    def test_multiple_reporters_accumulate_events(self):
+        individual_events1 = ["HappyBirthday", "NewInfectionEvent"]
+        individual_events2 = ["Births", "NonDiseaseDeaths"]
+        node_events = ["NodeEvent1"]
+        coordinator_events = ["CoordEvent1"]
+
+        self.reporter.add(ReportEventCounter(reporters_object=self.reporter, event_list=individual_events1))
+        self.reporter.add(ReportEventRecorder(reporters_object=self.reporter, event_list=individual_events2))
+        self.reporter.add(ReportNodeEventRecorder(reporters_object=self.reporter, event_list=node_events))
+        self.reporter.add(ReportCoordinatorEventRecorder(reporters_object=self.reporter, event_list=coordinator_events))
+
+        self.assertEqual(self.reporter.listening_individual_events, individual_events1 + individual_events2)
+        self.assertEqual(self.reporter.listening_node_events, node_events)
+        self.assertEqual(self.reporter.listening_coordinator_events, coordinator_events)
+
+    def test_duplicate_events_not_added(self):
+        events = ["HappyBirthday", "NewInfectionEvent"]
+        self.reporter.add(ReportEventCounter(reporters_object=self.reporter, event_list=events))
+        self.reporter.add(ReportEventCounter(reporters_object=self.reporter, event_list=events))
+        self.assertEqual(self.reporter.listening_individual_events, events)
+
+    def test_non_event_reporter_does_not_affect_lists(self):
+        self.reporter.add(ReportHumanMigrationTracking(reporters_object=self.reporter))
+        self.assertEqual(self.reporter.listening_individual_events, [])
+        self.assertEqual(self.reporter.listening_node_events, [])
+        self.assertEqual(self.reporter.listening_coordinator_events, [])
+
+    def test_validation_passes_for_builtin_individual_events(self):
+        builtin = self.reporter.get_builtin_events()
+        if not builtin["individual"]:
+            self.skipTest("No built-in individual events in schema")
+        events = builtin["individual"][:2]
+        def build_reports(reporters):
+            reporters.add(ReportEventCounter(reporters_object=reporters, event_list=events))
+            return reporters
+        task = EMODTask.from_defaults(schema_path=helpers.BuildersCommon.schema_path,
+                                      report_builder=build_reports)
+        self.assertEqual(task.reporters.listening_individual_events, events)
+
+    def test_validation_passes_for_custom_events_in_config(self):
+        def config_builder(config):
+            config.parameters.Custom_Coordinator_Events = ["MyCustomCoordEvent"]
+            return config
+        def build_reports(reporters):
+            reporters.add(ReportCoordinatorEventRecorder(reporters_object=reporters,
+                                                          event_list=["MyCustomCoordEvent"]))
+            return reporters
+        task = EMODTask.from_defaults(schema_path=helpers.BuildersCommon.schema_path,
+                                      report_builder=build_reports,
+                                      config_builder=config_builder)
+        self.assertEqual(task.reporters.listening_coordinator_events, ["MyCustomCoordEvent"])
+
+    def test_validation_raises_for_unregistered_individual_event(self):
+        def build_reports(reporters):
+            reporters.add(ReportEventCounter(reporters_object=reporters,
+                                             event_list=["NonExistentEvent_XYZ"]))
+            return reporters
+        with self.assertRaises(ValueError) as context:
+            EMODTask.from_defaults(schema_path=helpers.BuildersCommon.schema_path,
+                                   report_builder=build_reports)
+        self.assertIn("NonExistentEvent_XYZ", str(context.exception))
+        self.assertIn("individual", str(context.exception))
+
+    def test_validation_raises_for_unregistered_node_event(self):
+        def build_reports(reporters):
+            reporters.add(ReportNodeEventRecorder(reporters_object=reporters,
+                                                   event_list=["NonExistentNodeEvent"]))
+            return reporters
+        with self.assertRaises(ValueError) as context:
+            EMODTask.from_defaults(schema_path=helpers.BuildersCommon.schema_path,
+                                   report_builder=build_reports)
+        self.assertIn("NonExistentNodeEvent", str(context.exception))
+        self.assertIn("node", str(context.exception))
+
+    def test_validation_raises_for_unregistered_coordinator_event(self):
+        def build_reports(reporters):
+            reporters.add(ReportCoordinatorEventRecorder(reporters_object=reporters,
+                                                          event_list=["NonExistentCoordEvent"]))
+            return reporters
+        with self.assertRaises(ValueError) as context:
+            EMODTask.from_defaults(schema_path=helpers.BuildersCommon.schema_path,
+                                   report_builder=build_reports)
+        self.assertIn("NonExistentCoordEvent", str(context.exception))
+        self.assertIn("coordinator", str(context.exception))
 
 
 @pytest.mark.skip(reason="Skipping because reports in Generic-Ongoing EMOD meaningfully different")

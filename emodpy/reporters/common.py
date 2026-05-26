@@ -86,10 +86,6 @@ class ReportPluginAgeAtInfection(BuiltInReporter):
     """
     Creates ReportPluginAgeAtInfection report to be added to the simulation.
 
-    For more information:
-    `HIV's ReportPluginAgeAtInfection <https://github.com/EMOD-Hub/emodpy-hiv/issues/8>`_ or
-    `Malaria's ReportPluginAgeAtInfection <https://github.com/EMOD-Hub/emodpy-malaria/issues/16>`_
-
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -104,10 +100,6 @@ class ReportPluginAgeAtInfection(BuiltInReporter):
 class ReportPluginAgeAtInfectionHistogram(BuiltInReporter):
     """
     Creates ReportPluginAgeAtInfectionHistogram report to be added to the simulation.
-
-    For more information:
-    `HIV's ReportPluginAgeAtInfectionHistogram <https://github.com/EMOD-Hub/emodpy-hiv/issues/9>`_ or
-    `Malaria's ReportPluginAgeAtInfectionHistogram <https://github.com/EMOD-Hub/emodpy-malaria/issues/17>`_
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -145,9 +137,6 @@ class SqlReport(BuiltInReporter):
     the report output is a multi-table SQLite relational database (see https://sqlitebrowser.org/). Use the
     configuration parameters to manage the size of the database.
 
-    For more information:
-    `HIV's SqlReport <https://github.com/EMOD-Hub/emodpy-hiv/issues/7>`_ or
-    `Malaria's SqlReport <https://github.com/EMOD-Hub/emodpy-malaria/issues/15>`_
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -255,6 +244,8 @@ class ReportEventCounter(BuiltInReporter):
                                                                       param_name="event_list",
                                                                       empty_list_ok=False,
                                                                       process_string_callback=validate_individual_event)
+        self._event_level = "individual"
+        self._event_list = self.parameters.Event_Trigger_List
 
     def _set_start_year(self, start_year: float, reporter_class_name: str) -> None:
         raise ValueError(f'start_year is not a valid parameter for {reporter_class_name}.')
@@ -267,9 +258,6 @@ class ReportSimulationStats(BuiltInReporter):
     """
     Creates the ReportSimulationStats to summarize key simulation statistics.
 
-    For more information:
-    `HIV's ReportSimulationStats <https://github.com/EMOD-Hub/emodpy-hiv/issues/6>`_ or
-    `Malaria's ReportSimulationStats <https://github.com/EMOD-Hub/emodpy-malaria/issues/14>`_
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -334,10 +322,6 @@ class ReportInfectionDuration(BuiltInReporter):
     """
     The infection duration report (ReportInfectionDuration.csv)provides one line of information about an infection
     that has just cleared. It tells you who had the infection and how long they had it.
-
-    For more information:
-    `HIV's ReportInfectionDuration <https://github.com/EMOD-Hub/emodpy-hiv/issues/10>`_ or
-    `Malaria's ReportInfectionDuration <https://github.com/EMOD-Hub/emodpy-malaria/issues/18>`_
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -439,6 +423,8 @@ class ReportEventRecorder(ConfigReporter):
                                      empty_list_ok=False,
                                      process_string_callback=validate_individual_event))
         self.parameters[f"{reporter_parameter_prefix}_Ignore_Events_In_List"] = 0
+        self._event_level = "individual"
+        self._event_list = self.parameters[f"{reporter_parameter_prefix}_Events"]
 
         self.parameters[f"{reporter_parameter_prefix}_Individual_Properties"] = (
             validate_list_of_strings(strings=individual_properties,
@@ -464,10 +450,6 @@ class ReportNodeEventRecorder(ConfigReporter):
     The Node-level events report (ReportNodeEventRecorder.csv) provides information on node's population and health
     status at the time of a node-level event. Additionally, it is possible to break up the population data by specific
     Node and Individual Properties.
-
-    For more information:
-    `HIV's ReportNodeEventRecorder <https://github.com/EMOD-Hub/emodpy-hiv/issues/11>`_ or
-    `Malaria's ReportNodeEventRecorder <https://github.com/EMOD-Hub/emodpy-malaria/issues/19>`_
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -503,6 +485,8 @@ class ReportNodeEventRecorder(ConfigReporter):
                                      empty_list_ok=False,
                                      process_string_callback=validate_node_event))
         self.parameters[f"{reporter_parameter_prefix}_Ignore_Events_In_List"] = 0
+        self._event_level = "node"
+        self._event_list = self.parameters[f"{reporter_parameter_prefix}_Events"]
 
         self.parameters[f"{reporter_parameter_prefix}_Node_Properties"] = (
             validate_list_of_strings(strings=node_properties_to_record,
@@ -520,10 +504,6 @@ class ReportCoordinatorEventRecorder(ConfigReporter):
     """
     The Coordinator-level events report (ReportCoordinatorEventRecorder.csv) records the event, time, and the
     coordinator sending out the event.
-
-    For more information:
-    `HIV's ReportCoordinatorEventRecorder <https://github.com/EMOD-Hub/emodpy-hiv/issues/12>`_ or
-    `Malaria's ReportCoordinatorEventRecorder <https://github.com/EMOD-Hub/emodpy-malaria/issues/20>`_
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -544,6 +524,8 @@ class ReportCoordinatorEventRecorder(ConfigReporter):
                                      param_name="event_list",
                                      empty_list_ok=False,
                                      process_string_callback=validate_coordinator_event))
+        self._event_level = "coordinator"
+        self._event_list = self.parameters[f"{reporter_parameter_prefix}_Events"]
 
 
 class ReportSurveillanceEventRecorder(ConfigReporter):
@@ -585,6 +567,8 @@ class ReportSurveillanceEventRecorder(ConfigReporter):
                                      param_name="event_list",
                                      empty_list_ok=False,
                                      process_string_callback=validate_surveillance_event))
+        self._event_level = "coordinator"
+        self._event_list = self.parameters[f"{reporter_parameter_prefix}_Events"]
         self.parameters[f"{reporter_parameter_prefix}_Stats_By_IPs"] = (
             validate_list_of_strings(strings=stats_by_ips,
                                      param_name="stats_by_ips",

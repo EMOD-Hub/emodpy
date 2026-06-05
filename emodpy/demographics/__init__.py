@@ -33,8 +33,7 @@ for _ in __all_exports:
     _.__module__ = __name__
 
 # __all__: A list that defines the public interface of this module.
-# This is essential to ensure that Sphinx builds documentation for these classes, including those that are imported
-# from emodpy.
+# This ensures proper documentation generation for these classes, including those that are imported from emodpy.
 # It contains the names of all the classes that should be accessible when this module is imported using the syntax
 # 'from module import *'.
 # Here, it is set to the names of all classes in __all_exports.

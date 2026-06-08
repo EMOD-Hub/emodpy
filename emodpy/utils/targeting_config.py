@@ -10,106 +10,106 @@ a relationship.
 Below is the JSON for a simple example where we want to distribute a vaccine to 20%
 of the people that do not already have the vaccine on the 100th day of the simulation.
 
-    >>> {
-    >>>     "class": "CampaignEvent",
-    >>>     "Start_Day": 100,
-    >>>     "Nodeset_Config": {
-    >>>         "class": "NodeSetAll"
-    >>>     },
-    >>>     "Event_Coordinator_Config": {
-    >>>         "class": "StandardInterventionDistributionEventCoordinator",
-    >>>         "Target_Demographic": "Everyone",
-    >>>         "Demographic_Coverage": 0.2,
-    >>>         "Targeting_Config": {
-    >>>             "class": "HasIntervention",
-    >>>             "Is_Equal_To": 0,
-    >>>             "Intervention_Name": "MyVaccine"
-    >>>         },
-    >>>         "Intervention_Config": {
-    >>>             "class": "SimpleVaccine",
-    >>>             "Intervention_Name" : "MyVaccine",
-    >>>             "Cost_To_Consumer": 1,
-    >>>             "Vaccine_Take": 1,
-    >>>             "Vaccine_Type": "AcquisitionBlocking",
-    >>>             "Waning_Config": {
-    >>>                 "class": "WaningEffectConstant",
-    >>>                 "Initial_Effect" : 1.0
-    >>>             }
-    >>>         }
-    >>>     }
-    >>> }
+    {
+        "class": "CampaignEvent",
+        "Start_Day": 100,
+        "Nodeset_Config": {
+            "class": "NodeSetAll"
+        },
+        "Event_Coordinator_Config": {
+            "class": "StandardInterventionDistributionEventCoordinator",
+            "Target_Demographic": "Everyone",
+            "Demographic_Coverage": 0.2,
+            "Targeting_Config": {
+                "class": "HasIntervention",
+                "Is_Equal_To": 0,
+                "Intervention_Name": "MyVaccine"
+            },
+            "Intervention_Config": {
+                "class": "SimpleVaccine",
+                "Intervention_Name" : "MyVaccine",
+                "Cost_To_Consumer": 1,
+                "Vaccine_Take": 1,
+                "Vaccine_Type": "AcquisitionBlocking",
+                "Waning_Config": {
+                    "class": "WaningEffectConstant",
+                    "Initial_Effect" : 1.0
+                }
+            }
+        }
+    }
 
 Below is a slightly more complicated example where we want to distribute a diagnostic
 to people that are either high risk or have not been vaccinated.
 
-    >>> {
-    >>>     "class": "CampaignEvent",
-    >>>     "Start_Day": 100,
-    >>>     "Nodeset_Config": {
-    >>>         "class": "NodeSetAll"
-    >>>     },
-    >>>     "Event_Coordinator_Config": {
-    >>>         "class": "StandardInterventionDistributionEventCoordinator",
-    >>>         "Target_Demographic": "Everyone",
-    >>>         "Demographic_Coverage": 0.2,
-    >>>         "Targeting_Config": {
-    >>>             "class" : "TargetingLogic",
-    >>>             "Logic" : [
-    >>>                 [
-    >>>                     {
-    >>>                         "class": "HasIntervention",
-    >>>                         "Is_Equal_To": 0,
-    >>>                         "Intervention_Name": "MyVaccine"
-    >>>                     }
-    >>>                 ],
-    >>>                 [
-    >>>                     {
-    >>>                         "class": "HasIP",
-    >>>                         "Is_Equal_To": 1,
-    >>>                         "IP_Key_Value": "Risk:HIGH"
-    >>>                     }
-    >>>                 ]
-    >>>             ]
-    >>>         },
-    >>>         "Intervention_Config": {
-    >>>             "class": "SimpleDiagnostic",
-    >>>             "Treatment_Fraction": 1.0,
-    >>>             "Base_Sensitivity": 1.0,
-    >>>             "Base_Specificity": 1.0,
-    >>>             "Event_Or_Config": "Event",
-    >>>             "Positive_Diagnosis_Event": "TestedPositive"
-    >>>         }
-    >>>     }
-    >>> }
+    {
+        "class": "CampaignEvent",
+        "Start_Day": 100,
+        "Nodeset_Config": {
+            "class": "NodeSetAll"
+        },
+        "Event_Coordinator_Config": {
+            "class": "StandardInterventionDistributionEventCoordinator",
+            "Target_Demographic": "Everyone",
+            "Demographic_Coverage": 0.2,
+            "Targeting_Config": {
+                "class" : "TargetingLogic",
+                "Logic" : [
+                    [
+                        {
+                            "class": "HasIntervention",
+                            "Is_Equal_To": 0,
+                            "Intervention_Name": "MyVaccine"
+                        }
+                    ],
+                    [
+                        {
+                            "class": "HasIP",
+                            "Is_Equal_To": 1,
+                            "IP_Key_Value": "Risk:HIGH"
+                        }
+                    ]
+                ]
+            },
+            "Intervention_Config": {
+                "class": "SimpleDiagnostic",
+                "Treatment_Fraction": 1.0,
+                "Base_Sensitivity": 1.0,
+                "Base_Specificity": 1.0,
+                "Event_Or_Config": "Event",
+                "Positive_Diagnosis_Event": "TestedPositive"
+            }
+        }
+    }
 
 The classes of emodpy are intended to make it easier for users to create complex logic and
 reduce the burden of trying to create this complex logic in JSON.  Below is the python
 configuration logic for the two examples above:
 
-    >>> # Example 1: Does not have MyVaccine
-    >>> targeting_config = ~HasIntervention( intervention_name="MyVaccine" )
-    >>>
-    >>> # Example 2: Does not have MyVaccine OR is high risk
-    >>> targeting_config = ~HasIntervention( intervention_name="MyVaccine" ) | HasIP( ip_key_value="Risk:HIGH" )
+    # Example 1: Does not have MyVaccine
+    targeting_config = ~HasIntervention( intervention_name="MyVaccine" )
+
+    # Example 2: Does not have MyVaccine OR is high risk
+    targeting_config = ~HasIntervention( intervention_name="MyVaccine" ) | HasIP( ip_key_value="Risk:HIGH" )
 
 Notice that this logic uses the bitwise operators instead of the logical operators.
 Python does not allow you to override the logical operators so the bitwise operators
 were the next best thing to allow simple notation.  The bitwise operators are:
 
-    * '~' - use instead of "not" to logically invert the logical check
-    * '&' - use instead of "and" to logically AND two logical checks
-    * '|' - use instead of "or" to logically OR two logical checks
-    * '^' - XOR - NOT SUPPORTED
-    * '<<' - Left Shift - NOT SUPPORTED
-    * '>>' - Right Shift - NOT SUPPORTED
+* '~' - use instead of "not" to logically invert the logical check
+* '&' - use instead of "and" to logically AND two logical checks
+* '|' - use instead of "or" to logically OR two logical checks
+* '^' - XOR - NOT SUPPORTED
+* '<<' - Left Shift - NOT SUPPORTED
+* '>>' - Right Shift - NOT SUPPORTED
 
 The order of operations for bitwise operators is the same as for logical operators.
 For the operators we support, the following order of operations is followed:
 
-    1) Parentheses
-    2) '~' - NOT
-    3) '&' - AND
-    4) '|' - OR
+1. Parentheses
+2. '~' - NOT
+3. '&' - AND
+4. '|' - OR
 
 Please note that the bitwise operations should not change objects directly.  You expect
 them to return a new object with the operation.  For example, if you have A_prime = ~A,

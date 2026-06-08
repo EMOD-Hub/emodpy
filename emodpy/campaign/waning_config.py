@@ -270,9 +270,9 @@ class MapLinear(BaseWaningConfig):
         730 and 1460. The value at time 395 is 10.821918, which is calculated by linear interpolation between the values
         at times 365 and 730, (20-10)*(395-365)/(730-365) + 10 , and so on.
 
-        >>> times = [365, 730, 1460, 3650]
-        >>> effects = [10, 20, 33, 40]
-        >>> wc = MapLinear(times=times, effects=effects)
+        times = [365, 730, 1460, 3650]
+        effects = [10, 20, 33, 40]
+        wc = MapLinear(times=times, effects=effects)
     """
 
     def __init__(self, times: list[float], effects: list[float], effect_multiplier: float = 1,

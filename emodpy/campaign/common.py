@@ -148,12 +148,12 @@ class TargetDemographicsConfig:
             - Defaults to False.
 
     Examples:
-        >>> # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
-        >>> from emodpy.campaign.common import TargetDemographicsConfig, TargetGender
-        >>> from emodpy.campaign.distributor import add_intervention_scheduled
-        >>> demographics_config = TargetDemographicsConfig(demographic_coverage=0.5, target_age_min=10,
-        >>>                                                target_age_max=20, target_gender=TargetGender.FEMALE)
-        >>> add_intervention_scheduled(demographics_config=demographics_config, ...)
+        # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
+        from emodpy.campaign.common import TargetDemographicsConfig, TargetGender
+        from emodpy.campaign.distributor import add_intervention_scheduled
+        demographics_config = TargetDemographicsConfig(demographic_coverage=0.5, target_age_min=10,
+                                                       target_age_max=20, target_gender=TargetGender.FEMALE)
+        add_intervention_scheduled(demographics_config=demographics_config, ...)
     """
     class _TargetDemographic(Enum):
         EVERYONE = "Everyone"
@@ -241,11 +241,11 @@ class RepetitionConfig:
         ValueError: if timesteps_between_repetitions is undefined when number_repetitions is used.
 
     Examples:
-        >>> # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
-        >>> from emodpy.campaign.common import RepetitionConfig
-        >>> from emodpy.campaign.distributor import add_intervention_scheduled
-        >>> repetition_config = RepetitionConfig(number_repetitions=2, timesteps_between_repetitions=365)
-        >>> add_intervention_scheduled(repetition_config=repetition_config, ...)
+        # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
+        from emodpy.campaign.common import RepetitionConfig
+        from emodpy.campaign.distributor import add_intervention_scheduled
+        repetition_config = RepetitionConfig(number_repetitions=2, timesteps_between_repetitions=365)
+        add_intervention_scheduled(repetition_config=repetition_config, ...)
 
     """
     def __init__(self, number_repetitions: int = 1, timesteps_between_repetitions: int = None,
@@ -340,20 +340,20 @@ class PropertyRestrictions:
     Examples:
         Example 1: This example demonstrates how to specify individual restrictions for targeting specific groups of people who are high risk AND whose InterventionStatus is ARTStaging.
 
-        >>> # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
-        >>> from emodpy.campaign.common import PropertyRestrictions
-        >>> from emodpy.campaign.distributor import add_intervention_scheduled
-        >>> property_restrictions = PropertyRestrictions(individual_property_restrictions=[["Risk:HIGH", "InterventionStatus:ARTStaging"]])
-        >>> add_intervention_scheduled(property_restrictions=property_restrictions, ...)
-        >>> # the result json should look like this:
-        >>> # {
-        >>> #          "Property_Restrictions_Within_Node": [
-        >>> #            {
-        >>> #              "Risk": "HIGH",
-        >>> #              "InterventionStatus": "ARTStaging"
-        >>> #            }
-        >>> #          ]
-        >>> # }
+        # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
+        from emodpy.campaign.common import PropertyRestrictions
+        from emodpy.campaign.distributor import add_intervention_scheduled
+        property_restrictions = PropertyRestrictions(individual_property_restrictions=[["Risk:HIGH", "InterventionStatus:ARTStaging"]])
+        add_intervention_scheduled(property_restrictions=property_restrictions, ...)
+        # the result json should look like this:
+        # {
+        #          "Property_Restrictions_Within_Node": [
+        #            {
+        #              "Risk": "HIGH",
+        #              "InterventionStatus": "ARTStaging"
+        #            }
+        #          ]
+        # }
 
 
         Example 2: This example demonstrates how to specify individual restrictions for targeting specific groups of people. In this case, we are targeting individuals whose InterventionStatus is set to ARTStaging and who have either HIGH or MEDIUM risk behavior. In other words, we aim to target individuals who meet either of the following conditions:
@@ -361,54 +361,54 @@ class PropertyRestrictions:
                     1. "InterventionStatus is set to ARTStaging and Risk is set to HIGH"
                     2. "InterventionStatus is set to ARTStaging AND Risk is set to MEDIUM"
 
-        >>> # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
-        >>> from emodpy.campaign.common import PropertyRestrictions
-        >>> from emodpy.campaign.distributor import add_intervention_scheduled
-        >>> property_restrictions_within_node = PropertyRestrictions(
-        >>>                                       individual_property_restrictions=[
-        >>>                                                 ["Risk:HIGH", "InterventionStatus:ARTStaging"],
-        >>>                                                 ["Risk:MEDIUM", "InterventionStatus:ARTStaging"]])
-        >>> add_intervention_scheduled(property_restrictions=property_restrictions, ...)
-        >>> # the result json should look like this:
-        >>> # {
-        >>> #          "Property_Restrictions_Within_Node": [
-        >>> #            {
-        >>> #              "Risk": "HIGH",
-        >>> #              "InterventionStatus": "ARTStaging"
-        >>> #            },
-        >>> #            {
-        >>> #              "Risk": "MEDIUM",
-        >>> #              "InterventionStatus": "ARTStaging"
-        >>> #            }
-        >>> #          ]
-        >>> # }
+        # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
+        from emodpy.campaign.common import PropertyRestrictions
+        from emodpy.campaign.distributor import add_intervention_scheduled
+        property_restrictions_within_node = PropertyRestrictions(
+                                              individual_property_restrictions=[
+                                                        ["Risk:HIGH", "InterventionStatus:ARTStaging"],
+                                                        ["Risk:MEDIUM", "InterventionStatus:ARTStaging"]])
+        add_intervention_scheduled(property_restrictions=property_restrictions, ...)
+        # the result json should look like this:
+        # {
+        #          "Property_Restrictions_Within_Node": [
+        #            {
+        #              "Risk": "HIGH",
+        #              "InterventionStatus": "ARTStaging"
+        #            },
+        #            {
+        #              "Risk": "MEDIUM",
+        #              "InterventionStatus": "ARTStaging"
+        #            }
+        #          ]
+        # }
 
         Example 3: This example demonstrates how to use 'node_property_restrictions' to specify the NodeProperty. In this case, we are targeting nodes that meet either of the following conditions:
 
-                    1. "Risk is set to MEDIUM and Place is set to URBAN"
-                    2. "Risk is set to LOW and Place is set to RURAL"
+        1. "Risk is set to MEDIUM and Place is set to URBAN"
+        2. "Risk is set to LOW and Place is set to RURAL"
 
-        >>> # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
-        >>> from emodpy.campaign.common import PropertyRestrictions
-        >>> from emodpy.campaign.distributor import add_intervention_scheduled
-        >>> property_restrictions = PropertyRestrictions(
-        >>>                            node_property_restrictions=[
-        >>>                                                 ["Risk:MEDIUM", "Place:URBAN"],
-        >>>                                                 ["Risk:LOW", "Place:RURAL"]])
-        >>> add_intervention_scheduled(property_restrictions=property_restrictions, ...)
-        >>> # the result json should look like this:
-        >>> # {
-        >>> #          "Node_Property_Restrictions": [
-        >>> #            {
-        >>> #              "Risk": "MEDIUM",
-        >>> #              "Place": "URBAN"
-        >>> #            },
-        >>> #            {
-        >>> #              "Risk": "LOW",
-        >>> #              "Place": "RURAL"
-        >>> #            }
-        >>> #          ]
-        >>> # }
+        # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
+        from emodpy.campaign.common import PropertyRestrictions
+        from emodpy.campaign.distributor import add_intervention_scheduled
+        property_restrictions = PropertyRestrictions(
+                                   node_property_restrictions=[
+                                                        ["Risk:MEDIUM", "Place:URBAN"],
+                                                        ["Risk:LOW", "Place:RURAL"]])
+        add_intervention_scheduled(property_restrictions=property_restrictions, ...)
+        # the result json should look like this:
+        # {
+        #          "Node_Property_Restrictions": [
+        #            {
+        #              "Risk": "MEDIUM",
+        #              "Place": "URBAN"
+        #            },
+        #            {
+        #              "Risk": "LOW",
+        #              "Place": "RURAL"
+        #            }
+        #          ]
+        # }
 
     """
     def __init__(self, individual_property_restrictions: List[List[str]] = None,

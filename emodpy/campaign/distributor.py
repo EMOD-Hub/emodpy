@@ -87,40 +87,40 @@ def add_intervention_scheduled(campaign: api_campaign,
     Returns:
         None, add the configuration to the campaign.
 
-    Example:
-        >>> from emodpy.campaign.distributor import add_intervention_scheduled
-        >>> from emodpy.campaign.common import TargetDemographicsConfig, RepetitionConfig, PropertyRestrictions, TargetGender
-        >>> from emodpy.campaign.individual_intervention import BroadcastEvent, OutbreakIndividual
-        >>> from emodpy.utils.distributions import UniformDistribution
-        >>> from emodpy.utils.targeting_config import IsPregnant
-        >>> from emod_api import campaign as api_campaign
-        >>> my_campaign = api_campaign
-        >>> my_campaign.set_schema('path_to_schema.json')
-        >>> # Create a list of interventions containing a BroadcastEvent and an OutbreakIndividual
-        >>> my_intervention_list = [BroadcastEvent(my_campaign, broadcast_event="received_outbreak"),
-        >>>                         OutbreakIndividual(my_campaign)]
-        >>> # Create a UniformDistribution for the delay_distribution
-        >>> uniform_distribution = UniformDistribution(0, 365)
-        >>> # Create an IsPregnant targeting config
-        >>> is_pregnant = IsPregnant()
-        >>> # Add the event to the campaign, please note that only the first 2 arguments and start_day or start_year are required.
-        >>> add_intervention_scheduled(
-        >>>     campaign=my_campaign,
-        >>>     intervention_list=my_intervention_list,
-        >>>     # Distribute the interventions on January 1st, 1990.
-        >>>     start_year=1990,
-        >>>     event_name="test_event",
-        >>>     # Distribute the interventions to nodes (or the people there in) 1, 2, 3
-        >>>     node_ids=[1, 2, 3],
-        >>>     # Distribute the interventions twice with 365 timesteps between repetitions
-        >>>     repetition_config=RepetitionConfig(number_repetitions=2, timesteps_between_repetitions=365),
-        >>>     # Target 70% of female individuals whose Risk is High and are pregnant
-        >>>     target_demographics_config=TargetDemographicsConfig(demographic_coverage=0.7, target_gender=TargetGender.FEMALE),
-        >>>     property_restrictions=PropertyRestrictions(individual_property_restrictions=[["Risk:High"]]),
-        >>>     targeting_config=is_pregnant,
-        >>>     # Add a uniform delay (from 0 to 365 days) before the actual intervention is distributed
-        >>>     delay_distribution=uniform_distribution
-        >>> )
+    Examples:
+        from emodpy.campaign.distributor import add_intervention_scheduled
+        from emodpy.campaign.common import TargetDemographicsConfig, RepetitionConfig, PropertyRestrictions, TargetGender
+        from emodpy.campaign.individual_intervention import BroadcastEvent, OutbreakIndividual
+        from emodpy.utils.distributions import UniformDistribution
+        from emodpy.utils.targeting_config import IsPregnant
+        from emod_api import campaign as api_campaign
+        my_campaign = api_campaign
+        my_campaign.set_schema('path_to_schema.json')
+        # Create a list of interventions containing a BroadcastEvent and an OutbreakIndividual
+        my_intervention_list = [BroadcastEvent(my_campaign, broadcast_event="received_outbreak"),
+                                OutbreakIndividual(my_campaign)]
+        # Create a UniformDistribution for the delay_distribution
+        uniform_distribution = UniformDistribution(0, 365)
+        # Create an IsPregnant targeting config
+        is_pregnant = IsPregnant()
+        # Add the event to the campaign, please note that only the first 2 arguments and start_day or start_year are required.
+        add_intervention_scheduled(
+            campaign=my_campaign,
+            intervention_list=my_intervention_list,
+            # Distribute the interventions on January 1st, 1990.
+            start_year=1990,
+            event_name="test_event",
+            # Distribute the interventions to nodes (or the people there in) 1, 2, 3
+            node_ids=[1, 2, 3],
+            # Distribute the interventions twice with 365 timesteps between repetitions
+            repetition_config=RepetitionConfig(number_repetitions=2, timesteps_between_repetitions=365),
+            # Target 70% of female individuals whose Risk is High and are pregnant
+            target_demographics_config=TargetDemographicsConfig(demographic_coverage=0.7, target_gender=TargetGender.FEMALE),
+            property_restrictions=PropertyRestrictions(individual_property_restrictions=[["Risk:High"]]),
+            targeting_config=is_pregnant,
+            # Add a uniform delay (from 0 to 365 days) before the actual intervention is distributed
+            delay_distribution=uniform_distribution
+        )
     """
     # Create a DelayedIntervention with the intervention if a delay_distribution is provided
     intervention_list = _add_delay(campaign, delay_distribution, intervention_list)
@@ -215,44 +215,44 @@ def add_intervention_triggered(campaign: api_campaign,
             - Please refer to the emodpy.utils.targeting_config module for more information.
             - If None (default), then there is not extra targeting.
 
-    Example:
-        >>> from emodpy.campaign.distributor import add_intervention_triggered
-        >>> from emodpy.campaign.common import TargetDemographicsConfig, RepetitionConfig, PropertyRestrictions, TargetGender
-        >>> from emodpy.campaign.individual_intervention import BroadcastEvent, OutbreakIndividual
-        >>> from emodpy.utils.distributions import ExponentialDistribution
-        >>> from emodpy.utils.targeting_config import IsPregnant
-        >>> from emod_api import campaign as api_campaign
-        >>> my_campaign = api_campaign
-        >>> my_campaign.set_schema('path_to_schema.json')
-        >>> # Create a list of interventions containing a BroadcastEvent and an OutbreakIndividual
-        >>> my_intervention_list = [BroadcastEvent(my_campaign, broadcast_event="received_outbreak"),
-        >>>                         OutbreakIndividual(my_campaign)]
-        >>> # Create an ExponentialDistribution for the delay_distribution with a mean of 10 timesteps
-        >>> exponential_distribution = ExponentialDistribution(10)
-        >>> # Create an is not pregnant targeting config
-        >>> is_not_pregnant = ~IsPregnant()
-        >>> # Add the event to the campaign, please note that only the first 3 arguments and start_day or start_year are required.
-        >>> add_intervention_triggered(my_campaign,
-        >>>                            my_intervention_list,
-        >>>                            # Trigger the distribution of the intervention when either of the events: "trigger1" or "trigger2" are broadcast.
-        >>>                            triggers_list=["trigger1", "trigger2"],
-        >>>                            # Listen to the triggers for 30 days.
-        >>>                            duration=30,
-        >>>                            # Start the event at the 730th timestep.
-        >>>                            start_day=730,
-        >>>                            event_name="test_event",
-        >>>                            # Have nodes 1, 2, 3 listen for the event and distribute the intervention to the people in those nodes.
-        >>>                            node_ids=[1, 2, 3],
-        >>>                            # Add a delay between the trigger and the actual intervention
-        >>>                            delay_distribution=exponential_distribution,
-        >>>                            # Target 70% of female individual from age 10 to 20 whose Risk is High and are not pregnant
-        >>>                            target_demographics_config=TargetDemographicsConfig(demographic_coverage=0.7,
-        >>>                                                                                target_gender=TargetGender.FEMALE,
-        >>>                                                                                target_age_min=10,
-        >>>                                                                                target_age_max=20),
-        >>>                            property_restrictions=PropertyRestrictions(individual_property_restrictions=[["Risk:High"]])
-        >>>                            targeting_config=is_not_pregnant
-        >>> )
+    Examples:
+        from emodpy.campaign.distributor import add_intervention_triggered
+        from emodpy.campaign.common import TargetDemographicsConfig, RepetitionConfig, PropertyRestrictions, TargetGender
+        from emodpy.campaign.individual_intervention import BroadcastEvent, OutbreakIndividual
+        from emodpy.utils.distributions import ExponentialDistribution
+        from emodpy.utils.targeting_config import IsPregnant
+        from emod_api import campaign as api_campaign
+        my_campaign = api_campaign
+        my_campaign.set_schema('path_to_schema.json')
+        # Create a list of interventions containing a BroadcastEvent and an OutbreakIndividual
+        my_intervention_list = [BroadcastEvent(my_campaign, broadcast_event="received_outbreak"),
+                                OutbreakIndividual(my_campaign)]
+        # Create an ExponentialDistribution for the delay_distribution with a mean of 10 timesteps
+        exponential_distribution = ExponentialDistribution(10)
+        # Create an is not pregnant targeting config
+        is_not_pregnant = ~IsPregnant()
+        # Add the event to the campaign, please note that only the first 3 arguments and start_day or start_year are required.
+        add_intervention_triggered(my_campaign,
+                                   my_intervention_list,
+                                   # Trigger the distribution of the intervention when either of the events: "trigger1" or "trigger2" are broadcast.
+                                   triggers_list=["trigger1", "trigger2"],
+                                   # Listen to the triggers for 30 days.
+                                   duration=30,
+                                   # Start the event at the 730th timestep.
+                                   start_day=730,
+                                   event_name="test_event",
+                                   # Have nodes 1, 2, 3 listen for the event and distribute the intervention to the people in those nodes.
+                                   node_ids=[1, 2, 3],
+                                   # Add a delay between the trigger and the actual intervention
+                                   delay_distribution=exponential_distribution,
+                                   # Target 70% of female individual from age 10 to 20 whose Risk is High and are not pregnant
+                                   target_demographics_config=TargetDemographicsConfig(demographic_coverage=0.7,
+                                                                                       target_gender=TargetGender.FEMALE,
+                                                                                       target_age_min=10,
+                                                                                       target_age_max=20),
+                                   property_restrictions=PropertyRestrictions(individual_property_restrictions=[["Risk:High"]])
+                                   targeting_config=is_not_pregnant
+        )
 
     Returns:
         None, add the configuration to the campaign.

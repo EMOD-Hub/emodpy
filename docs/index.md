@@ -18,7 +18,7 @@ Python 3.13 is the recommended and supported version.
 
 The emodpy package is currently available on the [Python package index][pypi].
 
-Typically, emodpy is installed as part of [emodpy-malaria][emodpy-malaria] or [emodpy-hiv.][emodpy-hiv]. It can be installed independently as below:
+Typically, emodpy is installed as part of [emodpy-malaria][emodpy-malaria] or [emodpy-hiv][emodpy-hiv]. It can be installed independently as below:
 
 ```
 pip install emodpy

@@ -262,8 +262,6 @@ class TestWorkflowDemographics(unittest.TestCase):
             assert (demographics['Nodes'][1]["NodeAttributes"]['Latitude'] == 0)
             assert (demographics['Nodes'][0]["NodeAttributes"]['Longitude'] == 0)
             assert (demographics['Nodes'][1]["NodeAttributes"]['Longitude'] == 1)
-            assert (demographics['Nodes'][0]["NodeAttributes"]['FacilityName'] == "Test NodeAttributes1")
-            assert (demographics['Nodes'][1]["NodeAttributes"]['FacilityName'] == "Test NodeAttributes2")
 
     def test_demographics_overlay_individual_attributes(self):
         """

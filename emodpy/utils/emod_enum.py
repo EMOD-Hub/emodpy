@@ -1,4 +1,4 @@
-from emod_api.utils.str_enum import StrEnum
+from emod_api.utils.emod_enum import StrEnum, BirthRateDependence
 
 
 class DistributionType(StrEnum):

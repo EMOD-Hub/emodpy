@@ -1089,6 +1089,12 @@ class TestReportersCommon(unittest.TestCase):
                                                          event_list=self.event_list))
             return reporters
 
+        def config_builder_reporters(config):
+            config = self.builders.config_builder(config)
+            config.parameters.Custom_Node_Events = self.event_list
+            config.parameters.Custom_Coordinator_Events = self.event_list
+            return config
+
         os.chdir(self.original_working_dir)
         platform = Platform(manifest.container_platform_name, job_directory=self.test_folder,
                             docker_image=manifest.container_platform_image, num_retries=0)
@@ -1096,12 +1102,9 @@ class TestReportersCommon(unittest.TestCase):
         self.task = EMODTask.from_defaults(eradication_path=self.builders.eradication_path,
                                            schema_path=self.builders.schema_path,
                                            campaign_builder=self.builders.campaign_builder,
-                                           config_builder=self.builders.config_builder,
+                                           config_builder=config_builder_reporters,
                                            report_builder=build_reports,
                                            demographics_builder=self.builders.demographics_builder)
-
-        self.task.config.parameters.Custom_Coordinator_Events = self.event_list
-        self.task.config.parameters.Custom_Node_Events = self.event_list
 
         experiment = Experiment.from_task(task=self.task,
                                           name=self.case_name)

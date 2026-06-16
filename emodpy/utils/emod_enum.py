@@ -1,4 +1,4 @@
-from emod_api.utils.emod_enum import StrEnum, BirthRateDependence
+from emod_api.utils.emod_enum import StrEnum, BirthRateDependence  # noqa: F401
 
 
 class DistributionType(StrEnum):

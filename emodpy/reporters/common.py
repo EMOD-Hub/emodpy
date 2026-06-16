@@ -536,10 +536,6 @@ class ReportSurveillanceEventRecorder(ConfigReporter):
     Node and Individual Properties. Only the nodes that the SurveillanceEventCoordinator listening to will be
     included in the report.
 
-    For more information:
-    `HIV's ReportSurveillanceEventRecorder <https://github.com/EMOD-Hub/emodpy-hiv/issues/13>`_ or
-    `Malaria's ReportSurveillanceEventRecorder <https://github.com/EMOD-Hub/emodpy-malaria/issues/21>`_
-
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
 

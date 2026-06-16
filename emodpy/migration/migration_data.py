@@ -1,6 +1,5 @@
 from collections import defaultdict
 from datetime import datetime
-from functools import partial
 import json
 import logging
 from os import environ
@@ -537,9 +536,9 @@ class MigrationData:
         return data
 
     def to_migration_file(self, path, migration_type: Union[MigrationType, str] = MigrationType.LOCAL,
-                interpolation_type: Union[InterpolationType, str] = InterpolationType.PIECEWISE_CONSTANT,
-                value_limit: int = 100,
-                user_notes: Optional[str] = None):
+                          interpolation_type: Union[InterpolationType, str] = InterpolationType.PIECEWISE_CONSTANT,
+                          value_limit: int = 100,
+                          user_notes: Optional[str] = None):
         """Write migration data to EMOD binary format with JSON metadata sidecar.
 
         Args:

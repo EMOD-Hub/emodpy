@@ -140,7 +140,7 @@ class _NodeLevelHealthTriggeredIV(NodeIntervention):
         blackout_on_first_occurrence(bool, optional):
             If set to True, individuals will enter the blackout period after the first occurrence of an
             event in the trigger_condition_list.
-            Default value: False
+            Default value: True
 
         blackout_event_trigger(str, optional):
             The event to broadcast if an intervention cannot be distributed due to the blackout_period.
@@ -164,7 +164,7 @@ class _NodeLevelHealthTriggeredIV(NodeIntervention):
                  duration: float = -1,
                  distribute_on_return_home: bool = False,
                  blackout_period: float = 0,  # hide? ask Svetlana
-                 blackout_on_first_occurrence: bool = False,
+                 blackout_on_first_occurrence: bool = True,
                  blackout_event_trigger: str = None,
                  common_intervention_parameters: CommonInterventionParameters = None):
         super().__init__(campaign, 'NodeLevelHealthTriggeredIV', common_intervention_parameters)

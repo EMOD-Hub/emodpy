@@ -766,7 +766,6 @@ class IncidenceCounterSurveillance(IncidenceCounter):
         # but it is included for future extensibility.
         # self._counter_type = counter_type
 
-
     def to_schema_dict(self, campaign: api_campaign) -> s2c.ReadOnlyDict:
         obj = s2c.get_class_with_defaults(
             "idmType:IncidenceCounterSurveillance", schema_json=campaign.get_schema())

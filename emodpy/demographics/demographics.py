@@ -3,12 +3,12 @@ import logging
 from pathlib import Path
 from typing import List, Optional, Union
 
-logger = logging.getLogger(__name__)
-
 from emod_api.demographics.demographics import Demographics as EMODAPIDemographics
 from emod_api.demographics.node import Node
 
 from emodpy.utils.emod_enum import MigrationType, MigrationPattern, InterpolationType
+
+logger = logging.getLogger(__name__)
 
 _TYPE_PREFIX = {
     MigrationType.LOCAL: "Local",

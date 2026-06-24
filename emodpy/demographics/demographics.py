@@ -10,14 +10,6 @@ from emodpy.utils.emod_enum import MigrationType, MigrationPattern, Interpolatio
 
 logger = logging.getLogger(__name__)
 
-_TYPE_PREFIX = {
-    MigrationType.LOCAL: "Local",
-    MigrationType.AIR: "Air",
-    MigrationType.REGIONAL: "Regional",
-    MigrationType.SEA: "Sea",
-    MigrationType.FAMILY: "Family",
-}
-
 
 def _set_migration_config(config, migration_type, filename, x_modifier,
                           migration_pattern,
@@ -41,7 +33,7 @@ def _set_migration_config(config, migration_type, filename, x_modifier,
     Returns:
         config with migration parameters set
     """
-    prefix = _TYPE_PREFIX[migration_type]
+    prefix = migration_type.value.title()
     config.parameters.Migration_Model = "FIXED_RATE_MIGRATION"
     setattr(config.parameters, f"Enable_{prefix}_Migration", 1)
     setattr(config.parameters, f"{prefix}_Migration_Filename", filename)

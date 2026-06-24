@@ -12,14 +12,6 @@ from emodpy.utils.emod_enum import MigrationType, MigrationPattern
 if typing.TYPE_CHECKING:
     from emodpy.emod_task import EMODTask
 
-_TYPE_PREFIX = {
-    MigrationType.LOCAL: "Local",
-    MigrationType.AIR: "Air",
-    MigrationType.REGIONAL: "Regional",
-    MigrationType.SEA: "Sea",
-    MigrationType.FAMILY: "Family",
-}
-
 
 class InputFilesList(AssetCollection, metaclass=ABCMeta):
     def __init__(self, relative_path=None):
@@ -127,7 +119,7 @@ class MigrationFiles(InputFilesList):
 
         # Enable or disable migrations depending on the available files
         for migration_type in MigrationType:
-            prefix = _TYPE_PREFIX[migration_type]
+            prefix = migration_type.value.title()
             if migration_type in self.migration_files:
                 task.set_parameter(f"Enable_{prefix}_Migration", 1)
 
@@ -209,7 +201,7 @@ class MigrationFiles(InputFilesList):
 
         # Look for files
         for migration_type in MigrationType:
-            prefix = _TYPE_PREFIX[migration_type]
+            prefix = migration_type.value.title()
             file_path = params.get(f"{prefix}_Migration_Filename", None)
             if file_path:
                 self.add_migration_from_file(migration_type, os.path.join(asset_path, file_path))

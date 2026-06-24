@@ -864,19 +864,21 @@ class TestDistributorMalariaByYear(TestMalaria):
 
 
 def save_or_compare_regression_json(campaign, filename):
-    """Compare to regression file if it exists, otherwise generate it."""
+    """Compare against a checked-in regression file."""
     regression_file = os.path.join(regression_folder, filename)
     tmp_filename = os.path.join(output_folder, filename)
     campaign.save(tmp_filename)
     with open(tmp_filename, 'r') as f:
         output = json.load(f)
-    if os.path.exists(regression_file):
-        with open(regression_file, 'r') as f:
-            regression = json.load(f)
-        assert output == regression
-    else:
-        with open(regression_file, 'w') as f:
-            json.dump(output, f, sort_keys=True, indent=4)
+
+    if not os.path.exists(regression_file):
+        helpers.delete_existing_file(tmp_filename)
+        raise AssertionError(
+            f"Missing regression baseline: {regression_file}. Generate it locally and commit it to the repo.")
+
+    with open(regression_file, 'r') as f:
+        regression = json.load(f)
+    assert output == regression
     helpers.delete_existing_file(tmp_filename)
 
 

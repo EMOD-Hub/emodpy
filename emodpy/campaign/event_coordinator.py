@@ -152,7 +152,7 @@ class StandardEventCoordinator(InterventionDistributorEventCoordinator):
 class NodeIdAndCoverage:
     """
     Defines a single (node ID, coverage) pair for use in
-    :class:`CoverageByNodeEventCoordinator`. Each entry specifies a node and the fraction
+    [CoverageByNodeEventCoordinator][emodpy.campaign.event_coordinator.CoverageByNodeEventCoordinator]. Each entry specifies a node and the fraction
     of its population that should receive the intervention.
 
     Args:
@@ -185,13 +185,13 @@ class CoverageByNodeEventCoordinator(InterventionDistributorEventCoordinator):
     """
     The **CoverageByNodeEventCoordinator** distributes individual-level interventions with
     node-specific demographic coverage. It is similar to the
-    :class:`StandardEventCoordinator` but allows specifying different coverage fractions
+    [StandardEventCoordinator][emodpy.campaign.event_coordinator.StandardEventCoordinator] but allows specifying different coverage fractions
     for each node via the ``coverage_by_node`` parameter. If no coverage is specified for a
     particular node, coverage defaults to zero for that node.
 
     This coordinator can only be used with individual-level interventions. It supports the
     same demographic targeting, property restrictions, repetition, and targeting config
-    options as :class:`StandardEventCoordinator`.
+    options as [StandardEventCoordinator][emodpy.campaign.event_coordinator.StandardEventCoordinator].
 
     Args:
         campaign (api_campaign, required):
@@ -291,7 +291,7 @@ class CommunityHealthWorkerEventCoordinator(InterventionDistributorEventCoordina
 
         initial_amount_distribution (BaseDistribution, required):
             The distribution used to determine the initial stock of interventions. Use
-            any :class:`~emodpy.utils.distributions.BaseDistribution` subclass, e.g.,
+            any [BaseDistribution][emodpy.utils.distributions.BaseDistribution] subclass, e.g.,
             ``ConstantDistribution(500)`` or
             ``UniformDistribution(100, 1000)``.
             Default value: None
@@ -412,7 +412,7 @@ class CommunityHealthWorkerEventCoordinator(InterventionDistributorEventCoordina
 
 class Action:
     """
-    Defines a single threshold-action pair for use in a :class:`Responder`. When the incidence
+    Defines a single threshold-action pair for use in a [Responder][emodpy.campaign.event_coordinator.Responder]. When the incidence
     value (count or percentage) meets or exceeds the **threshold**, the specified event is
     broadcast. If multiple actions are defined, the one with the highest threshold that is still
     less than or equal to the incidence value is selected.
@@ -422,7 +422,7 @@ class Action:
             The threshold value that the incidence count or percentage must meet or exceed for
             this action to be selected. When multiple actions are defined, the action with the
             highest threshold that is still less than or equal to the sampled value is chosen.
-            Thresholds must be unique across all actions in the same :class:`Responder`.
+            Thresholds must be unique across all actions in the same [Responder][emodpy.campaign.event_coordinator.Responder].
             Minimum value: 0
             Maximum value: 3.40282e+38
             Default value: 0
@@ -433,7 +433,7 @@ class Action:
 
         event_type (Union[EventType, str], required):
             The type of event to broadcast. Use the
-            :class:`~emodpy.utils.emod_enum.EventType` enum values:
+            [EventType][emodpy.utils.emod_enum.EventType] enum values:
 
             * ``EventType.INDIVIDUAL`` -- Broadcast to individuals in the nodes.
             * ``EventType.NODE`` -- Broadcast as a node-level event.
@@ -478,22 +478,22 @@ class Action:
 
 class Responder:
     """
-    Defines how the :class:`IncidenceEventCoordinator` responds when the
-    :class:`IncidenceCounter` finishes counting. The responder calculates the incidence as a
+    Defines how the [IncidenceEventCoordinator][emodpy.campaign.event_coordinator.IncidenceEventCoordinator] responds when the
+    [IncidenceCounter][emodpy.campaign.event_coordinator.IncidenceCounter] finishes counting. The responder calculates the incidence as a
     raw count or percentage (based on ``threshold_type``), then selects the action from the
     ``action_list`` whose threshold is the highest value that is still less than or equal to
     the calculated incidence. The selected action's event is then broadcast.
 
     Args:
         action_list (list[Action], required):
-            A list of :class:`Action` objects specifying possible responses. Each action defines
+            A list of [Action][emodpy.campaign.event_coordinator.Action] objects specifying possible responses. Each action defines
             a threshold and an event to broadcast. Actions are evaluated in descending threshold
             order; the action with the highest threshold that does not exceed the incidence
             value is selected. The list must not be empty, and thresholds must be unique.
 
         threshold_type (Union[ThresholdType, str], optional):
             How to interpret the incidence value and action thresholds. Use the
-            :class:`~emodpy.utils.emod_enum.ThresholdType` enum values:
+            [ThresholdType][emodpy.utils.emod_enum.ThresholdType] enum values:
 
             * ``ThresholdType.COUNT`` -- Raw count of events. The
               **x_Base_Population** configuration parameter can indirectly affect the count
@@ -541,7 +541,7 @@ class Responder:
 class IncidenceCounter:
     """
     Defines what events to count and which individuals qualify for counting in an
-    :class:`IncidenceEventCoordinator`. The counter listens for specified individual events
+    [IncidenceEventCoordinator][emodpy.campaign.event_coordinator.IncidenceEventCoordinator]. The counter listens for specified individual events
     and counts them over a configurable number of timesteps. Only events from individuals
     matching the demographic and property restrictions are counted.
 
@@ -569,7 +569,7 @@ class IncidenceCounter:
             Individual and/or node property restrictions that further filter which
             individuals' events are counted. You can specify individual property restrictions,
             node property restrictions, or both (using the appropriate parameter on the
-            :class:`~emodpy.campaign.common.PropertyRestrictions` object).
+            [PropertyRestrictions][emodpy.campaign.common.PropertyRestrictions] object).
             Default value: None
 
         targeting_config (AbstractTargetingConfig, optional):
@@ -612,8 +612,8 @@ class IncidenceEventCoordinator(BaseEventCoordinator):
     The **IncidenceEventCoordinator** monitors for individual-level events within a
     simulation and responds by broadcasting events when configurable thresholds are met.
     It does not distribute interventions directly; instead, it counts specified events
-    using an :class:`IncidenceCounter` and evaluates the accumulated count or percentage
-    against thresholds defined in a :class:`Responder`. The responder then broadcasts the
+    using an [IncidenceCounter][emodpy.campaign.event_coordinator.IncidenceCounter] and evaluates the accumulated count or percentage
+    against thresholds defined in a [Responder][emodpy.campaign.event_coordinator.Responder]. The responder then broadcasts the
     appropriate event, which can trigger other campaign events or event coordinators.
 
     This coordinator is useful for implementing reactive strategies, such as deploying
@@ -625,13 +625,13 @@ class IncidenceEventCoordinator(BaseEventCoordinator):
             An instance of the emod_api.campaign module.
 
         incidence_counter (IncidenceCounter, required):
-            An :class:`IncidenceCounter` defining the events to count and the demographic
+            An [IncidenceCounter][emodpy.campaign.event_coordinator.IncidenceCounter] defining the events to count and the demographic
             and property restrictions for qualifying individuals. The counter accumulates
             events over the specified number of timesteps before passing the count to the
             responder.
 
         responder (Responder, required):
-            A :class:`Responder` defining the threshold type and the list of threshold-action
+            A [Responder][emodpy.campaign.event_coordinator.Responder] defining the threshold type and the list of threshold-action
             pairs. After the counter finishes counting, the responder calculates the incidence
             value and selects the appropriate action to execute.
 
@@ -688,7 +688,7 @@ class IncidenceEventCoordinator(BaseEventCoordinator):
 
 class IncidenceCounterSurveillance(IncidenceCounter):
     """
-    Extends :class:`IncidenceCounter` for use with :class:`SurveillanceEventCoordinator`.
+    Extends [IncidenceCounter][emodpy.campaign.event_coordinator.IncidenceCounter] for use with [SurveillanceEventCoordinator][emodpy.campaign.event_coordinator.SurveillanceEventCoordinator].
     Adds periodic counting with a configurable counter period and support for counting
     individual, node, or coordinator events.
 
@@ -704,7 +704,7 @@ class IncidenceCounterSurveillance(IncidenceCounter):
 
         counter_event_type (Union[EventType, str], required):
             The type of events counted in ``trigger_condition_list``. Use the
-            :class:`~emodpy.utils.emod_enum.EventType` enum values:
+            [EventType][emodpy.utils.emod_enum.EventType] enum values:
 
             * ``EventType.INDIVIDUAL`` -- Count individual-level events.
             * ``EventType.NODE`` -- Count node-level events.
@@ -723,7 +723,7 @@ class IncidenceCounterSurveillance(IncidenceCounter):
 
         target_demographics_config (TargetDemographicsConfig, optional):
             Demographic targeting configuration including demographic coverage. See
-            :class:`TargetDemographicsConfig` for details. Only applies when counting
+            [TargetDemographicsConfig][emodpy.campaign.common.TargetDemographicsConfig] for details. Only applies when counting
             individual-level events.
             Default value: None
 
@@ -732,7 +732,7 @@ class IncidenceCounterSurveillance(IncidenceCounter):
             Default value: None
 
         targeting_config (AbstractTargetingConfig, optional):
-            Advanced targeting configuration. See :class:`AbstractTargetingConfig` for details.
+            Advanced targeting configuration. See [AbstractTargetingConfig][emodpy.utils.targeting_config.AbstractTargetingConfig] for details.
             Default value: None
     """
 
@@ -791,18 +791,18 @@ class IncidenceCounterSurveillance(IncidenceCounter):
 
 class ResponderSurveillance(Responder):
     """
-    Extends :class:`Responder` for use with :class:`SurveillanceEventCoordinator`.
+    Extends [Responder][emodpy.campaign.event_coordinator.Responder] for use with [SurveillanceEventCoordinator][emodpy.campaign.event_coordinator.SurveillanceEventCoordinator].
     Adds support for a responded event (broadcast when any action is taken) and
     percentage-based event counting for the ``ThresholdType.PERCENTAGE_EVENTS``
     threshold type.
 
     Args:
         action_list (list[Action], required):
-            A list of :class:`Action` objects specifying possible responses.
+            A list of [Action][emodpy.campaign.event_coordinator.Action] objects specifying possible responses.
 
         threshold_type (Union[ThresholdType, str], required):
             How to interpret the incidence value and action thresholds. Use the
-            :class:`~emodpy.utils.emod_enum.ThresholdType` enum values:
+            [ThresholdType][emodpy.utils.emod_enum.ThresholdType] enum values:
 
             * ``ThresholdType.COUNT`` -- Raw count of events. The
               **x_Base_Population** configuration parameter can indirectly affect the count
@@ -825,14 +825,14 @@ class ResponderSurveillance(Responder):
         percentage_events_to_count (list[str], optional):
             When ``threshold_type`` is ``ThresholdType.PERCENTAGE_EVENTS``, this lists the
             events counted for the denominator. The numerator comes from the
-            ``trigger_condition_list`` in the :class:`IncidenceCounterSurveillance`. The
+            ``trigger_condition_list`` in the [IncidenceCounterSurveillance][emodpy.campaign.event_coordinator.IncidenceCounterSurveillance]. The
             event types must match the ``counter_event_type`` of the counter.
             Default value: None
 
         counter_event_type (Union[EventType, str], optional):
             The type of events in ``percentage_events_to_count``. Required when
             ``threshold_type`` is ``ThresholdType.PERCENTAGE_EVENTS``. Must match the
-            ``counter_event_type`` of the associated :class:`IncidenceCounterSurveillance`.
+            ``counter_event_type`` of the associated [IncidenceCounterSurveillance][emodpy.campaign.event_coordinator.IncidenceCounterSurveillance].
             Default value: None
     """
 
@@ -890,11 +890,11 @@ class ResponderSurveillance(Responder):
 class SurveillanceEventCoordinator(BaseEventCoordinator):
     """
     The **SurveillanceEventCoordinator** extends the functionality of
-    :class:`IncidenceEventCoordinator` by adding start/stop trigger events, a configurable
+    [IncidenceEventCoordinator][emodpy.campaign.event_coordinator.IncidenceEventCoordinator] by adding start/stop trigger events, a configurable
     duration, and periodic counting. It monitors for coordinator-level start events, begins
     counting individual/node/coordinator events using an
-    :class:`IncidenceCounterSurveillance`, and responds via a
-    :class:`ResponderSurveillance` when counting periods complete.
+    [IncidenceCounterSurveillance][emodpy.campaign.event_coordinator.IncidenceCounterSurveillance], and responds via a
+    [ResponderSurveillance][emodpy.campaign.event_coordinator.ResponderSurveillance] when counting periods complete.
 
     The coordinator remains dormant until it receives a start trigger event. Once started, it
     counts events during each counter period and passes results to the responder. It can be
@@ -906,11 +906,11 @@ class SurveillanceEventCoordinator(BaseEventCoordinator):
             An instance of the emod_api.campaign module.
 
         incidence_counter (IncidenceCounterSurveillance, required):
-            An :class:`IncidenceCounterSurveillance` defining the events to count, the
+            An [IncidenceCounterSurveillance][emodpy.campaign.event_coordinator.IncidenceCounterSurveillance] defining the events to count, the
             counter period, and demographic restrictions.
 
         responder (ResponderSurveillance, required):
-            A :class:`ResponderSurveillance` defining the threshold type, action list, and
+            A [ResponderSurveillance][emodpy.campaign.event_coordinator.ResponderSurveillance] defining the threshold type, action list, and
             optional responded event.
 
         start_trigger_condition_list (list[str], required):
@@ -976,10 +976,10 @@ class BroadcastCoordinatorEvent(BaseEventCoordinator):
     """
     The **BroadcastCoordinatorEvent** coordinator broadcasts a coordinator-level event. It does
     not distribute interventions. Instead, it broadcasts a single coordinator event that other
-    coordinators (such as :class:`SurveillanceEventCoordinator`) can listen for and respond to.
+    coordinators (such as [SurveillanceEventCoordinator][emodpy.campaign.event_coordinator.SurveillanceEventCoordinator]) can listen for and respond to.
 
     This coordinator is useful for triggering coordinator-level event chains. For example, it
-    can be used to start a :class:`SurveillanceEventCoordinator` by broadcasting its start
+    can be used to start a [SurveillanceEventCoordinator][emodpy.campaign.event_coordinator.SurveillanceEventCoordinator] by broadcasting its start
     trigger event. You can use the **Report_Coordinator_Event_Recorder** to report on the events
     broadcasted by this coordinator.
 

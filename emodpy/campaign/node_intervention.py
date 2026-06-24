@@ -98,19 +98,19 @@ class _NodeLevelHealthTriggeredIV(NodeIntervention):
         trigger_condition_list(list[str], required):
             A list of individual events that will trigger the distribution of the intervention. The events in the list
             must either be events already used in EMOD or custom events defined to be distributed elsewhere
-            in the campaign. See :doc:`emod-hiv:emod/parameter-campaign-event-list` for events already used in EMOD.
+            in the campaign. See [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/) for events already used in EMOD.
 
         target_demographics_config(TargetDemographicsConfig, optional):
             The TargetDemographicsConfig object that is used to configure the demographics of the targeted individuals,
             for example: Demographic_Coverage, Target_Demographic, Target_Age_Min, Target_Age_Max, Target_Gender and
-            Target_Residents_Only. Please refer to :class:`emodpy.campaign.common.TargetDemographicsConfig` for more
+            Target_Residents_Only. Please refer to [TargetDemographicsConfig][emodpy.campaign.common.TargetDemographicsConfig] for more
             information.
             Default value: None
 
         property_restrictions(PropertyRestrictions, optional):
             A PropertyRestrictions object that can be used to restrict the distribution of the intervention to
             individuals or nodes with specific properties. Please see
-            :class:`emodpy.campaign.common.PropertyRestrictions` for more information.
+            [PropertyRestrictions][emodpy.campaign.common.PropertyRestrictions] for more information.
             Default value: None
 
         targeting_config(AbstractTargetingConfig, optional):
@@ -245,13 +245,13 @@ class _BirthTriggeredIV(NodeIntervention):
         target_demographics_config(TargetDemographicsConfig, optional):
             The TargetDemographicsConfig object that is used to configure the demographics of the targeted individuals,
             for example: Demographic_Coverage, Target_Demographic, Target_Age_Min, Target_Age_Max, Target_Gender and
-            Target_Residents_Only. Please refer to :class:`emodpy.campaign.common.TargetDemographicsConfig` for more
+            Target_Residents_Only. Please refer to [TargetDemographicsConfig][emodpy.campaign.common.TargetDemographicsConfig] for more
             information.
             Default value: None
 
         property_restrictions(PropertyRestrictions, optional):
             A PropertyRestrictions object that can be used to restrict the distribution of the intervention to
-            individuals with specific properties. Please see :class:`emodpy.campaign.common.PropertyRestrictions` for
+            individuals with specific properties. Please see [PropertyRestrictions][emodpy.campaign.common.PropertyRestrictions] for
             more information. This intervention only supports individual property restrictions
             (Property_Restrictions, Property_Restrictions_Within_Node), not node property restrictions.
             Default value: None
@@ -318,7 +318,7 @@ class BroadcastCoordinatorEventFromNode(NodeIntervention):
     For example, if a death occurs in a node, an event can be broadcasted that will trigger some sort of response
     by the healthcare system. **NodeLevelHealthTriggeredIV** could be used to listen for the death of an individual
     and distribute this intervention to the node. The node intervention could then broadcast its event that another
-    coordinator is listening for. One can use :class:`emodpy.reporters.common.ReportCoordinatorEventRecorder` to report
+    coordinator is listening for. One can use [ReportCoordinatorEventRecorder][emodpy.reporters.common.ReportCoordinatorEventRecorder] to report
     on the events broadcasted by this intervention. Note, this coordinator class must be used with listeners that
     are operating on the same core. For more information, see Simulation core components.
 
@@ -356,8 +356,8 @@ class BroadcastNodeEvent(NodeIntervention):
     The **BroadcastNodeEvent** node intervention class broadcasts node-level events. This can be used with the campaign
     class, **SurveillanceEventCoordinator**, that can monitor and listen for events received from
     **BroadcastNodeEvent** and then perform an action based on the broadcasted event. You can also use this for
-    the reporting, by recording broadcasted events with :class:`emodpy.reporters.common.ReportNodeEventRecorder` or
-    :class:`emodpy.reporters.common.ReportSurveillanceEventRecorder`.
+    the reporting, by recording broadcasted events with [ReportNodeEventRecorder][emodpy.reporters.common.ReportNodeEventRecorder] or
+    [ReportSurveillanceEventRecorder][emodpy.reporters.common.ReportSurveillanceEventRecorder].
     You must use this intervention with listeners that are operating on the same core. You can
     also use **NLHTIVNode**. For more information, see Simulation core components.
 
@@ -381,8 +381,9 @@ class BroadcastNodeEvent(NodeIntervention):
                  common_intervention_parameters: CommonInterventionParameters = None):
         super().__init__(campaign, 'BroadcastNodeEvent', common_intervention_parameters)
 
-        if broadcast_event:
-            self._intervention.Broadcast_Event = campaign.set_broadcast_node_event(broadcast_event)
+        if not broadcast_event or not isinstance(broadcast_event, str):
+            raise ValueError("broadcast_event must be a non-empty string.")
+        self._intervention.Broadcast_Event = campaign.set_broadcast_node_event(broadcast_event)
 
 
 class ImportPressure(NodeIntervention):

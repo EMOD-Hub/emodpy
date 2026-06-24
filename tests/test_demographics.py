@@ -56,8 +56,10 @@ class TestDemographics(unittest.TestCase):
         if hasattr(node.individual_attributes, complex_attribute):
             self.assertEqual(getattr(node.individual_attributes, complex_attribute), None)
         self.assertEqual(getattr(node.individual_attributes, f"{use_case}_distribution_flag"), 1)
-        self.assertEqual(getattr(node.individual_attributes, f"{use_case}_distribution1"), self.simple_distribution_dict['Min'])
-        self.assertEqual(getattr(node.individual_attributes, f"{use_case}_distribution2"), self.simple_distribution_dict['Max'])
+        # set_age_distribution converts years to days (* 365) for EMOD
+        scale = 365 if use_case == 'age' else 1
+        self.assertEqual(getattr(node.individual_attributes, f"{use_case}_distribution1"), self.simple_distribution_dict['Min'] * scale)
+        self.assertEqual(getattr(node.individual_attributes, f"{use_case}_distribution2"), self.simple_distribution_dict['Max'] * scale)
 
     def _verify_complex_distribution_values(self, use_case: str, node: Node, expected: Updateable):
         self.assertIsInstance(getattr(node.individual_attributes, f"{use_case}_distribution"), Updateable)

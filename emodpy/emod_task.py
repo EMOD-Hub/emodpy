@@ -459,7 +459,7 @@ class EMODTask(ITask):
                    serialized_population_files: Union[str, list[str]] = None,
                    asset_path: str = None) -> "EMODTask":
         """
-        Load custom |EMOD_s| files when creating :class:`EMODTask`.
+        Load custom EMOD files when creating [EMODTask][].
 
         Args:
             eradication_path: Path to Eradication binary, including the filename.

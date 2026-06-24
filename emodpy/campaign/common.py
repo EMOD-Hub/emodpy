@@ -144,7 +144,7 @@ class TargetDemographicsConfig:
 
         target_residents_only (bool, optional):
             - When set to true, the intervention is only distributed to individuals that began the simulation in the node (i.e. those that claim the node as their residence).
-            - You can use the MigrateIndividuals function to modify an individual's HOME node. For more details on MigrateIndividuals, refer to the Emod documentation: :doc:`emod-hiv:emod/parameter-campaign-individual-migrateindividuals`
+            - You can use the MigrateIndividuals function to modify an individual's HOME node. For more details on MigrateIndividuals, refer to the Emod documentation: [MigrateIndividuals](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-individual-migrateindividuals/)
             - Defaults to False.
 
     Examples:
@@ -311,8 +311,8 @@ class PropertyRestrictions:
     Please refer to the Emod documentation for NodeProperties and IndividualProperties parameters for more
     information:
 
-    - HIV Emod: :doc:`emod-hiv:emod/parameter-demographics`
-    - Malaria Emod: :doc:`emod-malaria:emod/parameter-demographics`
+    - HIV Emod: [Demographics parameters](https://emod.idmod.org/emodpy-hiv/emod/parameter-demographics/)
+    - Malaria Emod: [Demographics parameters](https://emod.idmod.org/emodpy-malaria/emod/parameter-demographics/)
 
     Args:
         individual_property_restrictions (List[List[str]], optional):
@@ -474,7 +474,7 @@ class PropertyRestrictions:
             if hasattr(campaign_object, 'Property_Restrictions_Within_Node'):
                 campaign_object.Property_Restrictions_Within_Node = parse_to_dict(self.individual_property_restrictions)
             elif hasattr(campaign_object, 'Property_Restrictions'):
-                campaign_object.Property_Restrictions = []
+                campaign_object.Property_Restrictions = parse_to_dict(self.individual_property_restrictions)
             else:
                 raise ValueError(f"The {campaign_object.__class__.__name__} does not have Property_Restrictions_Within_Node "
                                  "or Property_Restrictions field to set the individual_property_restrictions.")

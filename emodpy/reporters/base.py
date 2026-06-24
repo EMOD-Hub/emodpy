@@ -66,7 +66,7 @@ class ReportFilter:
               for an individual to be included in the report. For HIV_SIM, when reporting on relationships, at least
               one partner must have this property for the relationship to be included in the report. If set to an empty
               string or None, no filtering is applied, and all individuals are included. For malaria, see
-              :doc:`emod-malaria:emod/model-properties` and for HIV, see :doc:`emod-hiv:emod/model-properties`.
+              [Model properties](https://emod.idmod.org/emodpy-malaria/emod/model-properties/) and for HIV, see [Model properties](https://emod.idmod.org/emodpy-hiv/emod/model-properties/).
             - Default value: ""
         must_have_intervention (str, optional):
             - The intervention_name parameter in the campaigns are the available values for this parameter.

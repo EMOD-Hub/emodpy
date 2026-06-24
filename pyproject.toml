@@ -19,7 +19,8 @@ authors = [
 keywords = ["modeling", "IDM"]
 dependencies = [
     "idmtools[full]~=3.0",
-    "emod-api~=3.1.0",
+    "emod-api~=3.2.0",
+    "geographiclib",
 ]
 license = "MIT"
 classifiers = [

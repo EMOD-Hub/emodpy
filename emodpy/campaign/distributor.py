@@ -178,7 +178,7 @@ def add_intervention_triggered(campaign: api_campaign,
             - Refer to the emodpy(_'disease').campaign.node_intervention module for available NodeIntervention derived classes.
         triggers_list (list[str], required):
             - A list of individual-level events that trigger the distribution of the intervention_list.
-            - For HIV, see :doc:`emod-hiv:emod/parameter-campaign-event-list`, and for malaria, :doc:`emod-malaria:emod/parameter-campaign-event-list` for events already used in EMOD or use your own custom from elsewhere in the campaign.
+            - For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/), and for malaria, [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own custom from elsewhere in the campaign.
             - It can not be an empty list.
         start_day (int, optional):
             - The day when the event starts.
@@ -300,9 +300,14 @@ def add_community_health_worker(campaign: api_campaign,
                                 property_restrictions: PropertyRestrictions = None,
                                 targeting_config: AbstractTargetingConfig = None) -> None:
     """
-    Add a community health worker (CHW) intervention to the campaign. The CHW listens for
-    trigger events, queues individuals or nodes, and distributes interventions at a configurable
-    rate limited by available stock. Stock is replenished periodically via shipments.
+    Add a community health worker (CHW) intervention to the campaign. The CHW models
+    treatment-seeking behavior where individuals or nodes queue for service and a health
+    worker distributes interventions at a limited rate constrained by available stock.
+
+    The CHW listens for trigger events, queues individuals or nodes, and distributes
+    interventions at a configurable rate. Stock is replenished periodically via shipments.
+    This is useful for modeling scenarios such as drug distribution at a health facility
+    where supply is limited and patients may wait or leave before being served.
 
     Individuals or nodes that have been in the queue longer than the **waiting_period** are
     removed. Individuals who die or emigrate are automatically removed from the queue. The
@@ -321,7 +326,7 @@ def add_community_health_worker(campaign: api_campaign,
             - It can not be an empty list.
         initial_amount_distribution (BaseDistribution, required):
             - The distribution used to determine the initial stock of interventions.
-            - Use any :class:`~emodpy.utils.distributions.BaseDistribution` subclass, e.g.,
+            - Use any [BaseDistribution][emodpy.utils.distributions.BaseDistribution] subclass, e.g.,
               ``ConstantDistribution(500)`` or ``UniformDistribution(100, 1000)``.
         max_distributed_per_day (int, required):
             - The maximum number of interventions the CHW can distribute per day.
@@ -431,14 +436,20 @@ def add_broadcast_coordinator_event(campaign: api_campaign,
                                     node_ids: Optional[List[int]] = None) -> None:
     """
     Add a coordinator-level event broadcast to the campaign. This creates a
-    :class:`~emodpy.campaign.event_coordinator.BroadcastCoordinatorEvent` coordinator that
+    [BroadcastCoordinatorEvent][emodpy.campaign.event_coordinator.BroadcastCoordinatorEvent] coordinator that
     broadcasts a single coordinator event when the campaign event fires. It does **not**
     distribute interventions.
 
     This is useful for triggering coordinator-level event chains. For example, it can
     broadcast the start trigger for a
-    :class:`~emodpy.campaign.event_coordinator.SurveillanceEventCoordinator` or a
-    :class:`~emodpy_malaria.campaign.event_coordinator.VectorSurveillanceEventCoordinator`.
+    [SurveillanceEventCoordinator][emodpy.campaign.event_coordinator.SurveillanceEventCoordinator],
+    `TriggeredEventCoordinator <https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-triggeredeventcoordinator/>`_ (not yet implemented in emodpy),
+    `DelayEventCoordinator <https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-delayeventcoordinator/>`_ (not yet implemented in emodpy), or a
+    [VectorSurveillanceEventCoordinator][emodpy_malaria.campaign.event_coordinator.VectorSurveillanceEventCoordinator].
+
+    The coordinator event is automatically registered via the campaign module, just like
+    individual-level events. It will appear in **Custom_Coordinator_Events** in the
+    simulation configuration at build time.
 
     Args:
         campaign (api_campaign, required):
@@ -446,8 +457,8 @@ def add_broadcast_coordinator_event(campaign: api_campaign,
               instance of the emod_api.campaign class.
         broadcast_event (str, required):
             - The name of the coordinator-level event to broadcast. Must be a non-empty
-              string. The event must be defined in **Custom_Coordinator_Events** in the
-              simulation configuration.
+              string. The event is automatically registered in **Custom_Coordinator_Events**
+              in the simulation configuration.
         start_day (float, optional):
             - The day when the event fires.
             - Either start_day or start_year is required, but not both.
@@ -458,7 +469,7 @@ def add_broadcast_coordinator_event(campaign: api_campaign,
             - Defaults to None.
         coordinator_name (str, optional):
             - A descriptive name for this coordinator instance, useful in output reports
-              such as :class:`~emodpy.reporters.common.ReportCoordinatorEventRecorder`.
+              such as [ReportCoordinatorEventRecorder][emodpy.reporters.common.ReportCoordinatorEventRecorder].
             - Default value: "BroadcastCoordinatorEvent"
         cost_to_consumer (float, optional):
             - The unit cost per coordinator created.

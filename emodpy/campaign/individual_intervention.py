@@ -25,7 +25,7 @@ class BroadcastEvent(IndividualIntervention):
 
         broadcast_event(str, required):
             The name of the event to be broadcasted. See
-            :doc:`emod-hiv:emod/parameter-campaign-event-list` for events already used in EMOD or use your own
+            [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own
             custom event.
 
         common_intervention_parameters (CommonInterventionParameters, optional):
@@ -69,8 +69,8 @@ class BroadcastEventToOtherNodes(IndividualIntervention):
         broadcast_event(str, required):
             The name of the event to broadcast to the people of 'nearby' nodes. For example, if a house is
             found to have malaria, broadcast an event to the people in the nearby houses so that they can get
-            treatment. For HIV, see :doc:`emod-hiv:emod/parameter-campaign-event-list`, and for malaria,
-            :doc:`emod-malaria:emod/parameter-campaign-event-list` for events already used in EMOD or use your own
+            treatment. For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/), and for malaria,
+            [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own
             custom event.
 
         node_selection_type('NodeSelectionType', optional):
@@ -167,7 +167,7 @@ class ControlledVaccine(IndividualIntervention):
 
         expired_event_trigger(str, optional):
             The name of the event to be broadcast when the intervention expires. See
-            :doc:`emod-hiv:emod/parameter-campaign-event-list` for events already used in EMOD or use your own
+            [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own
             custom event.
             Default value: None
 
@@ -186,7 +186,7 @@ class ControlledVaccine(IndividualIntervention):
 
         distributed_event_trigger(str, optional):
             The name of the event to be broadcast when the intervention is distributed to an individual. See
-            :doc:`emod-hiv:emod/parameter-campaign-event-list` for events already used in EMOD or use your own
+            [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own
             custom event.
 
             Default value: None
@@ -403,8 +403,8 @@ class _ImmunityBloodTest(IndividualIntervention):
 
         positive_diagnosis_event(str, required):
             If the test has a positive diagnosis, this parameter defines the event to be broadcast to potentially
-            trigger separate interventions or events. For HIV, see :doc:`emod-hiv:emod/parameter-campaign-event-list`,
-            and for malaria, :doc:`emod-malaria:emod/parameter-campaign-event-list` for events already used in EMOD or
+            trigger separate interventions or events. For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/),
+            and for malaria, [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or
             use your own custom event.
 
         treatment_fraction(float, optional):
@@ -423,8 +423,8 @@ class _ImmunityBloodTest(IndividualIntervention):
 
         negative_diagnosis_event(str, optional):
             If the test has a negative diagnosis, this parameter defines the event to be broadcast to potentially
-            trigger separate interventions or events. For HIV, see :doc:`emod-hiv:emod/parameter-campaign-event-list`,
-            and for malaria, :doc:`emod-malaria:emod/parameter-campaign-event-list` for events already used in EMOD or
+            trigger separate interventions or events. For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/),
+            and for malaria, [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or
             use your own custom event. If not set, no event will be sent out upon negative diagnosis.
 
             Default value: None
@@ -635,7 +635,7 @@ class IndividualNonDiseaseDeathRateModifier(IndividualIntervention):
 
         expiration_event(str, optional):
             When the person stops using the intervention (intervention expires), this event will be broadcast. See
-            :doc:`emod-hiv:emod/parameter-campaign-event-list` for events already used in EMOD or use your own
+            [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own
             custom event.
             Default value: None
 
@@ -1272,8 +1272,8 @@ class _SimpleDiagnostic(IndividualIntervention):
         positive_diagnosis_event(str, optional):
             If the test is positive, this specifies an event that can trigger another intervention when the event occurs.
             Must be defined if not using positive_diagnosis_config. Cannot have both positive_diagnosis_config and
-            positive_diagnosis_event. For HIV, see :doc:`emod-hiv:emod/parameter-campaign-event-list`, and for malaria,
-            :doc:`emod-malaria:emod/parameter-campaign-event-list` for events already used in EMOD or use your own custom event.
+            positive_diagnosis_event. For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/), and for malaria,
+            [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own custom event.
             Default value: None
 
         treatment_fraction(float, optional):
@@ -1377,8 +1377,8 @@ class _SimpleHealthSeekingBehavior(IndividualIntervention):
 
         intervention_event(str, optional):
             The name of the event to broadcast when individual has been selected to receive care after the delay.
-            For HIV, see :doc:`emod-hiv:emod/parameter-campaign-event-list`, and for malaria,
-            :doc:`emod-malaria:emod/parameter-campaign-event-list` for events already used in EMOD or use your own
+            For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/), and for malaria,
+            [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own
             custom event.
             Default value: None
 
@@ -1528,14 +1528,14 @@ class StandardDiagnostic(IndividualIntervention):
             - If the test is positive, this specifies an event that can trigger another intervention when the event occurs.
             - Must be defined if not using positive_diagnosis_config.
             - Cannot have both positive_diagnosis_config and positive_diagnosis_event.
-            - For HIV, see :doc:`emod-hiv:emod/parameter-campaign-event-list`, and for malaria, :doc:`emod-malaria:emod/parameter-campaign-event-list` for events already used in EMOD or use your own custom event.
+            - For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/), and for malaria, [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own custom event.
             - Default value: None
 
         negative_diagnosis_event(str, optional):
             - This parameter defines the event to be broadcast on a negative test result.
             - Cannot have both negative_diagnosis_config and negative_diagnosis_event.
             - If using positive_diagnosis_config, you can use negative_diagnosis_config, but not negative_diagnosis_event.
-            - For HIV, see :doc:`emod-hiv:emod/parameter-campaign-event-list`, and for malaria, :doc:`emod-malaria:emod/parameter-campaign-event-list` for events already used in EMOD or use your own custom event.
+            - For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/), and for malaria, [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own custom event.
             - Default value: None
 
         treatment_fraction(float, optional):
@@ -1664,7 +1664,7 @@ class FemaleContraceptive(IndividualIntervention):
 
         waning_config (AbstractWaningConfig, required):
             Waning effect for contraceptive efficacy.
-            Available types are defined in :mod:`emodpy.campaign.waning_config`.
+            Available types are defined in [emodpy.campaign.waning_config][emodpy.campaign.waning_config].
 
         usage_expiration_event (str, required):
             An individual-level event to broadcast when the contraceptive expires.

@@ -7,6 +7,8 @@ from typing import Dict, List, Optional, Any
 
 from idmtools.assets import Asset, AssetCollection, json_handler
 
+from emodpy.utils.emod_enum import MigrationType, MigrationPattern
+
 if typing.TYPE_CHECKING:
     from emodpy.emod_task import EMODTask
 
@@ -33,23 +35,9 @@ class InputFilesList(AssetCollection, metaclass=ABCMeta):
         return assets
 
 
-class MigrationTypes(Enum):
-    LOCAL = 'Local'
-    AIR = 'Air'
-    FAMILY = 'Family'
-    REGIONAL = 'Regional'
-    SEA = 'Sea'
-
-
 class MigrationModel(Enum):
     NO_MIGRATION = 'NO_MIGRATION'
     FIXED_RATE_MIGRATION = 'FIXED_RATE_MIGRATION'
-
-
-class MigrationPattern(Enum):
-    RANDOM_WALK_DIFFUSION = 'RANDOM_WALK_DIFFUSION'
-    SINGLE_ROUND_TRIPS = 'SINGLE_ROUND_TRIPS'
-    WAYPOINTS_HOME = 'WAYPOINTS_HOME'
 
 
 class MigrationFiles(InputFilesList):
@@ -88,7 +76,7 @@ class MigrationFiles(InputFilesList):
         for param, value in kwargs.items():
             self.migration_other_params[param] = value
 
-    def add_migration_from_file(self, migration_type: MigrationTypes, file_path: str, multiplier: float = 1):
+    def add_migration_from_file(self, migration_type: MigrationType, file_path: str, multiplier: float = 1):
         """
         Add migration info from a file
 
@@ -130,22 +118,20 @@ class MigrationFiles(InputFilesList):
             task.set_parameter(parameter, self.migration_other_params[parameter])
 
         # Enable or disable migrations depending on the available files
-        for migration_type in MigrationTypes:
+        for migration_type in MigrationType:
+            prefix = migration_type.value.title()
             if migration_type in self.migration_files:
-                # Enable the migration
-                task.set_parameter(f"Enable_{migration_type.value}_Migration", 1)
+                task.set_parameter(f"Enable_{prefix}_Migration", 1)
 
-                # Set the file
                 migration_file = self.migration_files[migration_type]
-                task.set_parameter(f"{migration_type.value}_Migration_Filename",
+                task.set_parameter(f"{prefix}_Migration_Filename",
                                    os.path.join(migration_file.relative_path, migration_file.filename))
 
-                # Set the multiplier
                 migration_multiplier = self.migration_multipliers.get(migration_type, 1)
-                task.set_parameter(f"x_{migration_type.value}_Migration", migration_multiplier)
+                task.set_parameter(f"x_{prefix}_Migration", migration_multiplier)
 
             else:
-                task.set_parameter(f"Enable_{migration_type.value}_Migration", 0)
+                task.set_parameter(f"Enable_{prefix}_Migration", 0)
 
     def gather_assets(self):
         """
@@ -214,13 +200,14 @@ class MigrationFiles(InputFilesList):
         params = config["parameters"]
 
         # Look for files
-        for migration_type in MigrationTypes:
-            file_path = params.get(f"{migration_type.value}_Migration_Filename", None)
+        for migration_type in MigrationType:
+            prefix = migration_type.value.title()
+            file_path = params.get(f"{prefix}_Migration_Filename", None)
             if file_path:
                 self.add_migration_from_file(migration_type, os.path.join(asset_path, file_path))
 
             # Take care of eventual multipliers
-            self.migration_multipliers[migration_type] = params.get(f"x_{migration_type.value}_Migration", 1)
+            self.migration_multipliers[migration_type] = params.get(f"x_{prefix}_Migration", 1)
 
         # Look for parameters
         self.migration_model = MigrationModel[params.get("Migration_Model", MigrationModel.NO_MIGRATION.value)]

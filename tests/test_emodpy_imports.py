@@ -63,7 +63,7 @@ class TestEmodpyImport():
         import emodpy.emod_file as e_f
         self.expected_items = [
             "InputFilesList",
-            "MigrationTypes",
+            "MigrationType",
             "MigrationModel",
             "MigrationPattern",
             "MigrationFiles",

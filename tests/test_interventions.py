@@ -10,7 +10,7 @@ from emodpy.campaign.individual_intervention import (BroadcastEvent, BroadcastEv
                                                      _SimpleDiagnostic, _SimpleHealthSeekingBehavior, SimpleVaccine,
                                                      StandardDiagnostic)
 from emodpy.campaign.node_intervention import (MultiNodeInterventionDistributor, _NodeLevelHealthTriggeredIV,
-                                               _BroadcastCoordinatorEventFromNode, BroadcastNodeEvent, ImportPressure,
+                                               BroadcastCoordinatorEventFromNode, BroadcastNodeEvent, ImportPressure,
                                                MigrateFamily, NodePropertyValueChanger, Outbreak)
 from emodpy.utils.emod_enum import NodeSelectionType, VaccineType, EventOrConfig
 from emodpy.campaign.common import ValueMap, CommonInterventionParameters, TargetDemographicsConfig, PropertyRestrictions
@@ -1205,7 +1205,7 @@ class TestBroadcastCoordinatorEventFromNode(TestNodeIntervention):
                                                                            dont_allow_duplicates=True,
                                                                            intervention_name='TestName',
                                                                            new_property_value='Risk:High')
-        self.intervention = _BroadcastCoordinatorEventFromNode(self.campaign, broadcast_event='TestEvent',
+        self.intervention = BroadcastCoordinatorEventFromNode(self.campaign, broadcast_event='TestEvent',
                                                                common_intervention_parameters=self.common_intervention_parameters)
         self.intervention_dict = self.intervention.to_schema_dict()
 

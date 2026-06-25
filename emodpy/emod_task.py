@@ -43,41 +43,88 @@ dev_mode = False
 @dataclass
 class EMODTask(ITask):
     """
-    EMODTask allows easy running and configuration of EMOD Experiments and Simulations
-    """
-    # Experiment Level Assets
-    #: Eradication path. Can also be set through config file
-    eradication_path: str = field(default=None, compare=False, metadata={"md": True})
-    #: Common Demographics
-    demographics: DemographicsFiles = field(default_factory=lambda: DemographicsFiles(''))
-    #: Common Migrations
-    migrations: MigrationFiles = field(default_factory=lambda: MigrationFiles('migrations'))
-    #: Common Reports
-    reporters: Reporters = field(default_factory=lambda: Reporters())
-    #: Common Climate
-    climate: ClimateFiles = field(default_factory=lambda: ClimateFiles())
+    Central orchestration class for configuring and running EMOD simulations.
 
-    # Simulation Level Configuration objects and files
-    #: Represents config.jon
+    EMODTask extends `idmtools.ITask` and wires together all the components needed for an EMOD
+    experiment: configuration parameters, campaign interventions, demographics, migration files,
+    climate data, reporters, and the Eradication binary. It manages both experiment-level assets
+    (shared across all simulations) and simulation-level assets (unique per simulation).
+
+    Two factory methods are provided for creating tasks:
+
+    - `from_defaults` — builds everything from schema defaults using user-supplied callback
+      functions (config_builder, campaign_builder, demographics_builder, report_builder). This is
+      the primary entry point and supports parameter sweeps.
+    - `from_files` — loads pre-existing JSON files (config, campaign, demographics, reports)
+      directly, for working with hand-authored or legacy configurations.
+
+    During the idmtools lifecycle, `pre_creation` finalizes the configuration by merging
+    migrations, wiring reporters into config, setting campaign filenames, and building the command
+    line. Asset gathering methods (`gather_common_assets`, `gather_transient_assets`)
+    collect the files that idmtools submits to the execution platform (COMPS, SLURM, containers).
+
+    Attributes:
+        eradication_path (str): Path to the Eradication binary. Can also be set via the
+            `[emodpy]` section of the idmtools config file. When set, the binary is added to
+            the experiment's common assets.
+        demographics (DemographicsFiles): Experiment-level demographics files shared by all
+            simulations.
+        migrations (MigrationFiles): Experiment-level migration files shared by all simulations.
+        reporters (Reporters): Reporter definitions (e.g. InsetChart, EventReporter) that produce
+            custom_reports.json.
+        climate (ClimateFiles): Experiment-level climate input files (air temperature, rainfall,
+            humidity).
+        config (dict): EMOD configuration parameters dictionary. Built from schema defaults via
+            `emod-api` when using `from_defaults`, or loaded from a JSON file via `from_files`.
+            Serialized to config.json for each simulation.
+        config_file_name (str): Filename used when writing the configuration to a simulation asset.
+        campaign (EMODCampaign): Campaign object holding intervention events. Serialized to
+            campaign.json for each simulation.
+        simulation_demographics (DemographicsFiles): Simulation-level demographics files
+            (e.g. overlays) that vary per simulation.
+        simulation_migrations (MigrationFiles): Simulation-level migration files that vary per
+            simulation. Merged with experiment-level migrations in `pre_creation`.
+        schema_path (str): Path to the EMOD schema.json file used to build default config and
+            campaign objects.
+        use_embedded_python (bool): When True, adds `--python-script-path` to the EMOD command
+            line to enable the embedded Python interpreter within the simulation.
+        py_path_list (list): List of paths prepended to `sys.path` in the embedded Python
+            interpreter. Defaults to `["./Assets/python"]`; additional paths can be added via
+            `add_py_path`.
+        is_linux (bool): Set to True during `pre_creation` when the target platform is Linux.
+        implicit_configs (list): Accumulated implicit configuration functions from demographics
+            and campaign builders that are executed during `from_defaults` to apply side-effect
+            config changes.
+        sif_filename (str): Filename of the Singularity image (.sif) used on COMPS to create the
+            execution environment.
+        sif_path: Filesystem path to the Singularity image, used on SLURM/File/Process platforms.
+    """
+    eradication_path: str = field(default=None, compare=False, metadata={"md": True})
+    demographics: DemographicsFiles = field(default_factory=lambda: DemographicsFiles(''))
+    migrations: MigrationFiles = field(default_factory=lambda: MigrationFiles('migrations'))
+    reporters: Reporters = field(default_factory=lambda: Reporters())
+    climate: ClimateFiles = field(default_factory=lambda: ClimateFiles())
     config: dict = field(default_factory=lambda: {})
     config_file_name: str = "config.json"
-    #: Campaign configuration
     campaign: EMODCampaign = field(default_factory=lambda: EMODCampaign(name="Empty Campaign", events=[], use_defaults=True))
-    #: Simulation level demographics such as overlays
     simulation_demographics: DemographicsFiles = field(default_factory=lambda: DemographicsFiles())
-    #: Simulation level migrations
     simulation_migrations: MigrationFiles = field(default_factory=lambda: MigrationFiles())
     schema_path: str = None
-
-    #: Add --python-script-path to command line
     use_embedded_python: bool = False
     py_path_list: list = field(default_factory=lambda: [])
     is_linux: bool = False
     implicit_configs: list = field(default_factory=lambda: [])
     sif_filename: str = None
-    sif_path = None  # one is for slurm only
+    sif_path = None
 
     def __post_init__(self):
+        """Initialize derived state after dataclass field assignment.
+
+        Sets the default executable name to "Eradication", adds "./Assets/python" to the
+        embedded Python path list, and resolves the Eradication binary path — either from
+        the explicitly provided `eradication_path` or from the `[emodpy]` section of the
+        idmtools config file.
+        """
         super().__post_init__()
         self.executable_name = "Eradication"
         self.py_path_list.append("./Assets/python")
@@ -149,26 +196,21 @@ class EMODTask(ITask):
         # from mucking with each other.
         campaign_dict = json.loads(json.dumps(campaign.campaign_dict))
         self.campaign = EMODCampaign.load_from_dict(campaign_dict)
-        adhoc_events = campaign.get_adhocs()
         if dev_mode:
             campaign.save()
 
-        if adhoc_events:
-            if verbose:
-                logger.debug("Found adhoc events in campaign. Needs some special processing behind the scenes.")
-            if "Custom_Individual_Events" in self.config.parameters:
-                self.config.parameters.Custom_Individual_Events = [x for x in adhoc_events.keys()]
-            else:
-                reverse_map = {}
-                for user_name, builtin_name in adhoc_events.items():
-                    reverse_map[builtin_name] = user_name
-                self.config.parameters["Event_Map"] = reverse_map
-        # checking attributes because if using older emod-api whose campaign doesn't have them,
-        # we don't want to fail, just move on.
-        if hasattr(campaign, "get_custom_coordinator_events") and "Custom_Coordinator_Events" in self.config.parameters:
-            self.config.parameters.Custom_Coordinator_Events = campaign.get_custom_coordinator_events()
-        if hasattr(campaign, "get_custom_node_events") and "Custom_Node_Events" in self.config.parameters:
-            self.config.parameters.Custom_Node_Events = campaign.get_custom_node_events()
+        if "Custom_Individual_Events" in self.config.parameters:  # not present in EMOD-Generic
+            # adding to the events that might already be there due to user explicitly adding them
+            self.config.parameters.Custom_Individual_Events = list(set(
+                self.config.parameters.Custom_Individual_Events + campaign.validate_custom_individual_events()))
+            self.config.parameters.Custom_Coordinator_Events = list(set(
+                self.config.parameters.Custom_Coordinator_Events + campaign.validate_custom_coordinator_events()))
+            self.config.parameters.Custom_Node_Events = list(set(
+                self.config.parameters.Custom_Node_Events + campaign.validate_custom_node_events()))
+        else: # this just runs the validation that the listened to events are also broadcast
+            campaign.validate_custom_individual_events()
+            campaign.validate_custom_coordinator_events()
+            campaign.validate_custom_node_events()
 
         # This might be a great place to reset the campaign module so users don't have to.
         campaign.reset()
@@ -251,6 +293,38 @@ class EMODTask(ITask):
         for fn in self.implicit_configs:
             if fn:
                 self.config = fn(self.config)
+
+    def _validate_reporter_listening_events(self) -> None:
+        if not self.reporters or not self.reporters.schema_path:
+            return
+
+        has_custom_events = "Custom_Individual_Events" in self.config.parameters
+
+        builtin = self.reporters.get_builtin_events()
+
+        checks = [
+            ("individual", self.reporters.listening_individual_events,
+             "Custom_Individual_Events"),
+            ("node", self.reporters.listening_node_events,
+             "Custom_Node_Events"),
+            ("coordinator", self.reporters.listening_coordinator_events,
+             "Custom_Coordinator_Events"),
+        ]
+        for level, listening_events, config_key in checks:
+            if not listening_events:
+                continue
+            builtin_set = set(builtin.get(level, []))
+            if has_custom_events:
+                custom_set = set(getattr(self.config.parameters, config_key, []))
+            else:
+                custom_set = set()
+            known = builtin_set | custom_set
+            unknown = [e for e in listening_events if e not in known]
+            if unknown:
+                raise ValueError(
+                    f"Reporter(s) are listening for {level}-level event(s) that are not broadcast by any of the "
+                    f"campaign modules or simulation (built-in): {unknown}. Either remove these events from the "
+                    f"reporter or set up your campaign to broadcast these events. Known {level}-level events are: {sorted(known)}")
 
     @staticmethod
     def build_default_config(schema_path: Union[str, Path]) -> ReadOnlyDict:
@@ -412,6 +486,7 @@ class EMODTask(ITask):
             if not returned or not isinstance(returned, Reporters):
                 raise ValueError("Something went wrong with report_builder, please make sure "
                                  "the report_builder function returns a Reporters object.")
+            task._validate_reporter_listening_events()
 
         if serialized_population_files:
             task.add_serialized_population_files_from_path(serialized_population_files)
@@ -431,7 +506,7 @@ class EMODTask(ITask):
                    serialized_population_files: Union[str, list[str]] = None,
                    asset_path: str = None) -> "EMODTask":
         """
-        Load custom |EMOD_s| files when creating :class:`EMODTask`.
+        Load custom EMOD files when creating [EMODTask][].
 
         Args:
             eradication_path: Path to Eradication binary, including the filename.

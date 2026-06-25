@@ -202,15 +202,15 @@ class EMODTask(ITask):
         if "Custom_Individual_Events" in self.config.parameters:  # not present in EMOD-Generic
             # adding to the events that might already be there due to user explicitly adding them
             self.config.parameters.Custom_Individual_Events = list(set(
-                self.config.parameters.Custom_Individual_Events + campaign.get_custom_individual_events()))
+                self.config.parameters.Custom_Individual_Events + campaign.validate_custom_individual_events()))
             self.config.parameters.Custom_Coordinator_Events = list(set(
-                self.config.parameters.Custom_Coordinator_Events + campaign.get_custom_coordinator_events()))
+                self.config.parameters.Custom_Coordinator_Events + campaign.validate_custom_coordinator_events()))
             self.config.parameters.Custom_Node_Events = list(set(
-                self.config.parameters.Custom_Node_Events + campaign.get_custom_node_events()))
+                self.config.parameters.Custom_Node_Events + campaign.validate_custom_node_events()))
         else: # this just runs the validation that the listened to events are also broadcast
-            campaign.get_custom_individual_events()
-            campaign.get_custom_coordinator_events()
-            campaign.get_custom_node_events()
+            campaign.validate_custom_individual_events()
+            campaign.validate_custom_coordinator_events()
+            campaign.validate_custom_node_events()
 
         # This might be a great place to reset the campaign module so users don't have to.
         campaign.reset()

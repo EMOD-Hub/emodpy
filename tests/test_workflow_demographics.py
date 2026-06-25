@@ -124,7 +124,7 @@ class TestWorkflowDemographics(unittest.TestCase):
             demog_filename = config_dict["parameters"]["Demographics_Filenames"][0]
             demog_file = self.platform.get_files(sim, [demog_filename])
             demographics_dict = json.loads(demog_file[demog_filename])
-            assert (demographics_dict['Defaults']['IndividualAttributes']['AgeDistribution1'] == prevalence)
+            assert (demographics_dict['Defaults']['IndividualAttributes']['AgeDistribution1'] == prevalence * 365)
             assert (demographics_dict['Defaults']['IndividualAttributes']['AgeDistribution2'] == 0)
             assert (demographics_dict['Defaults']['IndividualAttributes']['AgeDistributionFlag'] == 0)
 

@@ -32,7 +32,9 @@ class BroadcastEvent(IndividualIntervention):
             The CommonInterventionParameters object that contains the 4 common
             parameters: disqualifying_properties, new_property_value, intervention_name, dont_allow_duplicates.
             The following parameters are not valid for this intervention:
-            cost
+            
+            - cost
+
             Default value: None
     """
 
@@ -55,7 +57,7 @@ class BroadcastEventToOtherNodes(IndividualIntervention):
     surrounding nodes.
 
     When this intervention is updated, the event to be broadcast is cached to be distributed to the nodes.
-    After the people have migrated, the event information is distributed to the nodes - **NOTE: it does support
+    After the people have migrated, the event information is distributed to the nodes. **NOTE: it does support
     multi-core**. During the next time step, the nodes will update their node-level interventions and then
     broadcast the events from other nodes to ALL the people in the node. This is different from interventions
     that only broadcast the event in the current node for the person who had the intervention. Distances between
@@ -75,11 +77,13 @@ class BroadcastEventToOtherNodes(IndividualIntervention):
 
         node_selection_type('NodeSelectionType', optional):
             The method by which to select nodes to receive the event. Possible values are:
+
             * DISTANCE_ONLY - Nodes located within the distance specified by **Max_Distance_To_Other_Nodes_Km**
             are selected.
             * MIGRATION_NODES_ONLY - Nodes that are local, regional, or connected in the migration file are
             selected.
             * DISTANCE_AND_MIGRATION - Nodes are selected using DISTANCE_ONLY and MIGRATION_NODES_ONLY criteria.
+
             Default value: DISTANCE_ONLY
 
         max_distance_to_other_nodes_km(float, optional):
@@ -98,7 +102,9 @@ class BroadcastEventToOtherNodes(IndividualIntervention):
             The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
-            cost
+
+            - cost
+
             Default value: None
     """
 
@@ -149,11 +155,13 @@ class ControlledVaccine(IndividualIntervention):
 
         vaccine_type(VaccineType, optional):
             The type of vaccine to distribute in a vaccine intervention. Possible values are:
+
             * Generic - The vaccine can reduce transmission, acquisition, and mortality.
             * TransmissionBlocking - The vaccine will reduce pathogen transmission.
             * AcquisitionBlocking - The vaccine will reduce the acquisition of the pathogen by reducing the
             force of infection experienced by the vaccinated individual.
             * MortalityBlocking - The vaccine reduces the disease-mortality rate of a vaccinated individual.
+
             Default value: Generic
 
         vaccine_take(float, optional):
@@ -234,6 +242,7 @@ class DelayedIntervention(IndividualIntervention):
             The distribution type to use for assigning the delay period for distributing interventions. Each
             assigned value is a random draw from the distribution. Please use the following distribution classes
             from emodpy.utils.distributions to define the distribution:
+
             * ConstantDistribution
             * UniformDistribution
             * GaussianDistribution
@@ -253,7 +262,9 @@ class DelayedIntervention(IndividualIntervention):
             The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
-            cost
+
+            - cost
+
             Default value: None
     """
 
@@ -303,26 +314,28 @@ class IVCalendar(IndividualIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        intervention_list(list[IndividualIntervention], required):
+        intervention_list (list[IndividualIntervention], required):
             An array of interventions that will be distributed as specified by the calendar. Each time the
             calendar says it is time for the intervention, this list of interventions will be distributed
             to the person with this intervention.
 
-        dropout(bool, optional):
+        dropout (bool, optional):
             If set to true, when an intervention distribution is missed, all subsequent interventions are
             also missed. If set to false, all calendar dates/doses are applied independently of each other.
             Default value: True
 
-        calendar(list['AgeAndProbability'], optional):
+        calendar (list['AgeAndProbability'], optional):
             An array of JSON objects where each object specifies the age and probability of receiving the
-            interventions.  The parameters of the Calendar objects are Age and Probability.
+            interventions. The parameters of the Calendar objects are Age and Probability.
             Default value: None
 
         common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, disqualifying_properties, dont_allow_duplicates.
             The following parameters are not valid for this intervention:
-            cost
+
+            - cost
+
             Default value: None
     """
 
@@ -352,19 +365,19 @@ class IVCalendar(IndividualIntervention):
     class AgeAndProbability:
         """
         This class defines a single entry into the calendar of when an individual is to get a
-        collection of interventions.  When **IVCalendar** is distributed to the individual, the
+        collection of interventions. When **IVCalendar** is distributed to the individual, the
         'probability' is used to determine if the person will get the interventions as this age.
         If the person gets **IVCalendar** after 'age', they will not get the interventions.
 
         Args:
-            age_days(float,optional):
+            age_days (float,optional):
                 As a parameter of a Calendar object, this parameter determines the age (in days) that the
                 individual must be in order to receive the list of actual interventions.
                 Minimum value: 0
                 Maximum value: 125 * 365 = 45,625
                 Default value: 0
 
-            probability(float,optional):
+            probability (float,optional):
                 As a parameter of a Calendar object, this parameter determines the probability of an
                 individual receiving the list of actual interventions at the corresponding age.
                 Minimum value: 0
@@ -401,27 +414,27 @@ class _ImmunityBloodTest(IndividualIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        positive_diagnosis_event(str, required):
+        positive_diagnosis_event (str, required):
             If the test has a positive diagnosis, this parameter defines the event to be broadcast to potentially
             trigger separate interventions or events. For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/),
             and for malaria, [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or
             use your own custom event.
 
-        treatment_fraction(float, optional):
+        treatment_fraction (float, optional):
             The fraction of positive diagnoses that have the positive_diagnosis_event sent out to trigger separate
             interventions or events.
             Minimum value: 0
             Maximum value: 1
             Default value: 1
 
-        positive_threshold_acquisition_immunity(float, optional):
+        positive_threshold_acquisition_immunity (float, optional):
             Specifies the threshold for acquired immunity, where 1 equals 100% immunity and 0 equals 100%
             susceptible.
             Minimum value: 0
             Maximum value: 1
             Default value: 1
 
-        negative_diagnosis_event(str, optional):
+        negative_diagnosis_event (str, optional):
             If the test has a negative diagnosis, this parameter defines the event to be broadcast to potentially
             trigger separate interventions or events. For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/),
             and for malaria, [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or
@@ -433,7 +446,7 @@ class _ImmunityBloodTest(IndividualIntervention):
             If True, requires an infection to be symptomatic to return a positive test.
             Default value: False
 
-        days_to_diagnosis(float, optional):
+        days_to_diagnosis (float, optional):
             The number of days from the test, which is done when the intervention is distributed, until the
             positive_diagnosis_event is sent out if test had a positive diagnosis. The negative_diagnosis_event is sent
             out immediately if the test is negative.
@@ -441,7 +454,7 @@ class _ImmunityBloodTest(IndividualIntervention):
             Maximum value: 3.40282e+38
             Default value: 0
 
-        base_specificity(float, optional):
+        base_specificity (float, optional):
             The specificity of the diagnostic. This sets the proportion of the time that individuals without
             the condition being tested receive a negative diagnostic test. When set to 1, the diagnostic always
             accurately reflects the lack of having the condition. When set to zero, then individuals who do not
@@ -450,7 +463,7 @@ class _ImmunityBloodTest(IndividualIntervention):
             Maximum value: 1
             Default value: 1
 
-        base_sensitivity(float, optional):
+        base_sensitivity (float, optional):
             The sensitivity of the diagnostic. This sets the proportion of the time that individuals with the
             condition being tested receive a positive diagnostic test. When set to 1, the diagnostic always
             accurately reflects the condition. When set to zero, then individuals who have the condition always
@@ -502,28 +515,28 @@ class IndividualImmunityChanger(IndividualIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        prime_transmit(float, optional):
+        prime_transmit (float, optional):
             Specifies the priming effect on transmission immunity for naive individuals (without natural or
             vaccine-derived immunity) for a multi-effect booster vaccine.
             Minimum value: 0
             Maximum value: 1
             Default value: 0
 
-        prime_mortality(float, optional):
+        prime_mortality (float, optional):
             Specifies the priming effect on mortality immunity for naive individuals (without natural or
             vaccine-derived immunity) for a multi-effect booster vaccine.
             Minimum value: 0
             Maximum value: 1
             Default value: 0
 
-        prime_acquire(float, optional):
+        prime_acquire (float, optional):
             Specifies the priming effect on acquisition immunity for naive individuals (without natural or
             vaccine-derived immunity) for a multi-effect booster vaccine.
             Minimum value: 0
             Maximum value: 1
             Default value: 0
 
-        boost_transmit(float, optional):
+        boost_transmit (float, optional):
             Specifies the boosting effect on transmission immunity for naive individuals (without natural or
             vaccine-derived immunity) for a multi-effect booster vaccine. This does not replace current
             immunity, it builds multiplicatively on top of it.
@@ -531,28 +544,28 @@ class IndividualImmunityChanger(IndividualIntervention):
             Maximum value: 1
             Default value: 0
 
-        boost_threshold_transmit(float, optional):
+        boost_threshold_transmit (float, optional):
             Specifies how much transmission immunity is required before the vaccine changes from a prime to a
             boost.
             Minimum value: 0
             Maximum value: 1
             Default value: 0
 
-        boost_threshold_mortality(float, optional):
+        boost_threshold_mortality (float, optional):
             Specifies how much mortality immunity is required before the vaccine changes from a prime to a
             boost.
             Minimum value: 0
             Maximum value: 1
             Default value: 0
 
-        boost_threshold_acquire(float, optional):
+        boost_threshold_acquire (float, optional):
             Specifies how much acquisition immunity is required before the vaccine changes from a prime to a
             boost.
             Minimum value: 0
             Maximum value: 1
             Default value: 0
 
-        boost_mortality(float, optional):
+        boost_mortality (float, optional):
             Specifies the boosting effect on mortality immunity for naive individuals (without natural or
             vaccine-derived immunity) for a multi-effect booster vaccine. This does not replace current
             immunity, it builds multiplicatively on top of it.
@@ -560,7 +573,7 @@ class IndividualImmunityChanger(IndividualIntervention):
             Maximum value: 1
             Default value: 0
 
-        boost_acquire(float, optional):
+        boost_acquire (float, optional):
             Specifies the boosting effect on acquisition immunity for naive individuals (without natural or
             vaccine-derived immunity) for a multi-effect booster vaccine. This does not replace current
             immunity, it builds multiplicatively on top of it.
@@ -572,10 +585,12 @@ class IndividualImmunityChanger(IndividualIntervention):
             The CommonInterventionParameters object that contains the 1 common
             parameter: cost.
             The following parameters are not valid for this intervention:
-            intervention_name
-            dont_allow_duplicates
-            new_property_value
-            disqualifying_properties
+
+            - intervention_name
+            - dont_allow_duplicates
+            - new_property_value
+            - disqualifying_properties
+
             Default value: None
     """
 
@@ -644,6 +659,7 @@ class IndividualNonDiseaseDeathRateModifier(IndividualIntervention):
             determine when the person stops using the intervention. This is independent of how long the
             intervention is effective. Please use the following distribution classes
             from emodpy.utils.distributions to define the distribution:
+
             * ConstantDistribution
             * UniformDistribution
             * GaussianDistribution
@@ -653,6 +669,7 @@ class IndividualNonDiseaseDeathRateModifier(IndividualIntervention):
             * DualConstantDistribution
             * WeibullDistribution
             * DualExponentialDistribution
+
             Default value: None
 
         common_intervention_parameters (CommonInterventionParameters, optional):
@@ -684,11 +701,11 @@ class MigrateIndividuals(IndividualIntervention):
 
     As individuals migrate, there are three ways to categorize nodes:
 
-        - `Home`: the node where the individuals reside; each individual has a single home node.
-        - `Origin`: the "starting point" node for each leg of the migration. The origin updates
-          as individuals move between nodes.
-        - `Destination`: the node the individual is traveling to. The destination updates as
-          individuals move between nodes.
+    - Home: the node where the individuals reside; each individual has a single home node.
+    - Origin: the "starting point" node for each leg of the migration. The origin updates
+    as individuals move between nodes.
+    - Destination: the node the individual is traveling to. The destination updates as
+    individuals move between nodes.
 
     For example, Individual 1 has a home node of Node A. They migrate from Node A to Node B.
     Node A is both the home node and the origin node, and Node B is the destination node.
@@ -701,23 +718,24 @@ class MigrateIndividuals(IndividualIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        nodeid_to_migrate_to(int, optional):
+        nodeid_to_migrate_to (int, optional):
             The destination node ID for intervention-based migration.
             Minimum value: 0
             Maximum value: 4294970000.0
             Default value: 0
 
-        is_moving(bool, optional):
+        is_moving (bool, optional):
             Set to True to indicate the individual is permanently moving to a new home node for
             intervention-based migration. Once at the new home node, trips will be made with this node as the
             root (i.e. round trips come back to this node).
             Default value: False
 
-        duration_before_leaving_distribution(BaseDistribution, optional):
+        duration_before_leaving_distribution (BaseDistribution, optional):
             The distribution type to use for assigning the duration of time an individual waits before
             migrating to the destination node after intervention-based migration. Each assigned value is a
             random draw from the distribution. Please use the following distribution classes
             from emodpy.utils.distributions to define the distribution:
+
             * ConstantDistribution
             * UniformDistribution
             * GaussianDistribution
@@ -727,13 +745,15 @@ class MigrateIndividuals(IndividualIntervention):
             * DualConstantDistribution
             * WeibullDistribution
             * DualExponentialDistribution
+
             Default value: None
 
-        duration_at_node_distribution(BaseDistribution, optional):
+        duration_at_node_distribution (BaseDistribution, optional):
             The distribution type to use for assigning the duration of time an individual or family spends at a
             destination node after intervention-based migration. Each assigned value is a random draw from the
             distribution. Please use the following distribution classes
             from emodpy.utils.distributions to define the distribution:
+
             * ConstantDistribution
             * UniformDistribution
             * GaussianDistribution
@@ -743,13 +763,16 @@ class MigrateIndividuals(IndividualIntervention):
             * DualConstantDistribution
             * WeibullDistribution
             * DualExponentialDistribution
+
             Default value: None
 
         common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
-            cost
+
+            - cost
+
             Default value: None
     """
 
@@ -788,19 +811,19 @@ class MultiEffectBoosterVaccine(IndividualIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        transmit_config(AbstractWaningConfig, required):
+        transmit_config (AbstractWaningConfig, required):
             The configuration for multi-effect vaccine transmission. Specify how this effect decays over time
             using one of the Waning Config classes in emodpy.campaign.waning_config.
 
-        mortality_config(AbstractWaningConfig, required):
+        mortality_config (AbstractWaningConfig, required):
             The configuration for multi-effect vaccine mortality. Specify how this effect decays over time
             using one of the Waning Config classes in emodpy.campaign.waning_config.
 
-        acquire_config(AbstractWaningConfig, required):
+        acquire_config (AbstractWaningConfig, required):
             The configuration for multi-effect vaccine acquisition. Specify how this effect decays over time
             using one of the Waning Config classes in emodpy.campaign.waning_config.
 
-        vaccine_take(float, optional):
+        vaccine_take (float, optional):
             The rate at which delivered vaccines will successfully stimulate an immune response and achieve the
             desired efficacy. For example, if it is set to 0.9, there will be a 90 percent chance that the
             vaccine will start with the specified efficacy, and a 10 percent chance that it will have no
@@ -809,28 +832,28 @@ class MultiEffectBoosterVaccine(IndividualIntervention):
             Maximum value: 1
             Default value: 1
 
-        prime_transmit(float, optional):
+        prime_transmit (float, optional):
             Specifies the priming effect on transmission immunity for naive individuals (without natural or
             vaccine-derived immunity) for a multi-effect booster vaccine.
             Minimum value: 0
             Maximum value: 1
             Default value: 0
 
-        prime_mortality(float, optional):
+        prime_mortality (float, optional):
             Specifies the priming effect on mortality immunity for naive individuals (without natural or
             vaccine-derived immunity) for a multi-effect booster vaccine.
             Minimum value: 0
             Maximum value: 1
             Default value: 0
 
-        prime_acquire(float, optional):
+        prime_acquire (float, optional):
             Specifies the priming effect on acquisition immunity for naive individuals (without natural or
             vaccine-derived immunity) for a multi-effect booster vaccine.
             Minimum value: 0
             Maximum value: 1
             Default value: 0
 
-        boost_transmit(float, optional):
+        boost_transmit (float, optional):
             Specifies the boosting effect on transmission immunity for naive individuals (without natural or
             vaccine-derived immunity) for a multi-effect booster vaccine. This does not replace current
             immunity, it builds multiplicatively on top of it.
@@ -838,28 +861,28 @@ class MultiEffectBoosterVaccine(IndividualIntervention):
             Maximum value: 1
             Default value: 0
 
-        boost_threshold_transmit(float, optional):
+        boost_threshold_transmit (float, optional):
             Specifies how much transmission immunity is required before the vaccine changes from a prime to a
             boost.
             Minimum value: 0
             Maximum value: 1
             Default value: 0
 
-        boost_threshold_mortality(float, optional):
+        boost_threshold_mortality (float, optional):
             Specifies how much mortality immunity is required before the vaccine changes from a prime to a
             boost.
             Minimum value: 0
             Maximum value: 1
             Default value: 0
 
-        boost_threshold_acquire(float, optional):
+        boost_threshold_acquire (float, optional):
             Specifies how much acquisition immunity is required before the vaccine changes from a prime to a
             boost.
             Minimum value: 0
             Maximum value: 1
             Default value: 0
 
-        boost_mortality(float, optional):
+        boost_mortality (float, optional):
             Specifies the boosting effect on mortality immunity for naive individuals (without natural or
             vaccine-derived immunity) for a multi-effect booster vaccine. This does not replace current
             immunity, it builds multiplicatively on top of it.
@@ -867,7 +890,7 @@ class MultiEffectBoosterVaccine(IndividualIntervention):
             Maximum value: 1
             Default value: 0
 
-        boost_acquire(float, optional):
+        boost_acquire (float, optional):
             Specifies the boosting effect on acquisition immunity for naive individuals (without natural or
             vaccine-derived immunity) for a multi-effect booster vaccine. This does not replace current
             immunity, it builds multiplicatively on top of it.
@@ -925,9 +948,9 @@ class MultiEffectVaccine(IndividualIntervention):
     The **MultiEffectVaccine** intervention class implements vaccine campaigns in the simulation.
     Vaccines can affect all of the following:
 
-        - Reduce the likelihood of acquiring an infection
-        - Reduce the likelihood of transmitting an infection
-        - Reduce the likelihood of death
+    - Reduce the likelihood of acquiring an infection
+    - Reduce the likelihood of transmitting an infection
+    - Reduce the likelihood of death
 
     After distribution, the effect wanes over time.
 
@@ -935,19 +958,19 @@ class MultiEffectVaccine(IndividualIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        transmit_config(AbstractWaningConfig, required):
+        transmit_config (AbstractWaningConfig, required):
             The configuration for multi-effect vaccine transmission. Specify how this effect decays over time
             using one of the Waning Config classes in emodpy.campaign.waning_config.
 
-        mortality_config(AbstractWaningConfig, required):
+        mortality_config (AbstractWaningConfig, required):
             The configuration for multi-effect vaccine mortality. Specify how this effect decays over time
             using one of the Waning Config classes in emodpy.campaign.waning_config.
 
-        acquire_config(AbstractWaningConfig, required):
+        acquire_config (AbstractWaningConfig, required):
             The configuration for multi-effect vaccine acquisition. Specify how this effect decays over time
             using one of the Waning Config classes in emodpy.campaign.waning_config.
 
-        vaccine_take(float, optional):
+        vaccine_take (float, optional):
             The rate at which delivered vaccines will successfully stimulate an immune response and achieve the
             desired efficacy. For example, if it is set to 0.9, there will be a 90 percent chance that the
             vaccine will start with the specified efficacy, and a 10 percent chance that it will have no
@@ -992,14 +1015,16 @@ class MultiInterventionDistributor(IndividualIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        intervention_list(list[IndividualIntervention], required):
+        intervention_list (list[IndividualIntervention], required):
             The list of individual interventions that is distributed by **MultiInterventionDistributor**.
 
         common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
-            The following parameters are not valid for this intervention:
-            cost
+            The following parameters are not valid for this intervention
+
+            - cost
+
             Default value: None
     """
 
@@ -1025,7 +1050,7 @@ class OutbreakIndividual(IndividualIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        incubation_period_override(int, optional):
+        incubation_period_override (int, optional):
             The incubation period, in days, that infected individuals will go through before becoming
             infectious. This value overrides the incubation period set in the configuration file. Note for HIV
             simulations only: If set to 0, infection is assumed to be part of an outbreak event and a random
@@ -1035,19 +1060,19 @@ class OutbreakIndividual(IndividualIntervention):
             Maximum value: 2147480000.0
             Default value: -1
 
-        ignore_immunity(bool, optional):
+        ignore_immunity (bool, optional):
             Individuals will be force-infected (with a specific strain) regardless of actual immunity level
             when set to True.
             Default value: True
 
-        genome(int, optional):
+        genome (int, optional):
             The genetic substrain ID of the outbreak infection. Together with **Antigen**, they are a unitary
             object representing a strain of infection, which allows for differentiation among infections.
             Minimum value: -1
             Maximum value: 16777200.0
             Default value: 0
 
-        antigen(int, optional):
+        antigen (int, optional):
             The antigenic base strain ID of the outbreak infection.
             Minimum value: 0
             Maximum value: 10
@@ -1099,13 +1124,13 @@ class PropertyValueChanger(IndividualIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        target_property_value(str, required):
+        target_property_value (str, required):
             The user-defined value of the individual property that will be assigned to the individual.
 
-        target_property_key(str, required):
+        target_property_key (str, required):
             The name of the individual property type whose value will be updated by the intervention.
 
-        revert(float, optional):
+        revert (float, optional):
             The number of days to keep the value (**Target_Property_Value**) of the property
             (**Target_Property_Key**) set by the intervention for the individual. When the time has expired, the
             intervention will reset the property back to the value it had when the intervention was first
@@ -1114,7 +1139,7 @@ class PropertyValueChanger(IndividualIntervention):
             Maximum value: 3.40282e+38
             Default value: 0
 
-        maximum_duration(float, optional):
+        maximum_duration (float, optional):
             The maximum amount of time individuals have to move to a new group. This timing works in
             conjunction with **Daily_Probability**.
             Minimum value: -1
@@ -1131,7 +1156,9 @@ class PropertyValueChanger(IndividualIntervention):
             The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
-            cost
+
+            - cost
+
             Default value: None
     """
 
@@ -1172,20 +1199,22 @@ class SimpleBoosterVaccine(IndividualIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        waning_config(AbstractWaningConfig, required):
+        waning_config (AbstractWaningConfig, required):
             The configuration of the vaccine's efficacy and waning over time. Specify how this effect decays
             over time using one of the Waning Config classes in emodpy.campaign.waning_config.
 
-        vaccine_type(VaccineType, optional):
+        vaccine_type (VaccineType, optional):
             The type of vaccine to distribute in a vaccine intervention. Possible values are:
+
             * Generic - The vaccine can reduce transmission, acquisition, and mortality.
             * TransmissionBlocking - The vaccine will reduce pathogen transmission.
             * AcquisitionBlocking - The vaccine will reduce the acquisition of the pathogen by reducing the
             force of infection experienced by the vaccinated individual.
             * MortalityBlocking - The vaccine reduces the disease-mortality rate of a vaccinated individual.
+
             Default value: Generic
 
-        vaccine_take(float, optional):
+        vaccine_take (float, optional):
             The rate at which delivered vaccines will successfully stimulate an immune response and achieve the
             desired efficacy. For example, if it is set to 0.9, there will be a 90 percent chance that the
             vaccine will start with the specified efficacy, and a 10 percent chance that it will have no
@@ -1194,26 +1223,26 @@ class SimpleBoosterVaccine(IndividualIntervention):
             Maximum value: 1
             Default value: 1
 
-        prime_effect(float, optional):
+        prime_effect (float, optional):
             Specifies the priming effect on [acquisition/transmission/mortality] immunity for naive individuals
             (without natural or vaccine-derived immunity).
             Minimum value: 0
             Maximum value: 1
             Default value: 1
 
-        efficacy_is_multiplicative(bool, optional):
+        efficacy_is_multiplicative (bool, optional):
             The overall vaccine efficacy when individuals receive more than one vaccine. When set to True,
             the vaccine efficacies are multiplied together; when set to False, the efficacies are additive.
             Default value: True
 
-        boost_threshold(float, optional):
+        boost_threshold (float, optional):
             Specifies how much immunity is required before the vaccine changes from a priming effect to a
             boosting effect.
             Minimum value: 0
             Maximum value: 1
             Default value: 0
 
-        boost_effect(float, optional):
+        boost_effect (float, optional):
             Specifies the boosting effect on [acquisition/transmission/mortality] immunity for previously
             exposed individuals (either natural or vaccine-derived). This does not replace current immunity, it
             builds multiplicatively on top of it.
@@ -1264,30 +1293,30 @@ class _SimpleDiagnostic(IndividualIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        positive_diagnosis_config(IndividualIntervention, optional):
+        positive_diagnosis_config (IndividualIntervention, optional):
             The intervention distributed to individuals if they test positive. Must be defined if not using
             positive_diagnosis_event. Cannot have both positive_diagnosis_config and positive_diagnosis_event.
             Default value: None
 
-        positive_diagnosis_event(str, optional):
+        positive_diagnosis_event (str, optional):
             If the test is positive, this specifies an event that can trigger another intervention when the event occurs.
             Must be defined if not using positive_diagnosis_config. Cannot have both positive_diagnosis_config and
             positive_diagnosis_event. For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/), and for malaria,
             [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own custom event.
             Default value: None
 
-        treatment_fraction(float, optional):
+        treatment_fraction (float, optional):
             The fraction of positive diagnoses that are given the positive_diagnosis_config or
             positive_diagnosis_event, whichever is defined.
             Minimum value: 0
             Maximum value: 1
             Default value: 1
 
-        enable_is_symptomatic(bool, optional):
+        enable_is_symptomatic (bool, optional):
             If True, requires an infection to be symptomatic to return a positive test.
             Default value: False
 
-        days_to_diagnosis(float, optional):
+        days_to_diagnosis (float, optional):
             The number of days from diagnosis (which is done when the intervention is distributed) until a
             positive response is performed. The response to a negative diagnosis is done immediately when the
             diagnosis is made (at distribution of the intervention).
@@ -1295,7 +1324,7 @@ class _SimpleDiagnostic(IndividualIntervention):
             Maximum value: 3.40282e+38
             Default value: 0
 
-        base_specificity(float, optional):
+        base_specificity (float, optional):
             The specificity of the diagnostic. This sets the proportion of the time that individuals without
             the condition being tested receive a negative diagnostic test. When set to 1, the diagnostic always
             accurately reflects the lack of having the condition. When set to zero, then individuals who do not
@@ -1304,7 +1333,7 @@ class _SimpleDiagnostic(IndividualIntervention):
             Maximum value: 1
             Default value: 1
 
-        base_sensitivity(float, optional):
+        base_sensitivity (float, optional):
             The sensitivity of the diagnostic. This sets the proportion of the time that individuals with the
             condition being tested receive a positive diagnostic test. When set to 1, the diagnostic always
             accurately reflects the condition. When set to zero, then individuals who have the condition always
@@ -1371,24 +1400,24 @@ class _SimpleHealthSeekingBehavior(IndividualIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        intervention_config(IndividualIntervention, optional):
+        intervention_config (IndividualIntervention, optional):
             The configuration for the IndividualIntervention that the individual will receive after the delay.
             Default value: None
 
-        intervention_event(str, optional):
+        intervention_event (str, optional):
             The name of the event to broadcast when individual has been selected to receive care after the delay.
             For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/), and for malaria,
             [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own
             custom event.
             Default value: None
 
-        tendency(float, optional):
+        tendency (float, optional):
             The probability of seeking healthcare.
             Minimum value: 0
             Maximum value: 1
             Default value: 1
 
-        single_use(bool, optional):
+        single_use (bool, optional):
             If set to True, the health-seeking behavior gets used once and discarded. If set to False,
             it remains indefinitely.
             Default value: True
@@ -1397,7 +1426,9 @@ class _SimpleHealthSeekingBehavior(IndividualIntervention):
             The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
-            cost
+
+            - cost
+
             Default value: None
     """
 
@@ -1436,9 +1467,9 @@ class SimpleVaccine(IndividualIntervention):
     The **SimpleVaccine** intervention class implements vaccine campaigns in the simulation.
     Vaccines can have an effect on one of the following:
 
-        - Reduce the likelihood of acquiring an infection
-        - Reduce the likelihood of transmitting an infection
-        - Reduce the likelihood of death
+    - Reduce the likelihood of acquiring an infection
+    - Reduce the likelihood of transmitting an infection
+    - Reduce the likelihood of death
 
     To configure vaccines that have an effect on more than one of these, use **MultiEffectVaccine** instead.
 
@@ -1446,20 +1477,22 @@ class SimpleVaccine(IndividualIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        waning_config(AbstractWaningConfig, required):
+        waning_config (AbstractWaningConfig, required):
             The configuration of the vaccine's efficacy and waning over time. Specify how this effect decays
             over time using one of the Waning Config classes in emodpy.campaign.waning_config.
 
-        vaccine_type(VaccineType, optional):
+        vaccine_type (VaccineType, optional):
             The type of vaccine to distribute in a vaccine intervention. Possible values are:
+
             * Generic - The vaccine can reduce transmission, acquisition, and mortality.
             * TransmissionBlocking - The vaccine will reduce pathogen transmission.
             * AcquisitionBlocking - The vaccine will reduce the acquisition of the pathogen by reducing the
             force of infection experienced by the vaccinated individual.
             * MortalityBlocking - The vaccine reduces the disease-mortality rate of a vaccinated individual.
+
             Default value: Generic
 
-        vaccine_take(float, optional):
+        vaccine_take (float, optional):
             The rate at which delivered vaccines will successfully stimulate an immune response and achieve the
             desired efficacy. For example, if it is set to 0.9, there will be a 90 percent chance that the
             vaccine will start with the specified efficacy, and a 10 percent chance that it will have no
@@ -1468,7 +1501,7 @@ class SimpleVaccine(IndividualIntervention):
             Maximum value: 1
             Default value: 1
 
-        efficacy_is_multiplicative(bool, optional):
+        efficacy_is_multiplicative (bool, optional):
             The overall vaccine efficacy when individuals receive more than one vaccine. When set to True,
             the vaccine efficacies are multiplied together; when set to False, the efficacies are additive.
             Default value: True
@@ -1512,19 +1545,19 @@ class StandardDiagnostic(IndividualIntervention):
         campaign (api_campaign, required):
             - An instance of the emod_api.campaign module.
 
-        positive_diagnosis_config(IndividualIntervention, optional):
+        positive_diagnosis_config (IndividualIntervention, optional):
             - The intervention distributed to individuals if they test positive.
             - Must be defined if not using positive_diagnosis_event.
             - Cannot have both positive_diagnosis_config and positive_diagnosis_event.
             - Default value: None
 
-        negative_diagnosis_config(IndividualIntervention, optional):
+        negative_diagnosis_config (IndividualIntervention, optional):
             - The intervention distributed to individuals if they test negative.
             - If using positive_diagnosis_config, you can use negative_diagnosis_config, but not negative_diagnosis_event.
             - Can use this or negative_diagnosis_event, but not both.
             - Default value: None
 
-        positive_diagnosis_event(str, optional):
+        positive_diagnosis_event (str, optional):
             - If the test is positive, this specifies an event that can trigger another intervention when the event occurs.
             - Must be defined if not using positive_diagnosis_config.
             - Cannot have both positive_diagnosis_config and positive_diagnosis_event.
@@ -1538,7 +1571,7 @@ class StandardDiagnostic(IndividualIntervention):
             - For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/), and for malaria, [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own custom event.
             - Default value: None
 
-        treatment_fraction(float, optional):
+        treatment_fraction (float, optional):
             - The fraction of positive diagnoses that are given the positive_diagnosis_config or
               positive_diagnosis_event, whichever is defined. This does not affect the distribution of the negative
               diagnosis.
@@ -1546,11 +1579,11 @@ class StandardDiagnostic(IndividualIntervention):
             - Maximum value: 1
             - Default value: 1
 
-        enable_is_symptomatic(bool, optional):
+        enable_is_symptomatic (bool, optional):
             - If True, requires an infection to be symptomatic to return a positive test.
             - Default value: False
 
-        days_to_diagnosis(float, optional):
+        days_to_diagnosis (float, optional):
             - The number of days from the test, which is done when the intervention is distributed, until the
               positive_diagnosis_config or positive_diagnosis_event (whichever is defined) are distributed if the test
               had a positive diagnosis. The negative_diagnosis_config or negative_diagnosis_event is distributed
@@ -1559,7 +1592,7 @@ class StandardDiagnostic(IndividualIntervention):
             - Maximum value: 3.40282e+38
             - Default value: 0
 
-        base_specificity(float, optional):
+        base_specificity (float, optional):
             - The specificity of the diagnostic. This sets the proportion of the time that individuals without
               the condition being tested receive a negative diagnostic test. When set to 1, the diagnostic always
               accurately reflects the lack of having the condition. When set to zero, then individuals who do not
@@ -1568,7 +1601,7 @@ class StandardDiagnostic(IndividualIntervention):
             - Maximum value: 1
             - Default value: 1
 
-        base_sensitivity(float, optional):
+        base_sensitivity (float, optional):
             - The sensitivity of the diagnostic. This sets the proportion of the time that individuals with the
               condition being tested receive a positive diagnostic test. When set to 1, the diagnostic always
               accurately reflects the condition. When set to zero, then individuals who have the condition always

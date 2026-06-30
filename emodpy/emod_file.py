@@ -24,10 +24,7 @@ class InputFilesList(AssetCollection, metaclass=ABCMeta):
 
     def gather_assets(self) -> List[Asset]:
         """
-        Gather input files for Input File List
-
-        Returns:
-
+        Gather input files for Input File List.
         """
         assets = [a for a in self.assets if not a.persisted]
         for a in assets:
@@ -51,8 +48,8 @@ class MigrationFiles(InputFilesList):
 
     def enable_migration(self):
         """
-        Enables migration and sets the pattern if defined. If there are not other other parameters, it also set
-        *Enable_Migration_Heterogeneity* to 0
+        Enables migration and sets the pattern if defined. If there are no other parameters, it also sets
+        *Enable_Migration_Heterogeneity* to 0.
         """
         self.migration_model = MigrationModel.FIXED_RATE_MIGRATION
         if not self.migration_pattern:
@@ -62,14 +59,12 @@ class MigrationFiles(InputFilesList):
 
     def update_migration_pattern(self, migration_pattern: MigrationPattern, **kwargs: Any) -> None:
         """
-        Update migration pattern
+        Update migration pattern.
 
         Args:
-            migration_pattern: Migration Pattern to use
-            **kwargs:
-
-        Returns:
-            None
+            migration_pattern (MigrationPattern): Migration Pattern to use
+            **kwargs (Any): Additional migration parameters supplied as keyword
+                arguments (for example `Enable_Migration_Heterogeneity=1`).
         """
         self.enable_migration()
         self.migration_pattern = migration_pattern
@@ -78,15 +73,12 @@ class MigrationFiles(InputFilesList):
 
     def add_migration_from_file(self, migration_type: MigrationType, file_path: str, multiplier: float = 1):
         """
-        Add migration info from a file
+        Add migration info from a file.
 
         Args:
-            migration_type: Type of migration
-            file_path: Path to file
-            multiplier: Multiplier
-
-        Returns:
-
+            migration_type (MigrationTypes): Type of migration
+            file_path (str): Path to file
+            multiplier (float): Multiplier
         """
         self.enable_migration()
         asset = Asset(absolute_path=file_path, relative_path=self.relative_path)
@@ -97,13 +89,10 @@ class MigrationFiles(InputFilesList):
 
     def set_task_config(self, task: 'EMODTask'):
         """
-        Update the task with the migration configuration
+        Update the task with the migration configuration.
 
         Args:
-            task: Task to update
-
-        Returns:
-
+            task (EMODTask): Task to update
         """
         # Set the migration  model if present
         if self.migration_model:
@@ -135,9 +124,7 @@ class MigrationFiles(InputFilesList):
 
     def gather_assets(self):
         """
-        Gather assets for Migration files. Called by EMODTask
-        Returns:
-
+        Gather assets for Migration files. Called by EMODTask.
         """
         for asset in self.migration_files.values():
             if asset.persisted:
@@ -150,10 +137,7 @@ class MigrationFiles(InputFilesList):
 
     def set_all_persisted(self):
         """
-        Set akk migration assets as persisted
-
-        Returns:
-
+        Set all migration assets as persisted.
         """
         for asset in self.migration_files.values():
             asset.persisted = True
@@ -161,14 +145,11 @@ class MigrationFiles(InputFilesList):
 
     def merge_with(self, mf: 'MigrationFiles', left_precedence: bool = True) -> None:
         """
-        Merge migration file with other Migration file
+        Merge migration file with other Migration file.
 
         Args:
-            mf: Other migration file to merge with
-            left_precedence: Does the current object have precedence or the other object?
-
-        Returns:
-            None
+            mf (MigrationFiles): Other migration file to merge with.
+            left_precedence (bool): Does the current object have precedence or the other object?
         """
         if not left_precedence:
             self.migration_files.update(mf.migration_files)
@@ -191,10 +172,10 @@ class MigrationFiles(InputFilesList):
 
     def read_config_file(self, config_path, asset_path):
         """
-        Try to recreate the migration based on a given config file and an asset path
+        Try to recreate the migration based on a given config file and an asset path.
         Args:
-            config_path: path to the config
-            asset_path: path containing the assets
+            config_path: path to the config.
+            asset_path: path containing the assets.
         """
         config = json.load(open(config_path))
         params = config["parameters"]
@@ -218,13 +199,11 @@ class MigrationFiles(InputFilesList):
 class DemographicsFiles(InputFilesList):
     def set_task_config(self, task: 'EMODTask', extend: bool = False):
         """
-        Set the simulation level config. If extend is true, the demographics files are appended to the list
+        Set the simulation level config. If `extend` is true, the demographics files are appended to the list.
+
         Args:
-            task:
-            extend:
-
-        Returns:
-
+            task (EMODTask): The task to update.
+            extend (bool): If true, the demographics files are appended to the list.
         """
         dfiles = [os.path.join(df.relative_path, df.filename) for df in self.assets]
         if dfiles:
@@ -240,13 +219,12 @@ class DemographicsFiles(InputFilesList):
 
     def add_demographics_from_files(self, absolute_path: str, filename: Optional[str] = None):
         """
-        Add demographics files into the demographics.assets from a file or from a directory
+        Add demographics files into the demographics.assets from a file or from a directory.
 
         Args:
-            absolute_path: Path to file, including the filename or folder. All .json files in the folder
+            absolute_path (str): Path to file, including the filename or folder. All .json files in the folder
                 will be added as demographics files and used in the experiment.
-            filename: Optional filename. If not provided, the file name of source file will be used
-
+            filename (str): Optional filename. If not provided, the file name of source file will be used.
         """
         filename = filename or os.path.basename(absolute_path)
 
@@ -275,14 +253,11 @@ class DemographicsFiles(InputFilesList):
 
     def add_demographics_from_dict(self, content: Dict, filename: str):
         """
-        Add demographics from a dictionary object
+        Add demographics from a dictionary object.
 
         Args:
-            content: Dictionary Content
-            filename: Filename to call demographics file
-
-        Returns:
-
+            content (Dict): Dictionary Content.
+            filename (str): Filename to call demographics file.
         """
         asset = Asset(filename=filename, content=content, relative_path=self.relative_path, handler=json_handler)
         if asset in self.assets:
@@ -320,7 +295,7 @@ class ClimateFiles(InputFilesList):
         Set the task Config. Set all the correct files for the climate.
 
         Args:
-            task: Task to config
+            task (EMODTask): Task to config.
         """
         # Set the files
         for climate_type, asset in self.files_by_type.items():
@@ -351,7 +326,7 @@ class ClimateFiles(InputFilesList):
 
     def gather_assets(self):
         """
-        Gather assets for Climate files. Called by EMODTask
+        Gather assets for Climate files. Called by EMODTask.
         """
         # Skip if the climate model is not by data
         if self.Climate_Model != ClimateModel.CLIMATE_BY_DATA:
@@ -380,12 +355,13 @@ class ClimateFiles(InputFilesList):
         self.climate_params[
             "Base_Relative_Humidity"] = Base_Relative_Humidity if Base_Relative_Humidity is not None else .1
 
-    def read_config_file(self, config_path, asset_path):
+    def read_config_file(self, config_path: str, asset_path: str):
         """
-        Try to recreate the climate based on a given config file and an asset path
+        Try to recreate the climate based on a given config file and an asset path.
+
         Args:
-            config_path: path to the config
-            asset_path: path containing the assets
+            config_path (str): path to the config
+            asset_path (str): path containing the assets
         """
         config = json.load(open(config_path))
         params = config["parameters"]

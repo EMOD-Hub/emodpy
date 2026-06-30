@@ -313,8 +313,8 @@ class PropertyRestrictions:
     Please refer to the EMOD documentation for NodeProperties and IndividualProperties parameters for more
     information:
 
-    - HIV EMOD: [Individual and Node Properties](https://emod.idmod.org/emodpy-hiv/emod/model-properties/)
-    - Malaria EMOD: [Individual and Node Properties](https://emod.idmod.org/emodpy-malaria/emod/model-properties/)
+    - HIV Emod: [Demographics parameters](https://emod.idmod.org/emodpy-hiv/emod/parameter-demographics/)
+    - Malaria Emod: [Demographics parameters](https://emod.idmod.org/emodpy-malaria/emod/parameter-demographics/)
 
     Args:
         individual_property_restrictions (List[List[str]], optional):
@@ -322,7 +322,7 @@ class PropertyRestrictions:
             - These are defined in the demographics.
             - Individuals must have these properties to be targeted by the intervention.
             - This parameter allows you to specify AND and OR combinations of key:value pairs. Please see example 1 and 2 for more information.
-            - You can either use this parameter or node_property_restrictions, but not both.
+            - Can be used together with node_property_restrictions.
             - Defaults to None.
 
         node_property_restrictions (List[List[str]], optional):
@@ -330,12 +330,11 @@ class PropertyRestrictions:
             - These are defined in the demographics.
             - Nodes must have these properties to be targeted by the intervention.
             - You can specify AND and OR combinations of key:value pairs with this parameter. Please see example 3 section for more information.
-            - You can either use this parameter or individual_property_restrictions, but not both.
+            - Can be used together with individual_property_restrictions.
             - Defaults to None.
 
     Raises:
         Warnings: if both individual_property_restrictions and node_property_restrictions are not defined.
-        ValueError: if both individual_property_restrictions and node_property_restrictions are defined.
         ValueError: if individual_property_restrictions or node_property_restrictions is not a 2D list(List[List[str]]).
         ValueError: if the elements in the inner list are not strings that represent dictionaries key:value pairs with at least one alphanumeric character before and after ':'.
 
@@ -431,12 +430,9 @@ class PropertyRestrictions:
     def _verify_property_restrictions(self):
         if not self.individual_property_restrictions and not self.node_property_restrictions:
             warnings.warn("No property restrictions are provided.")
-        elif self.individual_property_restrictions and self.node_property_restrictions:
-            raise ValueError("Both individual_property_restrictions and node_property_restrictions are provided. "
-                             "Please provide only one of them.")
-        elif self.individual_property_restrictions:
+        if self.individual_property_restrictions:
             self._validate_restrictions(self.individual_property_restrictions, "individual_property_restrictions")
-        else:  # if self.node_property_restrictions:
+        if self.node_property_restrictions:
             self._validate_restrictions(self.node_property_restrictions, "node_property_restrictions")
 
     @staticmethod
@@ -486,11 +482,19 @@ class PropertyRestrictions:
             return result
 
         if self.individual_property_restrictions:
-            campaign_object.Property_Restrictions_Within_Node = parse_to_dict(self.individual_property_restrictions)
-            if hasattr(campaign_object, 'Property_Restrictions'):
-                campaign_object.Property_Restrictions = []
+            if hasattr(campaign_object, 'Property_Restrictions_Within_Node'):
+                campaign_object.Property_Restrictions_Within_Node = parse_to_dict(self.individual_property_restrictions)
+            elif hasattr(campaign_object, 'Property_Restrictions'):
+                campaign_object.Property_Restrictions = parse_to_dict(self.individual_property_restrictions)
+            else:
+                raise ValueError(f"The {campaign_object.__class__.__name__} does not have Property_Restrictions_Within_Node "
+                                 "or Property_Restrictions field to set the individual_property_restrictions.")
         if self.node_property_restrictions:
-            campaign_object.Node_Property_Restrictions = parse_to_dict(self.node_property_restrictions)
+            if hasattr(campaign_object, 'Node_Property_Restrictions'):
+                campaign_object.Node_Property_Restrictions = parse_to_dict(self.node_property_restrictions)
+            else:
+                raise ValueError(f"The {campaign_object.__class__.__name__} does not have Node_Property_Restrictions"
+                                 f" field to set the node_property_restrictions.")
 
 
 class ValueMap:

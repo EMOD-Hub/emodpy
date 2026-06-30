@@ -14,7 +14,7 @@
                         "class": "BroadcastEvent"
                     },
                     "Blackout_Event_Trigger": "",
-                    "Blackout_On_First_Occurrence": 0,
+                    "Blackout_On_First_Occurrence": 1,
                     "Blackout_Period": 0,
                     "Demographic_Coverage": 1,
                     "Disqualifying_Properties": [],

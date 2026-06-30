@@ -1,0 +1,54 @@
+{
+    "Events": [
+        {
+            "Event_Coordinator_Config": {
+                "Amount_In_Shipment": 200,
+                "Days_Between_Shipments": 14,
+                "Demographic_Coverage": 1,
+                "Duration": 3.40282e+38,
+                "Initial_Amount_Distribution": "UNIFORM_DISTRIBUTION",
+                "Initial_Amount_Max": 1000,
+                "Initial_Amount_Min": 100,
+                "Intervention_Config": {
+                    "Antigen": 0,
+                    "Genome": 0,
+                    "Import_Age": 365,
+                    "Number_Cases_Per_Node": 10,
+                    "Probability_Of_Infection": 1,
+                    "class": "Outbreak"
+                },
+                "Max_Distributed_Per_Day": 20,
+                "Max_Stock": 2147480000.0,
+                "Node_Property_Restrictions": [
+                    {
+                        "Risk": "High"
+                    }
+                ],
+                "Property_Restrictions": [],
+                "Property_Restrictions_Within_Node": [],
+                "Target_Demographic": "Everyone",
+                "Target_Gender": "All",
+                "Target_Residents_Only": 0,
+                "Targeting_Config": {},
+                "Trigger_Condition_List": [
+                    "NewClinicalCase",
+                    "NewSevereCase"
+                ],
+                "Waiting_Period": 60,
+                "class": "CommunityHealthWorkerEventCoordinator"
+            },
+            "Event_Name": "test_chw_event",
+            "Nodeset_Config": {
+                "Node_List": [
+                    1,
+                    2,
+                    3
+                ],
+                "class": "NodeSetNodeList"
+            },
+            "Start_Day": 1,
+            "class": "CampaignEvent"
+        }
+    ],
+    "Use_Defaults": 1
+}

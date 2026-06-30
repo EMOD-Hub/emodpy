@@ -19,15 +19,17 @@ class BroadcastEvent(IndividualIntervention):
     event.
 
     Args:
-        campaign (api_campaign, required):
+        campaign (api_campaign, required):waityou're on leave
+
             An instance of the emod_api.campaign module.
 
         broadcast_event(str, required):
-            The name of the event to be broadcasted. See [Event List](https://emod.idmod.org/EMOD-Generic/md_parameter/parameter-campaign-event-list/)
-            for events already used in EMOD or use your own custom event.
+            The name of the event to be broadcasted. See
+            [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own
+            custom event.
 
         common_intervention_parameters (CommonInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+            The CommonInterventionParameters object that contains the 4 common
             parameters: disqualifying_properties, new_property_value, intervention_name, dont_allow_duplicates.
             The following parameters are not valid for this intervention:
             
@@ -69,9 +71,9 @@ class BroadcastEventToOtherNodes(IndividualIntervention):
         broadcast_event(str, required):
             The name of the event to broadcast to the people of 'nearby' nodes. For example, if a house is
             found to have malaria, broadcast an event to the people in the nearby houses so that they can get
-            treatment. See the [HIV event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/)
-            and the [Malaria event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/)
-            for events already used in EMOD or use your own custom event.
+            treatment. For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/), and for malaria,
+            [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own
+            custom event.
 
         node_selection_type('NodeSelectionType', optional):
             The method by which to select nodes to receive the event. Possible values are:
@@ -94,10 +96,10 @@ class BroadcastEventToOtherNodes(IndividualIntervention):
 
         include_my_node(bool, optional):
             Set to True to broadcast the event to the current node.
-            Default value: True
+            Default value: False
 
         common_intervention_parameters (CommonInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+            The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
 
@@ -149,7 +151,7 @@ class ControlledVaccine(IndividualIntervention):
 
         waning_config(AbstractWaningConfig, required):
             The configuration of the vaccine's efficacy and waning over time. Specify how this effect decays
-            over time using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            over time using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         vaccine_type(VaccineType, optional):
             The type of vaccine to distribute in a vaccine intervention. Possible values are:
@@ -173,8 +175,8 @@ class ControlledVaccine(IndividualIntervention):
 
         expired_event_trigger(str, optional):
             The name of the event to be broadcast when the intervention expires. See
-            [Event list](https://emod.idmod.org/EMOD-Generic/md_parameter/parameter-campaign-event-list/)
-            for events already used in EMOD or use your own custom event.
+            [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own
+            custom event.
             Default value: None
 
         efficacy_is_multiplicative(bool, optional):
@@ -192,13 +194,13 @@ class ControlledVaccine(IndividualIntervention):
 
         distributed_event_trigger(str, optional):
             The name of the event to be broadcast when the intervention is distributed to an individual. See
-            [Event list](https://emod.idmod.org/EMOD-Generic/md_parameter/parameter-campaign-event-list/)
-            for events already used in EMOD or use your own custom event.
+            [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own
+            custom event.
 
             Default value: None
 
         common_intervention_parameters (CommonInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 5 common
+            The CommonInterventionParameters object that contains the 5 common
             parameters: cost, new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             Default value: None
     """
@@ -256,8 +258,8 @@ class DelayedIntervention(IndividualIntervention):
             the delay period.
             Either intervention_to_broadcast_at_delay_completion or event_to_broadcast_at_delay_completion must be set.
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
 
@@ -305,7 +307,7 @@ class IVCalendar(IndividualIntervention):
     is dependent on whether the individual's age matches the next date in the calendar. This implies that
     at a certain age, the list of actual interventions will be distributed according to a given probability.
     While a typical use case might involve the distribution of calendars due to a **Births** event in the
-    context of a routine vaccination schedule, calendars may also be distributed directly to individuals at
+    context of a routine vaccination schedule, calendars may also be distributed directly to individuals
     at times other than birth.
 
     Args:
@@ -390,7 +392,7 @@ class IVCalendar(IndividualIntervention):
 
         def to_schema_dict(self, campaign) -> s2c.ReadOnlyDict:
             """
-            A function that converts the Sigmoid object to a schema dictionary.
+            A function that converts the AgeAndProbability object to a schema dictionary.
             """
             aap = s2c.get_class_with_defaults("idmType:AgeAndProbability", schema_json=campaign.get_schema())
             aap.Age = self.age_days
@@ -399,12 +401,14 @@ class IVCalendar(IndividualIntervention):
             return aap
 
 
-class _ImmunityBloodTest(IndividualIntervention):  # make this class private until we have time to review and test it.
+class _ImmunityBloodTest(IndividualIntervention):
     """
     The **ImmunityBloodTest** intervention class identifies whether an individual's immunity meets a specified
     threshold (as set with the **positive_threshold_acquisition_immunity** campaign parameter) and then broadcasts
     an event based on the results; positive has immunity while negative does not. Note that **base_sensitivity**
     and **base_specificity** function whether or not the immunity is above the threshold.
+
+    Developer Note: This class is private because we still need to review and test it.
 
     Args:
         campaign (api_campaign, required):
@@ -412,9 +416,9 @@ class _ImmunityBloodTest(IndividualIntervention):  # make this class private unt
 
         positive_diagnosis_event (str, required):
             If the test has a positive diagnosis, this parameter defines the event to be broadcast to potentially
-            trigger separate interventions or events. See the [HIV event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/)
-            and the [Malaria event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/)
-            for events already used in EMOD or use your own custom event.
+            trigger separate interventions or events. For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/),
+            and for malaria, [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or
+            use your own custom event.
 
         treatment_fraction (float, optional):
             The fraction of positive diagnoses that have the positive_diagnosis_event sent out to trigger separate
@@ -432,15 +436,15 @@ class _ImmunityBloodTest(IndividualIntervention):  # make this class private unt
 
         negative_diagnosis_event (str, optional):
             If the test has a negative diagnosis, this parameter defines the event to be broadcast to potentially
-            trigger separate interventions or events. See the [HIV event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/)
-            and the [Malaria event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/)
-            for events already used in EMOD or use your own custom event. If not set, no event will be sent out upon negative diagnosis.
+            trigger separate interventions or events. For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/),
+            and for malaria, [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or
+            use your own custom event. If not set, no event will be sent out upon negative diagnosis.
 
             Default value: None
 
         enable_is_symptomatic(bool, optional):
             If True, requires an infection to be symptomatic to return a positive test.
-            Default value: True
+            Default value: False
 
         days_to_diagnosis (float, optional):
             The number of days from the test, which is done when the intervention is distributed, until the
@@ -578,8 +582,8 @@ class IndividualImmunityChanger(IndividualIntervention):
             Default value: 0
 
         common_intervention_parameters (CommonInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 1 common
-            parameters: cost.
+            The CommonInterventionParameters object that contains the 1 common
+            parameter: cost.
             The following parameters are not valid for this intervention:
 
             - intervention_name
@@ -645,9 +649,9 @@ class IndividualNonDiseaseDeathRateModifier(IndividualIntervention):
             exceeds the max time, then the last modifier value will be used.
 
         expiration_event(str, optional):
-            When the person stops using the intervention (intervention expires), this event will be broadcasted. See the [HIV event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/)
-            and the [Malaria event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/)
-            for events already used in EMOD or use your own custom event.
+            When the person stops using the intervention (intervention expires), this event will be broadcast. See
+            [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own
+            custom event.
             Default value: None
 
         expiration_duration_distribution(BaseDistribution, optional):
@@ -669,7 +673,7 @@ class IndividualNonDiseaseDeathRateModifier(IndividualIntervention):
             Default value: None
 
         common_intervention_parameters (CommonInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 5 common
+            The CommonInterventionParameters object that contains the 5 common
             parameters: cost, new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             Default value: None
     """
@@ -724,7 +728,7 @@ class MigrateIndividuals(IndividualIntervention):
             Set to True to indicate the individual is permanently moving to a new home node for
             intervention-based migration. Once at the new home node, trips will be made with this node as the
             root (i.e. round trips come back to this node).
-            Default value: True
+            Default value: False
 
         duration_before_leaving_distribution (BaseDistribution, optional):
             The distribution type to use for assigning the duration of time an individual waits before
@@ -763,7 +767,7 @@ class MigrateIndividuals(IndividualIntervention):
             Default value: None
 
         common_intervention_parameters (CommonInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+            The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
 
@@ -809,15 +813,15 @@ class MultiEffectBoosterVaccine(IndividualIntervention):
 
         transmit_config (AbstractWaningConfig, required):
             The configuration for multi-effect vaccine transmission. Specify how this effect decays over time
-            using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         mortality_config (AbstractWaningConfig, required):
             The configuration for multi-effect vaccine mortality. Specify how this effect decays over time
-            using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         acquire_config (AbstractWaningConfig, required):
             The configuration for multi-effect vaccine acquisition. Specify how this effect decays over time
-            using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         vaccine_take (float, optional):
             The rate at which delivered vaccines will successfully stimulate an immune response and achieve the
@@ -895,7 +899,7 @@ class MultiEffectBoosterVaccine(IndividualIntervention):
             Default value: 0
 
         common_intervention_parameters (CommonInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 5 common
+            The CommonInterventionParameters object that contains the 5 common
             parameters: cost, new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             Default value: None
     """
@@ -942,7 +946,7 @@ class MultiEffectBoosterVaccine(IndividualIntervention):
 class MultiEffectVaccine(IndividualIntervention):
     """
     The **MultiEffectVaccine** intervention class implements vaccine campaigns in the simulation.
-    Vaccines can effect all of the following:
+    Vaccines can affect all of the following:
 
     - Reduce the likelihood of acquiring an infection
     - Reduce the likelihood of transmitting an infection
@@ -956,15 +960,15 @@ class MultiEffectVaccine(IndividualIntervention):
 
         transmit_config (AbstractWaningConfig, required):
             The configuration for multi-effect vaccine transmission. Specify how this effect decays over time
-            using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         mortality_config (AbstractWaningConfig, required):
             The configuration for multi-effect vaccine mortality. Specify how this effect decays over time
-            using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         acquire_config (AbstractWaningConfig, required):
             The configuration for multi-effect vaccine acquisition. Specify how this effect decays over time
-            using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         vaccine_take (float, optional):
             The rate at which delivered vaccines will successfully stimulate an immune response and achieve the
@@ -976,7 +980,7 @@ class MultiEffectVaccine(IndividualIntervention):
             Default value: 1
 
         common_intervention_parameters (CommonInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 5 common
+            The CommonInterventionParameters object that contains the 5 common
             parameters: cost, new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             Default value: None
     """
@@ -1015,7 +1019,7 @@ class MultiInterventionDistributor(IndividualIntervention):
             The list of individual interventions that is distributed by **MultiInterventionDistributor**.
 
         common_intervention_parameters (CommonInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+            The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention
 
@@ -1149,7 +1153,7 @@ class PropertyValueChanger(IndividualIntervention):
             Default value: 1
 
         common_intervention_parameters (CommonInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+            The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
 
@@ -1197,7 +1201,7 @@ class SimpleBoosterVaccine(IndividualIntervention):
 
         waning_config (AbstractWaningConfig, required):
             The configuration of the vaccine's efficacy and waning over time. Specify how this effect decays
-            over time using one of the Waning Config classes in emodpy.campaign.waninng_config.
+            over time using one of the Waning Config classes in emodpy.campaign.waning_config.
 
         vaccine_type (VaccineType, optional):
             The type of vaccine to distribute in a vaccine intervention. Possible values are:
@@ -1247,7 +1251,7 @@ class SimpleBoosterVaccine(IndividualIntervention):
             Default value: 1
 
         common_intervention_parameters (CommonInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 5 common
+            The CommonInterventionParameters object that contains the 5 common
             parameters: cost, new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             Default value: None
     """
@@ -1275,15 +1279,15 @@ class SimpleBoosterVaccine(IndividualIntervention):
         self._intervention.Boost_Effect = validate_value_range(boost_effect, 'boost_effect', 0, 1, float)
 
 
-# DanB - Making SimpleDiagnostic private because users should use StandardDiagnostic instead.  It is the same thing
-# but adds the negative diagnosis.
-
 class _SimpleDiagnostic(IndividualIntervention):
     """
     The **SimpleDiagnostic** intervention class identifies infected individuals, regardless of disease state,
     based on specified diagnostic sensitivity and specificity. Diagnostics are a key component of modern disease
     control efforts, whether used to identify high-risk individuals, infected individuals, or drug resistance.
     This intervention class distributes a specified intervention to a fraction of individuals who test positive.
+
+    Developer note: Making SimpleDiagnostic private because users should use **StandardDiagnostic** instead.
+    It is the same thing but adds the negative diagnosis.
 
     Args:
         campaign (api_campaign, required):
@@ -1297,9 +1301,8 @@ class _SimpleDiagnostic(IndividualIntervention):
         positive_diagnosis_event (str, optional):
             If the test is positive, this specifies an event that can trigger another intervention when the event occurs.
             Must be defined if not using positive_diagnosis_config. Cannot have both positive_diagnosis_config and
-            positive_diagnosis_event. See the [HIV event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/)
-            and the [Malaria event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/)
-            for events already used in EMOD or use your own custom event.
+            positive_diagnosis_event. For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/), and for malaria,
+            [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own custom event.
             Default value: None
 
         treatment_fraction (float, optional):
@@ -1311,7 +1314,7 @@ class _SimpleDiagnostic(IndividualIntervention):
 
         enable_is_symptomatic (bool, optional):
             If True, requires an infection to be symptomatic to return a positive test.
-            Default value: True
+            Default value: False
 
         days_to_diagnosis (float, optional):
             The number of days from diagnosis (which is done when the intervention is distributed) until a
@@ -1340,7 +1343,7 @@ class _SimpleDiagnostic(IndividualIntervention):
             Default value: 1
 
         common_intervention_parameters (CommonInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 5 common
+            The CommonInterventionParameters object that contains the 5 common
             parameters: cost, new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             Default value: None
     """
@@ -1403,9 +1406,9 @@ class _SimpleHealthSeekingBehavior(IndividualIntervention):
 
         intervention_event (str, optional):
             The name of the event to broadcast when individual has been selected to receive care after the delay.
-            See the [HIV event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/)
-            and the [Malaria event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/)
-            for events already used in EMOD or use your own custom event.
+            For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/), and for malaria,
+            [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own
+            custom event.
             Default value: None
 
         tendency (float, optional):
@@ -1420,7 +1423,7 @@ class _SimpleHealthSeekingBehavior(IndividualIntervention):
             Default value: True
 
         common_intervention_parameters (CommonInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 4 common
+            The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, new_property_value, dont_allow_duplicates, disqualifying_properties.
             The following parameters are not valid for this intervention:
 
@@ -1504,7 +1507,7 @@ class SimpleVaccine(IndividualIntervention):
             Default value: True
 
         common_intervention_parameters (CommonInterventionParameters, optional):
-            The CommonInterventionParameters object that Additional parameters that contains the 5 common
+            The CommonInterventionParameters object that contains the 5 common
             parameters: cost, new_property_value, intervention_name, disqualifying_properties, dont_allow_duplicates.
             Default value: None
     """
@@ -1535,8 +1538,8 @@ class StandardDiagnostic(IndividualIntervention):
     be a delay in receiving a positive result. This intervention class distributes a specified intervention to a
     fraction of individuals who test positive.
 
-    - You can use either the XXX_diagnosis_config or XXX_diagnosis_event parameters, but not both.
-    - You must specify a response for a positive diagnosis, but not for a negative diagnosis.
+        - You can use either the XXX_diagnosis_config or XXX_diagnosis_event parameters, but not both.
+        - You must specify a response for a positive diagnosis, but not for a negative diagnosis.
 
     Args:
         campaign (api_campaign, required):
@@ -1558,18 +1561,15 @@ class StandardDiagnostic(IndividualIntervention):
             - If the test is positive, this specifies an event that can trigger another intervention when the event occurs.
             - Must be defined if not using positive_diagnosis_config.
             - Cannot have both positive_diagnosis_config and positive_diagnosis_event.
-            - See the [HIV event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/)
-            and the [Malaria event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/)
-            for events already used in EMOD or use your own custom event.
+            - For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/), and for malaria, [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own custom event.
             - Default value: None
 
-        negative_diagnosis_event (str, optional):
-            - This parameter defines the event to be broadcasted on a negative test result.
+        negative_diagnosis_event(str, optional):
+            - This parameter defines the event to be broadcast on a negative test result.
             - Cannot have both negative_diagnosis_config and negative_diagnosis_event.
-            - if using positive_diagnosis_config, you can use negative_diagnosis_config, but not negative_diagnosis_event.
-            - See the [HIV event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/)
-            and the [Malaria event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/)
-            for events already used in EMOD or use your own custom event.
+            - If using positive_diagnosis_config, you can use negative_diagnosis_config, but not negative_diagnosis_event.
+            - For HIV, see [Campaign event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/), and for malaria, [Campaign event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/) for events already used in EMOD or use your own custom event.
+            - Default value: None
 
         treatment_fraction (float, optional):
             - The fraction of positive diagnoses that are given the positive_diagnosis_config or
@@ -1581,7 +1581,7 @@ class StandardDiagnostic(IndividualIntervention):
 
         enable_is_symptomatic (bool, optional):
             - If True, requires an infection to be symptomatic to return a positive test.
-            - Default value: True
+            - Default value: False
 
         days_to_diagnosis (float, optional):
             - The number of days from the test, which is done when the intervention is distributed, until the
@@ -1666,3 +1666,76 @@ class StandardDiagnostic(IndividualIntervention):
         self._intervention.Days_To_Diagnosis = validate_value_range(days_to_diagnosis, 'days_to_diagnosis', 0, 3.40282e+38, float)
         self._intervention.Base_Specificity = validate_value_range(base_specificity, 'base_specificity', 0, 1, float)
         self._intervention.Base_Sensitivity = validate_value_range(base_sensitivity, 'base_sensitivity', 0, 1, float)
+
+
+class FemaleContraceptive(IndividualIntervention):
+    """
+    The **FemaleContraceptive** intervention class models contraceptive use among women. It is
+    an individual-level intervention that reduces fertility for a configurable duration with a
+    configurable waning efficacy. The usage_duration_distribution determines how long each
+    woman uses the contraceptive, and the waning_config controls how the efficacy changes over
+    that period. When a woman stops using the contraceptive, the usage_expiration_event is
+    broadcast. This intervention can only be distributed to females, and ignores the waning
+    condition expiration (as women could still use a contraceptive, even if it is ineffective).
+
+    This intervention applies only when **Birth_Rate_Dependence** in config.json is set to
+    ``INDIVIDUAL_PREGNANCIES`` or ``INDIVIDUAL_PREGNANCIES_BY_AGE_AND_YEAR``.
+
+    At a glance:
+
+    * Distributed to: Individuals (females only)
+    * Serialized: Yes. It will be preserved when starting from a serialized file.
+    * Time-based expiration: Yes. Expires when the usage duration expires, which is
+      determined by the usage_duration_distribution.
+    * Purge existing: No. Adding a new intervention of this class will not remove any
+      existing interventions and efficacies will combine as
+      birth_modifier *= new_birth_modifier.
+
+    Args:
+        campaign (api_campaign, required):
+            An instance of the emod_api.campaign module.
+
+        waning_config (AbstractWaningConfig, required):
+            Waning effect for contraceptive efficacy.
+            Available types are defined in [emodpy.campaign.waning_config][emodpy.campaign.waning_config].
+
+        usage_expiration_event (str, required):
+            An individual-level event to broadcast when the contraceptive expires.
+
+        usage_duration_distribution (BaseDistribution, required):
+            The distribution type to use for setting the duration of contraceptive use. Each
+            intervention gets a usage duration by doing a random draw from the distribution.
+            This is independent of how long the contraceptive is effective. Please use the
+            following distribution classes from emodpy.utils.distributions to define the
+            distribution:
+            * ConstantDistribution
+            * UniformDistribution
+            * GaussianDistribution
+            * ExponentialDistribution
+            * PoissonDistribution
+            * LogNormalDistribution
+            * DualConstantDistribution
+            * WeibullDistribution
+            * DualExponentialDistribution
+
+        common_intervention_parameters (CommonInterventionParameters, optional):
+            The CommonInterventionParameters object that contains the 5 common
+            parameters: cost, intervention_name, new_property_value,
+            disqualifying_properties, dont_allow_duplicates.
+            Default value: None
+    """
+
+    def __init__(self,
+                 campaign: api_campaign,
+                 waning_config: AbstractWaningConfig,
+                 usage_expiration_event: str,
+                 usage_duration_distribution: BaseDistribution,
+                 common_intervention_parameters: CommonInterventionParameters = None):
+        super().__init__(campaign, 'FemaleContraceptive', common_intervention_parameters)
+        if not isinstance(waning_config, AbstractWaningConfig):
+            raise ValueError(f"waning_config must be an instance of AbstractWaningConfig, not {type(waning_config)}.")
+        self._intervention.Waning_Config = waning_config.to_schema_dict(campaign)
+        self._intervention.Usage_Expiration_Event = set_event(usage_expiration_event, 'usage_expiration_event', campaign, True)
+        if not isinstance(usage_duration_distribution, BaseDistribution):
+            raise ValueError(f"usage_duration_distribution must be an instance of BaseDistribution, not {type(usage_duration_distribution)}.")
+        self.set_distribution(usage_duration_distribution, 'Usage_Duration')

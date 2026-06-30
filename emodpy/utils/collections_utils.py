@@ -5,15 +5,15 @@ from more_itertools import take
 
 def cut_iterable_to(obj: Iterable, to: int) -> Tuple[Union[List, Mapping], int]:
     """
-       Cut an iterable to a certain length.
+    Cut an iterable to a certain length.
 
     Args:
-        obj: The iterable to cut.
-        to: The number of elements to return.
+        obj (Iterable): The iterable to cut.
+        to (int): The number of elements to return.
 
     Returns:
-        A list or dictionary (depending on the type of object) of elements and
-        the remaining elements in the original list or dictionary.
+        (Tuple[Union[List, Mapping], int]): A list or dictionary (depending on the type of object) of elements and
+            the remaining elements in the original list or dictionary.
     """
     if isinstance(obj, dict):
         slice = {k: v for (k, v) in take(to, obj.items())}

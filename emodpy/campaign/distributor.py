@@ -84,10 +84,8 @@ def add_intervention_scheduled(campaign: api_campaign,
             - Please refer to the emodpy.utils.targeting_config module for more information.
             - If None (default), then there is not extra targeting.
 
-    Returns:
-        None, add the configuration to the campaign.
-
     Examples:
+        ```
         from emodpy.campaign.distributor import add_intervention_scheduled
         from emodpy.campaign.common import TargetDemographicsConfig, RepetitionConfig, PropertyRestrictions, TargetGender
         from emodpy.campaign.individual_intervention import BroadcastEvent, OutbreakIndividual
@@ -121,6 +119,7 @@ def add_intervention_scheduled(campaign: api_campaign,
             # Add a uniform delay (from 0 to 365 days) before the actual intervention is distributed
             delay_distribution=uniform_distribution
         )
+        ```
     """
     # Create a DelayedIntervention with the intervention if a delay_distribution is provided
     intervention_list = _add_delay(campaign, delay_distribution, intervention_list)
@@ -216,6 +215,7 @@ def add_intervention_triggered(campaign: api_campaign,
             - If None (default), then there is not extra targeting.
 
     Examples:
+        ```
         from emodpy.campaign.distributor import add_intervention_triggered
         from emodpy.campaign.common import TargetDemographicsConfig, RepetitionConfig, PropertyRestrictions, TargetGender
         from emodpy.campaign.individual_intervention import BroadcastEvent, OutbreakIndividual
@@ -253,9 +253,7 @@ def add_intervention_triggered(campaign: api_campaign,
                                    property_restrictions=PropertyRestrictions(individual_property_restrictions=[["Risk:High"]])
                                    targeting_config=is_not_pregnant
         )
-
-    Returns:
-        None, add the configuration to the campaign.
+        ```
     """
     # Create a DelayedIntervention with the intervention if a delay_distribution is provided
     intervention_list = _add_delay(campaign, delay_distribution, intervention_list)

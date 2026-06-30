@@ -29,8 +29,8 @@ class ReportHumanMigrationTracking(BuiltInReporter):
     details about human travel during simulations. The finished report will provide one line for each surviving
     individual that migrates during the simulation.
 
-    For HIV, see :doc:`emod-hiv:emod/software-report-human-migration` and for malaria,
-    see :doc:`emod-malaria:emod/software-report-human-migration`.
+    See the additional details in the HIV [Migration Report documentation](https://emod.idmod.org/emodpy-hiv/emod/software-report-human-migration/) and
+    the Malaria [Migration Report documentation](https://emod.idmod.org/emodpy-malaria/emod/software-report-human-migration/).
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -46,14 +46,14 @@ class ReportNodeDemographics(BuiltInReporter):
     The node demographics report (ReportNodeDemographics.csv) is a CSV-formatted report that provides population
     information stratified by node. For each time step, the report will collect data on each node and age bin.
 
-    For HIV, see :doc:`emod-hiv:emod/software-report-node-demographics` and for malaria,
-    see :doc:`emod-malaria:emod/software-report-node-demographics`.
+    See the additional details in the HIV [Node Demographics Report documentation](https://emod.idmod.org/emodpy-hiv/emod/software-report-node-demographics/) and
+    the Malaria [Node Demographics Report documentation](https://emod.idmod.org/emodpy-malaria/emod/software-report-node-demographics/).
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
         ip_key_to_collect (str): Name of the IndividualProperties Key to stratify the report.
-            For malaria, see :doc:`emod-malaria:emod/model-properties` and for HIV,
-            see :doc:`emod-hiv:emod/model-properties`.
+            For more information, see [HIV Individual and Node Properties](https://emod.idmod.org/emodpy-hiv/emod/model-properties/) and
+            [Malaria Individual and Node Properties](https://emod.idmod.org/emodpy-malaria/emod/model-properties/).
 
             Default is None.
 
@@ -86,10 +86,8 @@ class ReportPluginAgeAtInfection(BuiltInReporter):
     """
     Creates ReportPluginAgeAtInfection report to be added to the simulation.
 
-    For more information:
-    `HIV's ReportPluginAgeAtInfection <https://github.com/EMOD-Hub/emodpy-hiv/issues/8>`_ or
-    `Malaria's ReportPluginAgeAtInfection <https://github.com/EMOD-Hub/emodpy-malaria/issues/16>`_
-
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/251) for the latest status.
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -105,9 +103,8 @@ class ReportPluginAgeAtInfectionHistogram(BuiltInReporter):
     """
     Creates ReportPluginAgeAtInfectionHistogram report to be added to the simulation.
 
-    For more information:
-    `HIV's ReportPluginAgeAtInfectionHistogram <https://github.com/EMOD-Hub/emodpy-hiv/issues/9>`_ or
-    `Malaria's ReportPluginAgeAtInfectionHistogram <https://github.com/EMOD-Hub/emodpy-malaria/issues/17>`_
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/49) for the latest status.
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -145,9 +142,8 @@ class SqlReport(BuiltInReporter):
     the report output is a multi-table SQLite relational database (see https://sqlitebrowser.org/). Use the
     configuration parameters to manage the size of the database.
 
-    For more information:
-    `HIV's SqlReport <https://github.com/EMOD-Hub/emodpy-hiv/issues/7>`_ or
-    `Malaria's SqlReport <https://github.com/EMOD-Hub/emodpy-malaria/issues/15>`_
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/219) for the latest status.
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -157,9 +153,8 @@ class SqlReport(BuiltInReporter):
             Default: True
 
         include_individual_properties (bool): If True, include individual properties in the report.
-            For malaria, see :doc:`emod-malaria:emod/model-properties` and for HIV,
-            see :doc:`emod-hiv:emod/model-properties`.
-
+            For more information, see [HIV Individual and Node Properties](https://emod.idmod.org/emodpy-hiv/emod/model-properties/) and
+            [Malaria Individual and Node Properties](https://emod.idmod.org/emodpy-malaria/emod/model-properties/).
             Default: False
 
         include_infection_data_table (bool): If True, include infection data in the report.
@@ -169,8 +164,8 @@ class SqlReport(BuiltInReporter):
         report_filter (ReportFilter, optional): Common report filtering parameters. Valid filtering parameters for this
             report are:
 
-                - start_day
-                - end_day
+            - start_day
+            - end_day
 
     """
 
@@ -220,28 +215,28 @@ class ReportEventCounter(BuiltInReporter):
     counts events; a similar report, ReportEventRecorder, will provide information about the person at the time of the
     event.
 
-    For HIV, see :doc:`emod-hiv:emod/software-report-event-counter`, and for malaria, see
-    :doc:`emod-malaria:emod/software-report-event-counter`
+    See the additional details in the HIV [Event Counter Report documentation](https://emod.idmod.org/emodpy-HIV/emod/software-report-event-counter/) and
+    the Malaria [Event Counter Report documentation](https://emod.idmod.org/emodpy-malaria/emod/software-report-event-counter/).
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
 
         event_list (list[str]): List of individual-level events which to count. There will be one channel for each event
-            in the list. For HIV, see :doc:`emod-hiv:emod/parameter-campaign-event-list` and for malaria:
-            :doc:`emod-malaria:emod/parameter-campaign-event-list` for available built-in events, as well as custom
-            events you've defined in campaigns.
+            in the list. See the [HIV event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/)
+            and the [Malaria event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/)
+            for events already used in EMOD or use your own custom event.
 
         report_filter (ReportFilter, optional): Common report filtering parameters. Valid filtering parameters for this
             report are:
 
-                - start_day
-                - end_day
-                - filename_suffix
-                - node_ids
-                - min_age_years
-                - max_age_years
-                - must_have_ip_key_value
-                - must_have_intervention
+            - start_day
+            - end_day
+            - filename_suffix
+            - node_ids
+            - min_age_years
+            - max_age_years
+            - must_have_ip_key_value
+            - must_have_intervention
     """
 
     def __init__(self,
@@ -267,9 +262,8 @@ class ReportSimulationStats(BuiltInReporter):
     """
     Creates the ReportSimulationStats to summarize key simulation statistics.
 
-    For more information:
-    `HIV's ReportSimulationStats <https://github.com/EMOD-Hub/emodpy-hiv/issues/6>`_ or
-    `Malaria's ReportSimulationStats <https://github.com/EMOD-Hub/emodpy-malaria/issues/14>`_
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/220) for the latest status.
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -286,7 +280,7 @@ class ReportDrugStatus(BuiltInReporter):
     The drug status report (ReportDrugStatus.csv) provides status information on the drugs that an individual has
     taken or is waiting to take.
 
-    For more information, see :doc:`emod-malaria:emod/software-report-drug-status`
+    For more information, see the [Drug Status Report documentation](https://emod.idmod.org/emodpy-malaria/emod/software-report-drug-status/).
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -294,8 +288,8 @@ class ReportDrugStatus(BuiltInReporter):
         report_filter (ReportFilter, optional): Common report filtering parameters.
             Valid filtering parameters for this report are:
 
-                    - start_day
-                    - end_day
+            - start_day
+            - end_day
     """
 
     def __init__(self,
@@ -335,9 +329,8 @@ class ReportInfectionDuration(BuiltInReporter):
     The infection duration report (ReportInfectionDuration.csv)provides one line of information about an infection
     that has just cleared. It tells you who had the infection and how long they had it.
 
-    For more information:
-    `HIV's ReportInfectionDuration <https://github.com/EMOD-Hub/emodpy-hiv/issues/10>`_ or
-    `Malaria's ReportInfectionDuration <https://github.com/EMOD-Hub/emodpy-malaria/issues/18>`_
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/249) for the latest status.
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -345,8 +338,8 @@ class ReportInfectionDuration(BuiltInReporter):
         report_filter (ReportFilter, optional): Common report filtering parameters.
             Valid filtering parameters for this report are:
 
-                    - start_day
-                    - end_day
+            - start_day
+            - end_day
     """
 
     def __init__(self,
@@ -387,39 +380,38 @@ class ReportEventRecorder(ConfigReporter):
     demographics and health status at the time of an event. Additionally, it is possible to see the value of specific
     IndividualProperties, as assigned in the demographics file.
 
-    For more information, see HIV: :doc:`emod-hiv:emod/software-report-event-recorder` or Malaria:
-    :doc:`emod-malaria:emod/software-report-event-recorder`
+    See the additional details in the HIV [Report Event Recorder documentation](https://emod.idmod.org/emodpy-hiv/emod/software-report-event-recorder/) and
+    the Malaria [Report Event Recorder documentation](https://emod.idmod.org/emodpy-malaria/emod/software-report-event-recorder/).
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
 
-        event_list (list[str]): The list of individual-level events to include in the output report. For HIV, see
-            :doc:`emod-hiv:emod/parameter-campaign-event-list`, and for malaria,
-            :doc:`emod-malaria:emod/parameter-campaign-event-list` events already used by EMOD or use your own custom
-            events from campaigns.
+        event_list (list[str]): The list of individual-level events to include in the output report. See the [HIV event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/)
+            and the [Malaria event list](https://emod.idmod.org/emodpy-malaria/emod/parameter-campaign-event-list/)
+            for events already used in EMOD or use your own custom event.
 
         individual_properties (list[str], optional): A list of individual property keys, as defined in
             IndividualProperties in the demographics, to be added as additional columns to the output
             report. One column will be added to the report for each key in the list.
-            For malaria, see :doc:`emod-malaria:emod/model-properties` and for HIV,
-            see :doc:`emod-hiv:emod/model-properties`.
+            For more information, see [HIV Individual and Node Properties](https://emod.idmod.org/emodpy-hiv/emod/model-properties/) and
+            [Malaria Individual and Node Properties](https://emod.idmod.org/emodpy-malaria/emod/model-properties/).
 
         property_change_ip_to_record (str, optional): IndividualProperty key string for which recorder will add the
             PropertyChange event to the list of events that the report is listening to. However, it will only record
             the events where the property changed the value of this given key.
-            For malaria, see :doc:`emod-malaria:emod/model-properties` and for HIV,
-            see :doc:`emod-hiv:emod/model-properties`.
+            For more information, see [HIV Individual and Node Properties](https://emod.idmod.org/emodpy-hiv/emod/model-properties/) and
+            [Malaria Individual and Node Properties](https://emod.idmod.org/emodpy-malaria/emod/model-properties/).
 
         report_filter (ReportFilter, optional): Common report filtering parameters. Valid filtering parameters for this
             report are:
 
-                - start_day
-                - end_day
-                - node_ids
-                - min_age_years
-                - max_age_years
-                - must_have_ip_key_value
-                - must_have_intervention
+            - start_day
+            - end_day
+            - node_ids
+            - min_age_years
+            - max_age_years
+            - must_have_ip_key_value
+            - must_have_intervention
 
     """
 
@@ -465,9 +457,8 @@ class ReportNodeEventRecorder(ConfigReporter):
     status at the time of a node-level event. Additionally, it is possible to break up the population data by specific
     Node and Individual Properties.
 
-    For more information:
-    `HIV's ReportNodeEventRecorder <https://github.com/EMOD-Hub/emodpy-hiv/issues/11>`_ or
-    `Malaria's ReportNodeEventRecorder <https://github.com/EMOD-Hub/emodpy-malaria/issues/19>`_
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/248) for the latest status.
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -478,14 +469,14 @@ class ReportNodeEventRecorder(ConfigReporter):
         node_properties_to_record (list[str], optional): A list of node property keys, as
             defined in NodeProperties in the demographics, to be added as additional columns to the
             ReportNodeEventRecorder.csv output report.
-            For malaria, see :doc:`emod-malaria:emod/model-properties` and for HIV,
-            see :doc:`emod-hiv:emod/model-properties`.
+            For more information, see [HIV Individual and Node Properties](https://emod.idmod.org/emodpy-hiv/emod/model-properties/) and
+            [Malaria Individual and Node Properties](https://emod.idmod.org/emodpy-malaria/emod/model-properties/).
 
         stats_by_ips (list[str], optional): A list of individual property keys, as defined in
             IndividualProperties in the demographics. For each key in this list, there are two columns added for
             each value of the key, key::NumIndividuals and key::NumInfected.
-            For malaria, see :doc:`emod-malaria:emod/model-properties` and for HIV,
-            see :doc:`emod-hiv:emod/model-properties`.
+            For more information, see [HIV Individual and Node Properties](https://emod.idmod.org/emodpy-hiv/emod/model-properties/) and
+            [Malaria Individual and Node Properties](https://emod.idmod.org/emodpy-malaria/emod/model-properties/).
 
     """
 
@@ -521,9 +512,8 @@ class ReportCoordinatorEventRecorder(ConfigReporter):
     The Coordinator-level events report (ReportCoordinatorEventRecorder.csv) records the event, time, and the
     coordinator sending out the event.
 
-    For more information:
-    `HIV's ReportCoordinatorEventRecorder <https://github.com/EMOD-Hub/emodpy-hiv/issues/12>`_ or
-    `Malaria's ReportCoordinatorEventRecorder <https://github.com/EMOD-Hub/emodpy-malaria/issues/20>`_
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/247) for the latest status.
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -554,9 +544,8 @@ class ReportSurveillanceEventRecorder(ConfigReporter):
     Node and Individual Properties. Only the nodes that the SurveillanceEventCoordinator listening to will be
     included in the report.
 
-    For more information:
-    `HIV's ReportSurveillanceEventRecorder <https://github.com/EMOD-Hub/emodpy-hiv/issues/13>`_ or
-    `Malaria's ReportSurveillanceEventRecorder <https://github.com/EMOD-Hub/emodpy-malaria/issues/21>`_
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/246) for the latest status.
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -567,8 +556,8 @@ class ReportSurveillanceEventRecorder(ConfigReporter):
         stats_by_ips (list[str], optional): A list of individual property keys, as defined in
             IndividualProperties in the demographics. For each key in this list, there are two columns added for
             each value of the key, key::NumIndividuals and key::NumInfected.
-            For malaria, see :doc:`emod-malaria:emod/model-properties` and for HIV,
-            see :doc:`emod-hiv:emod/model-properties`.
+            For more information, see [HIV Individual and Node Properties](https://emod.idmod.org/emodpy-hiv/emod/model-properties/) and
+            [Malaria Individual and Node Properties](https://emod.idmod.org/emodpy-malaria/emod/model-properties/).
 
     """
 
@@ -599,16 +588,16 @@ class InsetChart(ConfigReporter):
     population at the end of the time step, however, there can be statistics that count events that occur during
     the time step.
 
-    For HIV, see :doc:`emod-hiv:emod/software-report-inset-chart`, and for malaria, see
-    :doc:`emod-malaria:emod/software-report-inset-chart`
+    See the additional details in the HIV [Inset Chart documentation](https://emod.idmod.org/emodpy-hiv/emod/software-report-inset-chart/) and
+    the Malaria [Inset Chart documentation](https://emod.idmod.org/emodpy-malaria/emod/software-report-inset-chart/).
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
 
         has_ip (list[str], optional): A channel is added to InsetChart for each value of each IndividualProperty key
             provided. The channel name will be HasIP_<Key:Value> and will be the fraction of the population that has
-            that value for that Individual Property Key. For malaria, see :doc:`emod-malaria:emod/model-properties`
-            and for HIV, see :doc:`emod-hiv:emod/model-properties`.
+            that value for that Individual Property Key. For more information, see [HIV Individual and Node Properties](https://emod.idmod.org/emodpy-hiv/emod/model-properties/) and
+            [Malaria Individual and Node Properties](https://emod.idmod.org/emodpy-malaria/emod/model-properties/).
 
         has_interventions (list[str], optional): A channel is added to InsetChart for each intervention name provided.
             The channel name will be Has_<InterventionName> and will be the fraction of the population that has that
@@ -644,8 +633,8 @@ class SpatialReport(ConfigReporter):
     """
     Creates a separate spatially-distributed data binary (SpatialReport_{Channel_Name}.bin) for every channel listed.
 
-    For HIV, see :doc:`emod-hiv:emod/software-report-spatial`, and for malaria, see
-    :doc:`emod-malaria:emod/software-report-spatial`
+    See the additional details in the HIV [Spatial Report documentation](https://emod.idmod.org/emodpy-hiv/emod/software-report-spatial) and
+    the Malaria [Spatial Report documentation](https://emod.idmod.org/emodpy-malaria/emod/software-report-spatial/).
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -653,11 +642,12 @@ class SpatialReport(ConfigReporter):
             are defined in the SpatialReportChannels enum. Please use the enum to define the channels.
 
 
-            Example::
-
-                SpatialReport(reporters_object=reporters,
-                              spatial_output_channels=[SpatialReportChannels.Infected,
-                                                      SpatialReportChannels.Births])
+            Example:
+            ```
+            SpatialReport(reporters_object=reporters,
+                            spatial_output_channels=[SpatialReportChannels.Infected,
+                                                    SpatialReportChannels.Births])
+            ```
 
     """
 
@@ -694,10 +684,11 @@ class DemographicsReport(ConfigReporter):
     sub-channels (bins) based on age. For example, instead of having a single prevalence channel, you might have
     prevalence in the '0-3 years old bin' and the '4-6 years old bin', and so forth.
 
-    For HIV, see :doc:`emod-hiv:emod/software-report-demographic-summary` and
-    :doc:`emod-hiv:emod/software-report-binned`, and for malaria,
-    see :doc:`emod-malaria:emod/software-report-demographic-summary` and
-    :doc:`emod-malaria:emod/software-report-binned`.
+    For HIV, see the additional details in the [Binned Report documentation](https://emod.idmod.org/emodpy-hiv/emod/software-report-binned/) and
+    the [Demographics Summary Report documentation](https://emod.idmod.org/emodpy-hiv/emod/software-report-demographic-summary/).
+
+    For Malaria, see the additional details in the [Binned Report documentation](https://emod.idmod.org/emodpy-malaria/emod/software-report-binned/) and
+    the [Demographics Summary Report documentation](https://emod.idmod.org/emodpy-malaria/emod/software-report-demographic-summary/).
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -719,8 +710,8 @@ class PropertyReport(ConfigReporter):
     are being counted. For example, it allows you to compare disease deaths for people in the high risk group versus
     the low risk group.
 
-    For HIV, see :doc:`emod-hiv:emod/software-report-property` and for malaria, see
-     :doc:`emod-malaria:emod/software-report-property`
+    See the additional details in the HIV [Property Output Report documentation](https://emod.idmod.org/emodpy-hiv/emod/software-report-property/) and
+    the Malaria [Property Output Report documentation](https://emod.idmod.org/emodpy-malaria/emod/software-report-property/).
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.

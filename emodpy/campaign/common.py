@@ -15,7 +15,7 @@ class CommonInterventionParameters:
     Args:
         cost (float, optional):
             - The unit 'cost' per intervention distributed. For interventions distributed to people, the cost will be
-              added for each person. For internventions distributed to nodes, the cost is for each node. Setting
+              added for each person. For interventions distributed to nodes, the cost is for each node. Setting
               cost to zero for all other interventions, and to a non-zero amount for one intervention, provides a
               convenient way to track the number of times the intervention has been applied in a simulation.
             - Minimum value: 0.
@@ -25,9 +25,9 @@ class CommonInterventionParameters:
         disqualifying_properties (list[str], optional):
             - A list of IndividualProperty 'key:value' pairs that will prevent an intervention from being distributed
               or applied/updated (persistent interventions will abort/expire in the time step they see the change in
-              their individual property). See :ref:demo-properties parameters for more information. Generally used to
-              control the flow of health care access. For example, to prevent the same individual from accessing health
-              care via two different routes at the same time.
+              their individual property). See [Individual and Node Properties](https://emod.idmod.org/EMOD-Generic/md_parameter/parameter-demographics/#nodeproperties-and-individualproperties)
+              for more information. Generally used to control the flow of health care access. For example, to prevent
+              the same individual from accessing health care via two different routes at the same time.
             - Defaults to None.
 
         dont_allow_duplicates (bool, optional):
@@ -43,10 +43,10 @@ class CommonInterventionParameters:
 
         new_property_value (str, optional):
             - An optional IndividualProperty 'key:value' pair that will be assigned when the intervention is first
-              applied/updated. See :ref:demo-properties parameters for more information. Generally used to indicate the
-              broad category of health care cascade to which an intervention belongs to prevent individuals from
-              accessing care through multiple pathways. For example, if an individual must already be taking a
-              particular medication to be prescribed a new one.
+              applied/updated. See [Individual and Node Properties](https://emod.idmod.org/EMOD-Generic/md_parameter/parameter-demographics/#nodeproperties-and-individualproperties)
+              for more information. Generally used to indicate the broad category of health care cascade to which
+              an intervention belongs to prevent individuals from accessing care through multiple pathways. For example,
+              if an individual must already be taking a particular medication to be prescribed a new one.
             - Defaults to None.
 
     """
@@ -121,8 +121,8 @@ class TargetGender(Enum):
 class TargetDemographicsConfig:
     """
     A class that is used to configure the Demographics_Coverage, Target_Demographic, Target_Age_Min, Target_Age_Max,
-    Target_Gender and Target_Residents_Only in the coordinator class. Please refer to emodpy.campaign.distributor
-    for its usage.
+    Target_Gender and Target_Residents_Only in the coordinator class. Please refer to [emodpy.campaign.distributor](https://emod.idmod.org/emodpy/autoapi/emodpy/campaign/distributor/)
+    for more information about its usage.
 
     Args:
         demographic_coverage (float, optional):
@@ -144,16 +144,18 @@ class TargetDemographicsConfig:
 
         target_residents_only (bool, optional):
             - When set to true, the intervention is only distributed to individuals that began the simulation in the node (i.e. those that claim the node as their residence).
-            - You can use the MigrateIndividuals function to modify an individual's HOME node. For more details on MigrateIndividuals, refer to the Emod documentation: :doc:`emod-hiv:emod/parameter-campaign-individual-migrateindividuals`
+            - You can use the MigrateIndividuals function to modify an individual's HOME node. For more details on MigrateIndividuals, refer to the [EMOD documentation](https://emod.idmod.org/EMOD-Generic/md_parameter/parameter-campaign-individual-migrateindividuals/)
             - Defaults to False.
 
     Examples:
-        # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
+        Replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
+        ```
         from emodpy.campaign.common import TargetDemographicsConfig, TargetGender
         from emodpy.campaign.distributor import add_intervention_scheduled
         demographics_config = TargetDemographicsConfig(demographic_coverage=0.5, target_age_min=10,
                                                        target_age_max=20, target_gender=TargetGender.FEMALE)
         add_intervention_scheduled(demographics_config=demographics_config, ...)
+        ```
     """
     class _TargetDemographic(Enum):
         EVERYONE = "Everyone"
@@ -241,12 +243,13 @@ class RepetitionConfig:
         ValueError: if timesteps_between_repetitions is undefined when number_repetitions is used.
 
     Examples:
-        # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
+        replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
+        ```
         from emodpy.campaign.common import RepetitionConfig
         from emodpy.campaign.distributor import add_intervention_scheduled
         repetition_config = RepetitionConfig(number_repetitions=2, timesteps_between_repetitions=365)
         add_intervention_scheduled(repetition_config=repetition_config, ...)
-
+        ```
     """
     def __init__(self, number_repetitions: int = 1, timesteps_between_repetitions: int = None,
                  infinite_repetitions: bool = False):
@@ -295,7 +298,6 @@ class RepetitionConfig:
 
         Returns:
             This function does not return any value; instead, it modifies the campaign_object.
-
         """
         if self.number_repetitions:
             campaign_object.Number_Repetitions = self.number_repetitions
@@ -308,11 +310,11 @@ class PropertyRestrictions:
     A class that is used to configure the individual property restrictions and node property restrictions in the
     campaign object.
 
-    Please refer to the Emod documentation for NodeProperties and IndividualProperties parameters for more
+    Please refer to the EMOD documentation for NodeProperties and IndividualProperties parameters for more
     information:
 
-    - HIV Emod: :doc:`emod-hiv:emod/parameter-demographics`
-    - Malaria Emod: :doc:`emod-malaria:emod/parameter-demographics`
+    - HIV EMOD: [Individual and Node Properties](https://emod.idmod.org/emodpy-hiv/emod/model-properties/)
+    - Malaria EMOD: [Individual and Node Properties](https://emod.idmod.org/emodpy-malaria/emod/model-properties/)
 
     Args:
         individual_property_restrictions (List[List[str]], optional):
@@ -338,30 +340,35 @@ class PropertyRestrictions:
         ValueError: if the elements in the inner list are not strings that represent dictionaries key:value pairs with at least one alphanumeric character before and after ':'.
 
     Examples:
-        Example 1: This example demonstrates how to specify individual restrictions for targeting specific groups of people who are high risk AND whose InterventionStatus is ARTStaging.
-
-        # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
+        Example 1: This example demonstrates how to specify individual restrictions for targeting specific groups
+        of people who are high risk AND whose InterventionStatus is ARTStaging.
+        ```
+        replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
         from emodpy.campaign.common import PropertyRestrictions
         from emodpy.campaign.distributor import add_intervention_scheduled
         property_restrictions = PropertyRestrictions(individual_property_restrictions=[["Risk:HIGH", "InterventionStatus:ARTStaging"]])
         add_intervention_scheduled(property_restrictions=property_restrictions, ...)
-        # the result json should look like this:
-        # {
-        #          "Property_Restrictions_Within_Node": [
-        #            {
-        #              "Risk": "HIGH",
-        #              "InterventionStatus": "ARTStaging"
-        #            }
-        #          ]
-        # }
+        ```
+        the resulting json should look like this:
+        ```
+        {
+                 "Property_Restrictions_Within_Node": [
+                   {
+                     "Risk": "HIGH",
+                     "InterventionStatus": "ARTStaging"
+                   }
+                 ]
+        }
+        ```
+        Example 2: This example demonstrates how to specify individual restrictions for targeting specific groups
+        of people. In this case, we are targeting individuals whose InterventionStatus is set to ARTStaging and who
+        have either HIGH or MEDIUM risk behavior. In other words, we aim to target individuals who meet either of
+        the following conditions:
 
-
-        Example 2: This example demonstrates how to specify individual restrictions for targeting specific groups of people. In this case, we are targeting individuals whose InterventionStatus is set to ARTStaging and who have either HIGH or MEDIUM risk behavior. In other words, we aim to target individuals who meet either of the following conditions:
-
-                    1. "InterventionStatus is set to ARTStaging and Risk is set to HIGH"
-                    2. "InterventionStatus is set to ARTStaging AND Risk is set to MEDIUM"
-
-        # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
+        1. InterventionStatus is set to ARTStaging and Risk is set to HIGH
+        2. InterventionStatus is set to ARTStaging AND Risk is set to MEDIUM
+        ```
+        replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
         from emodpy.campaign.common import PropertyRestrictions
         from emodpy.campaign.distributor import add_intervention_scheduled
         property_restrictions_within_node = PropertyRestrictions(
@@ -369,26 +376,28 @@ class PropertyRestrictions:
                                                         ["Risk:HIGH", "InterventionStatus:ARTStaging"],
                                                         ["Risk:MEDIUM", "InterventionStatus:ARTStaging"]])
         add_intervention_scheduled(property_restrictions=property_restrictions, ...)
-        # the result json should look like this:
-        # {
-        #          "Property_Restrictions_Within_Node": [
-        #            {
-        #              "Risk": "HIGH",
-        #              "InterventionStatus": "ARTStaging"
-        #            },
-        #            {
-        #              "Risk": "MEDIUM",
-        #              "InterventionStatus": "ARTStaging"
-        #            }
-        #          ]
-        # }
-
+        ```
+        the resulting json should look like this:
+        ```
+        {
+                 "Property_Restrictions_Within_Node": [
+                   {
+                     "Risk": "HIGH",
+                     "InterventionStatus": "ARTStaging"
+                   },
+                   {
+                     "Risk": "MEDIUM",
+                     "InterventionStatus": "ARTStaging"
+                   }
+                 ]
+        }
+        ```
         Example 3: This example demonstrates how to use 'node_property_restrictions' to specify the NodeProperty. In this case, we are targeting nodes that meet either of the following conditions:
 
-        1. "Risk is set to MEDIUM and Place is set to URBAN"
-        2. "Risk is set to LOW and Place is set to RURAL"
-
-        # replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
+        1. Risk is set to MEDIUM and Place is set to URBAN
+        2. Risk is set to LOW and Place is set to RURAL
+        ```
+        replace emodpy with emodpy_hiv or emodpy_malaria based on the disease you are working on.
         from emodpy.campaign.common import PropertyRestrictions
         from emodpy.campaign.distributor import add_intervention_scheduled
         property_restrictions = PropertyRestrictions(
@@ -396,20 +405,22 @@ class PropertyRestrictions:
                                                         ["Risk:MEDIUM", "Place:URBAN"],
                                                         ["Risk:LOW", "Place:RURAL"]])
         add_intervention_scheduled(property_restrictions=property_restrictions, ...)
-        # the result json should look like this:
-        # {
-        #          "Node_Property_Restrictions": [
-        #            {
-        #              "Risk": "MEDIUM",
-        #              "Place": "URBAN"
-        #            },
-        #            {
-        #              "Risk": "LOW",
-        #              "Place": "RURAL"
-        #            }
-        #          ]
-        # }
-
+        ```
+        the resulting json should look like this:
+        ```
+        {
+                 "Node_Property_Restrictions": [
+                   {
+                     "Risk": "MEDIUM",
+                     "Place": "URBAN"
+                   },
+                   {
+                     "Risk": "LOW",
+                     "Place": "RURAL"
+                   }
+                 ]
+        }
+        ```
     """
     def __init__(self, individual_property_restrictions: List[List[str]] = None,
                  node_property_restrictions: List[List[str]] = None):
@@ -447,23 +458,23 @@ class PropertyRestrictions:
         A function that configure the Property_Restrictions_Within_Node and Node_Property_Restrictions
         for the campaign_object. This function is a private function that is used by the coordinator class and should
         not be called directly by user code.
+
         Args:
             campaign_object: An EventCoordinator or Intervention object.
 
         Returns:
             This function does not return any value; instead, it modifies the campaign_object.
-
         """
         def parse_to_dict(list_of_lists):
             """
             A helper function that parse the list of lists to a list of dictionaries of key-value-pairs where each dict
             can only contain a given key once.
+
             Args:
                 list_of_lists:
 
             Returns:
                 list of dictionaries of key-value-pairs where each dict can only contain a given key once.
-
             """
             result = []
             for inner_list in list_of_lists:
@@ -504,7 +515,6 @@ class ValueMap:
         values (List[float]):
             - A list of values that correspond to the times.
             - The list of values should have the same length as times.
-
     """
     def __init__(self, times: List[float], values: List[float]):
         if not isinstance(times, list) or not isinstance(values, list):

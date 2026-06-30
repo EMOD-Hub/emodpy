@@ -22,15 +22,17 @@ class MultiNodeInterventionDistributor(NodeIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        node_intervention_list(list[NodeIntervention], optional):
+        node_intervention_list (list[NodeIntervention], optional):
             A list of NodeIntervention objects for the multi-node-level interventions to be distributed by this
             intervention.
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
+        common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that Additional parameters that contains the 4 common
             parameters: intervention_name, dont_allow_duplicates, new_property_value, disqualifying_properties.
             The following parameters are not valid for this intervention:
-            cost
+
+            - cost
+
             Default value: None
     """
 
@@ -58,7 +60,7 @@ class _NodeLevelHealthTriggeredIV(NodeIntervention):
     become infected, they broadcast the 'NewInfectionEvent' trigger and **NodeLevelHealthTriggeredIV**
     distributes the diagnostic intervention to them.
 
-    Notes and tips for this intervention:
+    Notes and tips for this intervention
 
         - This is the main tool for distributing an intervention to a person when an event happens to that person.
         Note that the intervention is distributed to all individuals in the node which experience the triggering
@@ -91,45 +93,46 @@ class _NodeLevelHealthTriggeredIV(NodeIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        intervention_list(list[Union[NodeIntervention, IndividualIntervention], required):
+        intervention_list (list[Union[NodeIntervention, IndividualIntervention], required):
             The configuration of an actual individual intervention to be distributed on the trigger. Selects a
             class for the intervention and configures the parameters specific for that intervention class.
 
-        trigger_condition_list(list[str], required):
+        trigger_condition_list (list[str], required):
             A list of individual events that will trigger the distribution of the intervention. The events in the list
             must either be events already used in EMOD or custom events defined to be distributed elsewhere
-            in the campaign. See :doc:`emod-hiv:emod/parameter-campaign-event-list` for events already used in EMOD.
+            in the campaign. See [Event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/)
+            for events already used in EMOD.
 
-        target_demographics_config(TargetDemographicsConfig, optional):
-            The TargetDemographicsConfig object that is used to configure the demographcs of the targeted individuals,
+        target_demographics_config (TargetDemographicsConfig, optional):
+            The TargetDemographicsConfig object that is used to configure the demographics of the targeted individuals,
             for example: demographic_coverage, target_demographic, target_age_min, target_age_max, target_gender and
             target_residents_only in the coordinator class. Please refer to the
             emodpy.campaign.common.TargetDemographicsConfig for more information.
             Default value: None
 
-        property_restrictions(PropertyRestrictions, optional):
+        property_restrictions (PropertyRestrictions, optional):
             A PropertyRestrictions object that can be used to restrict the distribution of the intervention to
             individuals or nodes with specific properties. Please see the emodpy.common.PropertyRestrictions for more
             information.
             Default value: None
 
-        targeting_config(AbstractTargetingConfig, optional):
+        targeting_config (AbstractTargetingConfig, optional):
             Be more selective of individuals by using the emodpy.utils.targeting_config classes. Please refer to the
             emodpy.utils.targeting_config for more information.
 
-        duration(float, optional):
+        duration (float, optional):
             The number of days to continue this intervention. It will listen and respond to events during this
             time. A value of -1 (the default) keeps the intervention running indefinitely.
             Minimum value: -1
             Maximum value: 3.40282e+38
             Default value: -1
 
-        distribute_on_return_home(bool, optional):
+        distribute_on_return_home (bool, optional):
             When set to True, individuals will receive an intervention upon returning home if that
             intervention was originally distributed while the individual was away.
             Default value: True
 
-        blackout_period(float, optional):
+        blackout_period (float, optional):
             After the initial intervention distribution, the time, in days, to wait before distributing the
             intervention again. If it cannot distribute due to the blackout period, it will broadcast the
             user-defined blackout_event_trigger.
@@ -137,22 +140,24 @@ class _NodeLevelHealthTriggeredIV(NodeIntervention):
             Maximum value: 3.40282e+38
             Default value: 0
 
-        blackout_on_first_occurrence(bool, optional):
+        blackout_on_first_occurrence (bool, optional):
             If set to True, individuals will enter the blackout period after the first occurrence of an
             event in the trigger_condition_list.
             Default value: True
 
-        blackout_event_trigger(str, optional):
-            The event to broadcast if an intervention cannot be distributed due to the blackout_period.See
-            :doc:`emod-hiv:emod/parameter-campaign-event-list` for events already used in EMOD or use your
-            own custom event.
+        blackout_event_trigger (str, optional):
+            The event to broadcast if an intervention cannot be distributed due to the blackout_period. See
+            [Event list](https://emod.idmod.org/emodpy-hiv/emod/parameter-campaign-event-list/) for events
+            already used in EMOD or use your own custom event.
             Default value: None
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
+        common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 4 common
             parameters: intervention_name, dont_allow_duplicates, new_property_value, disqualifying_properties.
             The following parameters are not valid for this intervention:
-            cost
+
+            - cost
+
             Default value: None
     """
 
@@ -240,34 +245,36 @@ class _BirthTriggeredIV(NodeIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        actual_individualintervention_config(IndividualIntervention, required):
+        actual_individualintervention_config (IndividualIntervention, required):
             The configuration of an actual individual intervention to be distributed on the trigger. Selects a
             class for the intervention and configures the parameters specific for that intervention class.
 
-        target_demographics_config(TargetDemographicsConfig, optional):
-            The TargetDemographicsConfig object that is used to configure the demographcs of the targeted individuals,
+        target_demographics_config (TargetDemographicsConfig, optional):
+            The TargetDemographicsConfig object that is used to configure the demographics of the targeted individuals,
             for example: Demographics_Coverage, Target_Demographic, Target_Age_Min, Target_Age_Max, Target_Gender and
             Target_Residents_Only in the coordinator class. Please refer to the emodpy.campaign.common.TargetDemographicsConfig for more information.
             Default value: None
 
-        property_restrictions(PropertyRestrictions, optional):
+        property_restrictions (PropertyRestrictions, optional):
             A PropertyRestrictions object that can be used to restrict the distribution of the intervention to
             individuals with specific properties. Please see the emodpy.common.PropertyRestrictions for more
             information. This Intervention only allows individual properties, not node properties.
             Default value: None
 
-        duration(float, optional):
+        duration (float, optional):
             The number of days to continue this intervention. It will listen and respond to events during this
             time. A value of -1 (the default) keeps the intervention running indefinitely.
             Minimum value: -1
             Maximum value: 3.40282e+38
             Default value: -1
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
+        common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 4 common
             parameters: disqualifying_properties, dont_allow_duplicates, intervention_name, new_property_value.
             The following parameters are not valid for this intervention:
-            cost
+
+            - cost
+
             Default value: None
     """
 
@@ -328,11 +335,13 @@ class _BroadcastCoordinatorEventFromNode(NodeIntervention):
             **Custom_Coordinator_Events** in the simulation configuration file.
             Default value: None
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
+        common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 4 common
             parameters: disqualifying_properties, dont_allow_duplicates, intervention_name, new_property_value.
             The following parameters are not valid for this intervention:
-            cost
+
+            - cost
+
             Default value: None
     """
 
@@ -354,8 +363,8 @@ class BroadcastNodeEvent(NodeIntervention):
     The **BroadcastNodeEvent** node intervention class broadcasts node-level events. This can be used with the campaign
     class, **SurveillanceEventCoordinator**, that can monitor and listen for events received from
     **BroadcastNodeEvent** and then perform an action based on the broadcasted event. You can also use this for
-    the reporting, by recording broadcasted events with :class:`emodpy.reporters.common.ReportNodeEventRecorder` or
-    :class:`emodpy.reporters.common.ReportSurveillanceEventRecorder`.
+    the reporting, by recording broadcasted events with emodpy.reporters.common.ReportNodeEventRecorder or
+    emodpy.reporters.common.ReportSurveillanceEventRecorder.
     You must use this coordinator class with listeners that are operating on the same core. You can
     also use **NLHTIVNode**. For more information, see Simulation core components.
 
@@ -368,7 +377,7 @@ class BroadcastNodeEvent(NodeIntervention):
             configuration parameter.
             Default value: None
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
+        common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 5 common
             parameters: intervention_name, new_property_value, disqualifying_properties, dont_allow_duplicates, cost.
             Default value: None
@@ -401,33 +410,32 @@ class ImportPressure(NodeIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        import_age(float, optional):
+        import_age (float, optional):
             The age (in days) of infected import cases.
             Minimum value: 0
             Maximum value: 43800
             Default value: 365
 
-        genome(int, optional):
+        genome (int, optional):
             The genetic substrain ID of the outbreak infection. Together with **Antigen**, they are a unitary
             object representing a strain of infection, which allows for differentiation among infections.
             Minimum value: -1
             Maximum value: 16777200.0
             Default value: 0
 
-        durations(list[int], optional):
+        durations (list[int], optional):
             The durations over which to apply import pressure.
             Default value: None
 
-        daily_import_pressures(list[float], optional):
+        daily_import_pressures (list[float], optional):
             The rate of per-day importation for each node that the intervention is distributed to.
             Default value: None
 
-        antigen(int, optional):
+        antigen (int, optional):
             The antigenic base strain ID of the outbreak infection.
             Minimum value: 0
             Maximum value: 10
             Default value: 0
-
     """
 
     def __init__(self,
@@ -476,11 +484,12 @@ class MigrateFamily(NodeIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        duration_before_leaving_distribution(BaseDistribution, required):
+        duration_before_leaving_distribution (BaseDistribution, required):
             The distribution type to use for assigning the duration of time a family waits before migrating to
             the destination node after all residents are home. Each assigned value is a random draw from the
             distribution. Please use the following distribution classes
             from emodpy.utils.distributions to define the distribution:
+
             * ConstantDistribution
             * UniformDistribution
             * GaussianDistribution
@@ -491,11 +500,12 @@ class MigrateFamily(NodeIntervention):
             * WeibullDistribution
             * DualExponentialDistribution
 
-        duration_at_node_distribution(BaseDistribution, required):
+        duration_at_node_distribution (BaseDistribution, required):
             The distribution type to use for assigning the duration of time an individual or family spends at a
             destination node after intervention-based migration. Each assigned value is a random draw from the
             distribution. Please use the following distribution classes
             from emodpy.utils.distributions to define the distribution:
+
             * ConstantDistribution
             * UniformDistribution
             * GaussianDistribution
@@ -506,23 +516,25 @@ class MigrateFamily(NodeIntervention):
             * WeibullDistribution
             * DualExponentialDistribution
 
-        nodeid_to_migrate_to(int, optional):
+        nodeid_to_migrate_to (int, optional):
             The destination node ID for intervention-based migration.
             Minimum value: 0
             Maximum value: 4294970000.0
             Default value: 0
 
-        is_moving(bool, optional):
+        is_moving (bool, optional):
             Set to true (1) to indicate all the individuals of the family are permanently moving to a new home
             node for intervention-based migration. Once at the new home node, trips will be made with this node
             as the root (i.e. round trips come back to this node).
             Default value: True
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
+        common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 4 common
             parameters: disqualifying_properties, dont_allow_duplicates, intervention_name, new_property_value.
             The following parameters are not valid for this intervention:
-            cost
+
+            - cost
+
             Default value: None
     """
 
@@ -556,35 +568,37 @@ class NodePropertyValueChanger(NodeIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        target_np_key_value(str, required):
+        target_np_key_value (str, required):
             The **NodeProperty** key:value pair, as defined in the demographics file, to assign to the node.
 
-        revert(float, optional):
+        revert (float, optional):
             The number of days to keep the value of the property/key, specified in **Target_NP_Key_Value** and
-            set by the intervenion, for the node. When the time has expired, the intervention will reset the
+            set by the intervention, for the node. When the time has expired, the intervention will reset the
             property/key back to the value it had when the intervention was first applied.
             Minimum value: 0
             Maximum value: 3.40282e+38
             Default value: 0
 
-        maximum_duration(float, optional):
+        maximum_duration (float, optional):
             The maximum amount of time in days nodes have to update the property value. This timing works in
             conjunction with **Daily_Probability**.
             Minimum value: -1
             Maximum value: 3.40282e+38
             Default value: 3.40282e+38
 
-        daily_probability(float, optional):
+        daily_probability (float, optional):
             The daily probability that the node's property value changes to the **Target_NP_Key_Value**.
             Minimum value: 0
             Maximum value: 1
             Default value: 1
 
-        common_intervention_parameters (CommomInterventionParameters, optional):
+        common_intervention_parameters (CommonInterventionParameters, optional):
             The CommonInterventionParameters object that contains the 4 common
             parameters: disqualifying_properties, dont_allow_duplicates, intervention_name, new_property_value.
             The following parameters are not valid for this intervention:
-            cost
+
+            - cost
+
             Default value: None
     """
 
@@ -616,40 +630,38 @@ class Outbreak(NodeIntervention):
         campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
-        probability_of_infection(float, optional):
+        probability_of_infection (float, optional):
             The probability that new individuals are infected. 1.0 implies all new individuals are infected
             while 0.0 adds all of the people as susceptible individuals.
             Minimum value: 0
             Maximum value: 1
             Default value: 1
 
-        number_cases_per_node(int, optional):
-            The number of new imported individuals.
-            .. note:: This will increase the population with demographics of 50/50 male/female and user-defined
-            ages
+        number_cases_per_node (int, optional):
+            The number of new imported individuals. Note, this will increase the population with demographics of
+            50/50 male/female and user-defined ages.
             Minimum value: 0
             Maximum value: 2147480000.0
             Default value: 1
 
-        import_age(float, optional):
+        import_age (float, optional):
             The age (in days) of infected import cases.
             Minimum value: 0
             Maximum value: 43800
             Default value: 365
 
-        genome(int, optional):
+        genome (int, optional):
             The genetic substrain ID of the outbreak infection. Together with **Antigen**, they are a unitary
             object representing a strain of infection, which allows for differentiation among infections.
             Minimum value: -1
             Maximum value: 16777200.0
             Default value: 0
 
-        antigen(int, optional):
+        antigen (int, optional):
             The antigenic base strain ID of the outbreak infection.
             Minimum value: 0
             Maximum value: 10
             Default value: 0
-
     """
 
     def __init__(self,

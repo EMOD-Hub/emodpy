@@ -984,7 +984,7 @@ class EMODTaskSpecification(TaskSpecification):
     used in idmtools workflow in two places.
 
     CLI command
-    
+
     - check idmtools related packages installed (version including plugins): idmtools version
     - check available Task: idmtools info plugins task
     """

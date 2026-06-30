@@ -32,7 +32,7 @@ class BroadcastEvent(IndividualIntervention):
             The CommonInterventionParameters object that contains the 4 common
             parameters: disqualifying_properties, new_property_value, intervention_name, dont_allow_duplicates.
             The following parameters are not valid for this intervention:
-            
+
             - cost
 
             Default value: None

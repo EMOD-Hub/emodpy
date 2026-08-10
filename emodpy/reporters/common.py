@@ -86,6 +86,8 @@ class ReportPluginAgeAtInfection(BuiltInReporter):
     """
     Creates ReportPluginAgeAtInfection report to be added to the simulation.
 
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/251) for the latest status.
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -100,6 +102,9 @@ class ReportPluginAgeAtInfection(BuiltInReporter):
 class ReportPluginAgeAtInfectionHistogram(BuiltInReporter):
     """
     Creates ReportPluginAgeAtInfectionHistogram report to be added to the simulation.
+
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/49) for the latest status.
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -137,6 +142,8 @@ class SqlReport(BuiltInReporter):
     the report output is a multi-table SQLite relational database (see https://sqlitebrowser.org/). Use the
     configuration parameters to manage the size of the database.
 
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/219) for the latest status.
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -158,8 +165,8 @@ class SqlReport(BuiltInReporter):
         report_filter (ReportFilter, optional): Common report filtering parameters. Valid filtering parameters for this
             report are:
 
-                - start_day
-                - end_day
+            - start_day
+            - end_day
 
     """
 
@@ -223,14 +230,14 @@ class ReportEventCounter(BuiltInReporter):
         report_filter (ReportFilter, optional): Common report filtering parameters. Valid filtering parameters for this
             report are:
 
-                - start_day
-                - end_day
-                - filename_suffix
-                - node_ids
-                - min_age_years
-                - max_age_years
-                - must_have_ip_key_value
-                - must_have_intervention
+            - start_day
+            - end_day
+            - filename_suffix
+            - node_ids
+            - min_age_years
+            - max_age_years
+            - must_have_ip_key_value
+            - must_have_intervention
     """
 
     def __init__(self,
@@ -258,6 +265,8 @@ class ReportSimulationStats(BuiltInReporter):
     """
     Creates the ReportSimulationStats to summarize key simulation statistics.
 
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/220) for the latest status.
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -282,8 +291,8 @@ class ReportDrugStatus(BuiltInReporter):
         report_filter (ReportFilter, optional): Common report filtering parameters.
             Valid filtering parameters for this report are:
 
-                    - start_day
-                    - end_day
+            - start_day
+            - end_day
     """
 
     def __init__(self,
@@ -323,14 +332,17 @@ class ReportInfectionDuration(BuiltInReporter):
     The infection duration report (ReportInfectionDuration.csv)provides one line of information about an infection
     that has just cleared. It tells you who had the infection and how long they had it.
 
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/249) for the latest status.
+
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
 
         report_filter (ReportFilter, optional): Common report filtering parameters.
             Valid filtering parameters for this report are:
 
-                    - start_day
-                    - end_day
+            - start_day
+            - end_day
     """
 
     def __init__(self,
@@ -397,13 +409,13 @@ class ReportEventRecorder(ConfigReporter):
         report_filter (ReportFilter, optional): Common report filtering parameters. Valid filtering parameters for this
             report are:
 
-                - start_day
-                - end_day
-                - node_ids
-                - min_age_years
-                - max_age_years
-                - must_have_ip_key_value
-                - must_have_intervention
+            - start_day
+            - end_day
+            - node_ids
+            - min_age_years
+            - max_age_years
+            - must_have_ip_key_value
+            - must_have_intervention
 
     """
 
@@ -450,6 +462,9 @@ class ReportNodeEventRecorder(ConfigReporter):
     The Node-level events report (ReportNodeEventRecorder.csv) provides information on node's population and health
     status at the time of a node-level event. Additionally, it is possible to break up the population data by specific
     Node and Individual Properties.
+
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/248) for the latest status.
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -505,6 +520,9 @@ class ReportCoordinatorEventRecorder(ConfigReporter):
     The Coordinator-level events report (ReportCoordinatorEventRecorder.csv) records the event, time, and the
     coordinator sending out the event.
 
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/247) for the latest status.
+
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
 
@@ -535,6 +553,9 @@ class ReportSurveillanceEventRecorder(ConfigReporter):
     status at the time of an event. Additionally, it is possible to break up the population data by specific
     Node and Individual Properties. Only the nodes that the SurveillanceEventCoordinator listening to will be
     included in the report.
+
+    Additional documentation for this report is currently in development.
+    Check [here](https://github.com/EMOD-Hub/issues-and-discussions/issues/246) for the latest status.
 
     Args:
         reporters_object (Reporters): The reporters object given by the emodpy.
@@ -633,11 +654,12 @@ class SpatialReport(ConfigReporter):
             are defined in the SpatialReportChannels enum. Please use the enum to define the channels.
 
 
-            Example::
-
-                SpatialReport(reporters_object=reporters,
-                              spatial_output_channels=[SpatialReportChannels.Infected,
-                                                      SpatialReportChannels.Births])
+            Example:
+            ```
+            SpatialReport(reporters_object=reporters,
+                            spatial_output_channels=[SpatialReportChannels.Infected,
+                                                    SpatialReportChannels.Births])
+            ```
 
     """
 

@@ -465,15 +465,19 @@ class Reporters(InputFilesList):
 
     def set_task_config(self, task: 'EMODTask') -> None:
         """
-        Note: not using this method in the current implementation
-        because: task has Reporters object, but we have to give task to Reporters object so
-        that Reporters object can configure stuff in task. It makes more sense for Task to take Reporters object
-        and configure itself.
+        Configure reporter-related settings on the given EMODTask.
 
-        Configures reporter settings for config.json in the simulation
+        **NOTE** Historically this method allowed a Reporters object to modify a Task
+        (for example, to add reporter configuration into a simulation's
+        config.json). In the current design the Task is responsible for
+        applying Reporters' configuration itself, so this method is not used
+        by default.
+
+        This method remains as an optional hook for callers that prefer the
+        Reporters object to push settings into a Task instance.
 
         Args:
-            task: Task to configure
+            task (EMODTask): Task to configure (optional; not used by default)
 
         """
         pass

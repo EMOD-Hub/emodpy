@@ -10,109 +10,111 @@ a relationship.
 Below is the JSON for a simple example where we want to distribute a vaccine to 20%
 of the people that do not already have the vaccine on the 100th day of the simulation.
 
-    {
-        "class": "CampaignEvent",
-        "Start_Day": 100,
-        "Nodeset_Config": {
-            "class": "NodeSetAll"
+```
+{
+    "class": "CampaignEvent",
+    "Start_Day": 100,
+    "Nodeset_Config": {
+        "class": "NodeSetAll"
+    },
+    "Event_Coordinator_Config": {
+        "class": "StandardInterventionDistributionEventCoordinator",
+        "Target_Demographic": "Everyone",
+        "Demographic_Coverage": 0.2,
+        "Targeting_Config": {
+            "class": "HasIntervention",
+            "Is_Equal_To": 0,
+            "Intervention_Name": "MyVaccine"
         },
-        "Event_Coordinator_Config": {
-            "class": "StandardInterventionDistributionEventCoordinator",
-            "Target_Demographic": "Everyone",
-            "Demographic_Coverage": 0.2,
-            "Targeting_Config": {
-                "class": "HasIntervention",
-                "Is_Equal_To": 0,
-                "Intervention_Name": "MyVaccine"
-            },
-            "Intervention_Config": {
-                "class": "SimpleVaccine",
-                "Intervention_Name" : "MyVaccine",
-                "Cost_To_Consumer": 1,
-                "Vaccine_Take": 1,
-                "Vaccine_Type": "AcquisitionBlocking",
-                "Waning_Config": {
-                    "class": "WaningEffectConstant",
-                    "Initial_Effect" : 1.0
-                }
+        "Intervention_Config": {
+            "class": "SimpleVaccine",
+            "Intervention_Name" : "MyVaccine",
+            "Cost_To_Consumer": 1,
+            "Vaccine_Take": 1,
+            "Vaccine_Type": "AcquisitionBlocking",
+            "Waning_Config": {
+                "class": "WaningEffectConstant",
+                "Initial_Effect" : 1.0
             }
         }
     }
-
+}
+```
 Below is a slightly more complicated example where we want to distribute a diagnostic
 to people that are either high risk or have not been vaccinated.
 
-    {
-        "class": "CampaignEvent",
-        "Start_Day": 100,
-        "Nodeset_Config": {
-            "class": "NodeSetAll"
-        },
-        "Event_Coordinator_Config": {
-            "class": "StandardInterventionDistributionEventCoordinator",
-            "Target_Demographic": "Everyone",
-            "Demographic_Coverage": 0.2,
-            "Targeting_Config": {
-                "class" : "TargetingLogic",
-                "Logic" : [
-                    [
-                        {
-                            "class": "HasIntervention",
-                            "Is_Equal_To": 0,
-                            "Intervention_Name": "MyVaccine"
-                        }
-                    ],
-                    [
-                        {
-                            "class": "HasIP",
-                            "Is_Equal_To": 1,
-                            "IP_Key_Value": "Risk:HIGH"
-                        }
-                    ]
+```
+{
+    "class": "CampaignEvent",
+    "Start_Day": 100,
+    "Nodeset_Config": {
+        "class": "NodeSetAll"
+    },
+    "Event_Coordinator_Config": {
+        "class": "StandardInterventionDistributionEventCoordinator",
+        "Target_Demographic": "Everyone",
+        "Demographic_Coverage": 0.2,
+        "Targeting_Config": {
+            "class" : "TargetingLogic",
+            "Logic" : [
+                [
+                    {
+                        "class": "HasIntervention",
+                        "Is_Equal_To": 0,
+                        "Intervention_Name": "MyVaccine"
+                    }
+                ],
+                [
+                    {
+                        "class": "HasIP",
+                        "Is_Equal_To": 1,
+                        "IP_Key_Value": "Risk:HIGH"
+                    }
                 ]
-            },
-            "Intervention_Config": {
-                "class": "SimpleDiagnostic",
-                "Treatment_Fraction": 1.0,
-                "Base_Sensitivity": 1.0,
-                "Base_Specificity": 1.0,
-                "Event_Or_Config": "Event",
-                "Positive_Diagnosis_Event": "TestedPositive"
-            }
+            ]
+        },
+        "Intervention_Config": {
+            "class": "SimpleDiagnostic",
+            "Treatment_Fraction": 1.0,
+            "Base_Sensitivity": 1.0,
+            "Base_Specificity": 1.0,
+            "Event_Or_Config": "Event",
+            "Positive_Diagnosis_Event": "TestedPositive"
         }
     }
-
+}
+```
 The classes of emodpy are intended to make it easier for users to create complex logic and
 reduce the burden of trying to create this complex logic in JSON.  Below is the python
-configuration logic for the two examples above:
+configuration logic for the two examples above.
 
-    # Example 1: Does not have MyVaccine
-    targeting_config = ~HasIntervention( intervention_name="MyVaccine" )
+- Example 1: Does not have MyVaccine<br>
+`targeting_config = ~HasIntervention( intervention_name="MyVaccine" )`
 
-    # Example 2: Does not have MyVaccine OR is high risk
-    targeting_config = ~HasIntervention( intervention_name="MyVaccine" ) | HasIP( ip_key_value="Risk:HIGH" )
+- Example 2: Does not have MyVaccine OR is high risk<br>
+`targeting_config = ~HasIntervention( intervention_name="MyVaccine" ) | HasIP( ip_key_value="Risk:HIGH" )`
 
 Notice that this logic uses the bitwise operators instead of the logical operators.
 Python does not allow you to override the logical operators so the bitwise operators
-were the next best thing to allow simple notation.  The bitwise operators are:
+were the next best thing to allow simple notation. The bitwise operators are:
 
-* '~' - use instead of "not" to logically invert the logical check
-* '&' - use instead of "and" to logically AND two logical checks
-* '|' - use instead of "or" to logically OR two logical checks
-* '^' - XOR - NOT SUPPORTED
-* '<<' - Left Shift - NOT SUPPORTED
-* '>>' - Right Shift - NOT SUPPORTED
+* ~ - use instead of "not" to logically invert the logical check
+* & - use instead of "and" to logically AND two logical checks
+* | - use instead of "or" to logically OR two logical checks
+* ^ - XOR - NOT SUPPORTED
+* Left Shift - NOT SUPPORTED
+* Right Shift - NOT SUPPORTED
 
 The order of operations for bitwise operators is the same as for logical operators.
 For the operators we support, the following order of operations is followed:
 
 1. Parentheses
-2. '~' - NOT
-3. '&' - AND
-4. '|' - OR
+2. ~ - NOT
+3. & - AND
+4. | - OR
 
 Please note that the bitwise operations should not change objects directly.  You expect
-them to return a new object with the operation.  For example, if you have A_prime = ~A,
+them to return a new object with the operation. For example, if you have A_prime = ~A,
 then you expect A_prime to be the inverse of A but you don't expect A to have changed.
 """
 
@@ -129,13 +131,14 @@ class AbstractTargetingConfig(ABC):
     classes must implement.  This class is needed to tie the TargetingLogic and
     BaseTargetingConfig classes together.
 
-    class_name: The subclass is responsible for setting the name of the EMOD class.
+    - class_name: The subclass is responsible for setting the name of the EMOD class.
         This name does not need to be the same as the python class, but it must
         match what is used in EMOD.
 
-    is_equal_to:
+    - is_equal_to:
         This is a parameter in all of EMOD's Targeting_Config classes.  The check
         performed by the class is compared with the value of this parameter.
+
         For example, if using HasIP with ip_key_value = "Risk:HIGH" and
         is_equal_to = 0, individuals who do NOT have Risk = HIGH will be selected.
         If is_equal_to = 1, then individuals who DO have Risk = HIGH will be selected.
@@ -223,8 +226,8 @@ class AbstractTargetingConfig(ABC):
 
     def to_simple_dict(self, campaign):
         """
-        Return a plain/simple dictionary of the expected JSON for EMOD.  The main
-        purpose of this is for validation in testing.  We need the ability to see
+        Return a plain/simple dictionary of the expected JSON for EMOD. The main
+        purpose of this is for validation in testing. We need the ability to see
         that the logic written in python is translated to the JSON correctly.
 
         Args:
@@ -247,15 +250,15 @@ class _TargetingLogic(AbstractTargetingConfig):
     TargetingLogic allows the user to logically combine different checks.  We leverage bitwise
     operators to make the syntax of combining different checks low and straight forward.
 
-    NOTE: We put the initial and'ing and or'ing in the constructor to reduce the amount of
+    NOTE We put the initial and'ing and or'ing in the constructor to reduce the amount of
     object creation and to stop a situation where we would end up with a nested TargetingLogic
-    element that only had one element.  See the "deeply nested" test in test_targeting_config.py.
+    element that only had one element. See the "deeply nested" test in test_targeting_config.py.
 
     Args:
-        is_and: If true, initialize the TargetingLogic object such that 'left' and 'right' are AND'd
+        is_and (bool): If true, initialize the TargetingLogic object such that 'left' and 'right' are AND'd
             together.  If false, initialize it such that they are OR'd.
-        left: The targeting config object on the left side of the operator
-        right: The targeting config object on the right side of the operator
+        left (AbstractTargetingConfig): The targeting config object on the left side of the operator
+        right (AbstractTargetingConfig): The targeting config object on the right side of the operator
     """
     def __init__(self, is_and: bool, left: AbstractTargetingConfig, right: AbstractTargetingConfig):
         super().__init__()
@@ -344,7 +347,7 @@ class _TargetingLogic(AbstractTargetingConfig):
 
     def pre_and(self, left):
         """
-        Return a new object that is "and'd" with the object to the left of the '&' operator
+        Return a new object that is "and'd" with the object to the left of the '&' operator.
         """
         copy_obj = copy.deepcopy(self)
         for inner in copy_obj.logic:
@@ -353,7 +356,7 @@ class _TargetingLogic(AbstractTargetingConfig):
 
     def pre_or(self, left):
         """
-        Return a new object that is "or'd" with the object to the left of the '|' operator
+        Return a new object that is "or'd" with the object to the left of the '|' operator.
         """
         copy_obj = copy.deepcopy(self)
         inner = []
@@ -367,10 +370,10 @@ class _TargetingLogic(AbstractTargetingConfig):
         This is the dictionary used to generate the JSON for EMOD.
 
         Args:
-            campaign: The campaign module that has the path to the schema
+            campaign (emodpy.campaign.emod_campaign.EMODCampaign): The campaign module that has the path to the schema
 
         Returns:
-            A ReadOnlyDict object created by schema_to_class
+            (ReadOnlyDict): A ReadOnlyDict object created by schema_to_class
         """
         tc_out = super().to_schema_dict(campaign)
         tc_out.Logic = []
@@ -399,15 +402,15 @@ class _TargetingLogic(AbstractTargetingConfig):
 
     def to_simple_dict(self, campaign):
         """
-        Return a plain/simple dictionary of the expected JSON for EMOD.  The main
-        purpose of this is for validation in testing.  We need the ability to see
+        Return a plain/simple dictionary of the expected JSON for EMOD. The main
+        purpose of this is for validation in testing. We need the ability to see
         that the logic written in python is translated to the JSON correctly.
 
         Args:
-            campaign: The campaign module that has the path to the schema
+            campaign (emodpy.campaign.emod_campaign.EMODCampaign): The campaign module that has the path to the schema
 
         Returns:
-            A simple dictionary containing the data for EMOD.
+            (dict): A simple dictionary containing the data for EMOD.
         """
         tc_obj = self.to_schema_dict(campaign)
         tc_dict = self._clean_dict(tc_obj)
@@ -418,10 +421,10 @@ class _TargetingLogic(AbstractTargetingConfig):
 class BaseTargetingConfig(AbstractTargetingConfig):
     """
     The BaseTargetingConfig class should used as the base class for all of the
-    Targeting_Config classes.  The main job of the subclasses is to maintain
-    the extra data needed by the class in EMOD to perform the check.  For example,
+    Targeting_Config classes. The main job of the subclasses is to maintain
+    the extra data needed by the class in EMOD to perform the check. For example,
     HasIP needs to know the IP key:value so that in EMOD the class can check if
-    the individual has the given IP.  HasIP is responsible for making sure it
+    the individual has the given IP. HasIP is responsible for making sure it
     is translated in the EMOD configuration.
     """
     def __init__(self):
@@ -471,8 +474,9 @@ class HasIP(BaseTargetingConfig):
     This is especially needed when determining if a partner has a particular IP
     (see emodpy-hiv.utils.targeting_config.HasRelationship).
 
-    ip_key_value: An IndividualProperties Key:Value pair where the key/property name and one of its
-        values is separated by a colon (':').  This cannot be an empty string.
+    Args:
+        ip_key_value (str): An IndividualProperties Key:Value pair where the key/property name and one of its
+            values is separated by a colon (':'). This cannot be an empty string.
     """
     def __init__(self, ip_key_value):
         super().__init__()
@@ -503,10 +507,11 @@ class HasIntervention(BaseTargetingConfig):
     This will only work for interventions that persist like SimpleVaccine and DelayedIntervention.
     It will not work for interventions like BroadcastEvent since it does not persist.
 
-    intervention_name: The name of the intervention the person should have. This cannot be an empty
-        string but should be either the name of the intervention class or the name given to the
-        intervention of interest.  EMOD does not verify that this name exists or is used in your
-        campaign.
+    Args:
+        intervention_name (str): The name of the intervention the person should have. This cannot be an empty
+            string but should be either the name of the intervention class or the name given to the
+            intervention of interest.  EMOD does not verify that this name exists or is used in your
+            campaign.
     """
     def __init__(self, intervention_name):
         super().__init__()

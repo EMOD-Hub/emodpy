@@ -19,8 +19,7 @@ class BroadcastEvent(IndividualIntervention):
     event.
 
     Args:
-        campaign (api_campaign, required):waityou're on leave
-
+        campaign (api_campaign, required):
             An instance of the emod_api.campaign module.
 
         broadcast_event(str, required):
